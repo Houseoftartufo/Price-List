@@ -14,11 +14,13 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "qa:preview": "node scripts/qa-preview.mjs",
     "release:candidate": "node scripts/create-release-candidate.mjs",
     "verify": "npm run typecheck && npm test && npm run build && npm run qa:preview && npm run release:candidate"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "typescript": "^7.0.2",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"
