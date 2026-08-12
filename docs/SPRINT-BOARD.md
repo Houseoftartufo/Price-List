@@ -14,7 +14,7 @@ Legend: `DONE` · `IN PROGRESS` · `NEXT` · `BLOCKED`
 | Document canonical data contract | DONE |
 | Record confirmed P0/P1 risks | DONE |
 | Add typed toolchain without replacing current UI | DONE |
-| Add automated quality workflow | IN PROGRESS |
+| Add automated quality workflow | DONE |
 | Create current SKU reconciliation dataset | NEXT |
 | Create visual regression baseline set | NEXT |
 
