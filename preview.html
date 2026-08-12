@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b0907" />
+    <meta
+      name="description"
+      content="House of Tartufo wholesale catalogue: verified B2B prices, volume discounts and quote requests."
+    />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>House of Tartufo — Wholesale Catalogue 10x Preview</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#catalogue">Skip to catalogue</a>
+
+    <header class="site-header" id="top">
+      <a class="brand" href="#top" aria-label="House of Tartufo catalogue home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+        <span class="brand-words"><strong>HOUSE</strong><span>OF TARTUFO</span></span>
+      </a>
+
+      <div class="header-actions">
+        <div class="source-state" id="source-state" aria-live="polite">
+          <span class="state-dot" aria-hidden="true"></span>
+          <span id="source-state-text">Loading verified prices…</span>
+        </div>
+
+        <div class="language-switcher" aria-label="Language">
+          <button type="button" data-locale="en">EN</button>
+          <button type="button" data-locale="it">IT</button>
+          <button type="button" data-locale="fr">FR</button>
+          <button type="button" data-locale="nl">NL</button>
+        </div>
+
+        <button class="quote-trigger" id="quote-trigger" type="button" aria-haspopup="dialog">
+          <span data-ui="quote">Quote</span>
+          <span class="quote-count" id="quote-count">0</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-content">
+          <p class="eyebrow" data-ui="heroEyebrow">House of Tartufo · B2B</p>
+          <h1 id="hero-title" data-ui="heroTitle">The wholesale catalogue, built to move fast.</h1>
+          <p class="hero-copy" data-ui="heroBody">
+            Search, compare volume pricing and prepare a quote without leaving the catalogue.
+          </p>
+
+          <div class="hero-metrics" aria-label="Catalogue summary">
+            <div><strong id="metric-products">—</strong><span data-ui="products">products</span></div>
+            <div><strong id="metric-categories">—</strong><span data-ui="categories">categories</span></div>
+            <div><strong>25%</strong><span data-ui="upToDiscount">Up to 25% volume discount</span></div>
+          </div>
+
+          <a class="primary-cta" href="#catalogue" data-ui="browse">Browse catalogue</a>
+        </div>
+      </section>
+
+      <section class="catalogue-shell" id="catalogue" aria-labelledby="catalogue-title">
+        <div class="catalogue-heading">
+          <div>
+            <p class="eyebrow" id="catalogue-eyebrow">2026 · Wholesale</p>
+            <h2 id="catalogue-title">Catalogue</h2>
+          </div>
+          <p class="catalogue-result" id="catalogue-result" aria-live="polite"></p>
+        </div>
+
+        <div class="toolbar" aria-label="Catalogue controls">
+          <label class="search-field" for="catalogue-search">
+            <span class="sr-only" data-ui="searchLabel">Search catalogue</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+              <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+              <path d="m16.5 16.5 4 4" fill="none" stroke="currentColor" stroke-width="1.6"></path>
+            </svg>
+            <input
+              id="catalogue-search"
+              type="search"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="Search SKU, product, size…"
+            />
+            <kbd>/</kbd>
+          </label>
+
+          <label class="filter-select">
+            <span class="sr-only">Line</span>
+            <select id="line-filter">
+              <option value="all" data-ui-option="allLines">All lines</option>
+              <option value="standard" data-ui-option="standardLine">Standard</option>
+              <option value="natural" data-ui-option="naturalLine">Natural Line</option>
+            </select>
+          </label>
+
+          <label class="filter-select">
+            <span class="sr-only">Truffle type</span>
+            <select id="truffle-filter">
+              <option value="all" data-ui-option="allTruffles">All truffles</option>
+              <option value="white" data-ui-option="white">White</option>
+              <option value="black" data-ui-option="black">Black</option>
+              <option value="summer" data-ui-option="summer">Summer</option>
+              <option value="bianchetto" data-ui-option="bianchetto">Bianchetto</option>
+              <option value="mixed" data-ui-option="mixed">Mixed</option>
+              <option value="none" data-ui-option="none">Other</option>
+            </select>
+          </label>
+        </div>
+
+        <nav class="category-nav" id="category-nav" aria-label="Product categories"></nav>
+
+        <div class="catalogue-notice" id="catalogue-notice" hidden role="status"></div>
+
+        <div class="catalogue-table-wrap">
+          <table class="catalogue-table" id="catalogue-table">
+            <thead>
+              <tr>
+                <th scope="col" data-ui="product">Product</th>
+                <th scope="col" data-ui="size">Size</th>
+                <th scope="col" data-ui="casePack">Case pack</th>
+                <th scope="col" data-ui="basePrice">Base price</th>
+                <th scope="col" data-ui="bestPrice">Best price</th>
+                <th scope="col" data-ui="cases">Cases</th>
+                <th scope="col" data-ui="yourPrice">Your price</th>
+                <th scope="col"><span class="sr-only">Action</span></th>
+              </tr>
+            </thead>
+            <tbody id="product-rows">
+              <tr class="loading-row">
+                <td colspan="8">Loading verified catalogue…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="empty-state" id="empty-state" hidden>
+          <p data-ui="noResults">No products match these filters.</p>
+          <button type="button" id="reset-filters" data-ui="resetFilters">Reset filters</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="brand brand-footer" aria-label="House of Tartufo">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+        <span class="brand-words"><strong>HOUSE</strong><span>OF TARTUFO</span></span>
+      </div>
+      <p data-ui="exWorks">Prices ex-works, excluding VAT and shipping.</p>
+      <a href="https://houseoftartufo.com" target="_blank" rel="noopener">houseoftartufo.com ↗</a>
+    </footer>
+
+    <dialog class="quote-dialog" id="quote-dialog" aria-labelledby="quote-title">
+      <div class="quote-panel">
+        <header class="quote-header">
+          <div>
+            <p class="eyebrow">House of Tartufo · B2B</p>
+            <h2 id="quote-title" data-ui="quoteTitle">Quote request</h2>
+          </div>
+          <button class="icon-button" id="quote-close" type="button" aria-label="Close quote">×</button>
+        </header>
+
+        <div class="quote-lines" id="quote-lines"></div>
+
+        <div class="quote-summary" id="quote-summary" hidden>
+          <div><span data-ui="total">Estimated total</span><strong id="quote-total">€0.00</strong></div>
+          <div><span data-ui="saving">Saving</span><strong id="quote-saving">€0.00</strong></div>
+          <p data-ui="exWorks">Prices ex-works, excluding VAT and shipping.</p>
+        </div>
+
+        <div class="quote-actions" id="quote-actions" hidden>
+          <button class="secondary-button" id="copy-order" type="button" data-ui="copyOrder">Copy order</button>
+          <a class="primary-button" id="whatsapp-order" href="#" target="_blank" rel="noopener" data-ui="whatsapp">
+            Send on WhatsApp
+          </a>
+          <button class="text-button" id="clear-quote" type="button" data-ui="clearQuote">Clear quote</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script type="module" src="/src/preview.ts"></script>
+  </body>
+</html>
