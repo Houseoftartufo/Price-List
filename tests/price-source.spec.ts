@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseCsv } from '../src/catalog/csv';
+import { parseCsv, parsePositiveMoney } from '../src/catalog/csv';
 import {
   parseCatalogueSourceCsv,
   parsePriceSourceCsv,
@@ -12,6 +12,13 @@ describe('CSV parser', () => {
     const rows = parseCsv('Code,Product,Unit Price\n1,"Sauce, Truffle",6.36\n2,"A ""quoted"" item",5.00');
     expect(rows[1]).toEqual(['1', 'Sauce, Truffle', '6.36']);
     expect(rows[2]).toEqual(['2', 'A "quoted" item', '5.00']);
+  });
+
+  it('parses US and European thousands/decimal money formats', () => {
+    expect(parsePositiveMoney('€1,289.16')).toBe(1289.16);
+    expect(parsePositiveMoney('€1.289,16')).toBe(1289.16);
+    expect(parsePositiveMoney('€6,36')).toBe(6.36);
+    expect(parsePositiveMoney('€6.36')).toBe(6.36);
   });
 });
 
