@@ -1,7 +1,10 @@
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 
 const EXPECTED_PRODUCTS = 145;
 const EXPECTED_CATEGORIES = 8;
+const JS_BUDGET_BYTES = 250 * 1024;
+const CSS_BUDGET_BYTES = 150 * 1024;
+const HTML_BUDGET_BYTES = 80 * 1024;
 const REQUIRED_IDS = [
   'catalogue',
   'catalogue-search',
@@ -28,12 +31,21 @@ function unique(values) {
   return new Set(values).size === values.length;
 }
 
-const [sourceHtml, builtHtml, catalogueText, translationText, previewTs] = await Promise.all([
+async function assetBytes(extension) {
+  const assets = new URL('../dist/assets/', import.meta.url);
+  const files = (await readdir(assets)).filter((file) => file.endsWith(extension));
+  const sizes = await Promise.all(files.map((file) => stat(new URL(file, assets)).then((entry) => entry.size)));
+  return sizes.reduce((sum, size) => sum + size, 0);
+}
+
+const [sourceHtml, builtHtml, catalogueText, translationText, previewTs, jsBytes, cssBytes] = await Promise.all([
   readFile(new URL('../preview.html', import.meta.url), 'utf8'),
   readFile(new URL('../dist/preview.html', import.meta.url), 'utf8'),
   readFile(new URL('../dist/data/catalog.snapshot.json', import.meta.url), 'utf8'),
   readFile(new URL('../dist/data/translations.snapshot.json', import.meta.url), 'utf8'),
   readFile(new URL('../src/preview.ts', import.meta.url), 'utf8'),
+  assetBytes('.js'),
+  assetBytes('.css'),
 ]);
 
 const ids = [...sourceHtml.matchAll(/\sid=["']([^"']+)["']/g)].map((match) => match[1]);
@@ -59,6 +71,12 @@ if (/\sonclick\s*=/i.test(sourceHtml)) fail('inline onclick handlers are forbidd
 if (!builtHtml.includes('src="/assets/') && !builtHtml.includes('src="./assets/')) {
   fail('built preview does not reference a bundled application asset');
 }
+
+if (Buffer.byteLength(builtHtml) > HTML_BUDGET_BYTES) {
+  fail(`preview HTML exceeds ${HTML_BUDGET_BYTES / 1024}KB budget`);
+}
+if (jsBytes > JS_BUDGET_BYTES) fail(`compiled JavaScript exceeds ${JS_BUDGET_BYTES / 1024}KB budget (${jsBytes} bytes)`);
+if (cssBytes > CSS_BUDGET_BYTES) fail(`compiled CSS exceeds ${CSS_BUDGET_BYTES / 1024}KB budget (${cssBytes} bytes)`);
 
 const catalogue = JSON.parse(catalogueText);
 if (!Array.isArray(catalogue.products)) fail('catalogue snapshot products are missing');
@@ -90,5 +108,5 @@ if (!previewTs.includes('loadCatalogue')) fail('preview is not connected to the 
 if (!previewTs.includes('quote.set')) fail('quote flow is not wired');
 
 console.log(
-  `[preview-qa] PASS · ${catalogue.products.length} SKUs · ${categoryCount} categories · ${ids.length} unique UI ids · EN/IT/FR/NL snapshots present`,
+  `[preview-qa] PASS · ${catalogue.products.length} SKUs · ${categoryCount} categories · ${ids.length} unique UI ids · JS ${(jsBytes / 1024).toFixed(1)}KB · CSS ${(cssBytes / 1024).toFixed(1)}KB · EN/IT/FR/NL snapshots present`,
 );
