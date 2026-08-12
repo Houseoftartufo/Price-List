@@ -2,120 +2,130 @@
 
 Last updated: 2026-08-12
 
-Legend: `DONE` · `IN PROGRESS` · `NEXT` · `BLOCKED`
+Legend: `DONE` · `NEXT` · `BLOCKED`
 
-## Sprint 0 — Safety & Baseline
+## Current state
 
-| Item | Status |
-| --- | --- |
-| Create isolated development branch | DONE |
-| Keep `main` / production untouched | DONE |
-| Document master plan and quality gates | DONE |
-| Document canonical data contract | DONE |
-| Record confirmed P0/P1 risks | DONE |
-| Add typed toolchain without replacing current UI | DONE |
-| Add automated quality workflow | DONE |
-| Identify exact live Google Sheet source | DONE |
-| Record source SKU/category baseline | DONE — 145 SKUs / 8 categories |
-| Create visual regression baseline set | IN PROGRESS |
+**READY FOR FINAL APPROVAL.**
 
-## Sprint 1 — Data & Pricing Core
+Working branch: `codex/price-list-10x`
+
+PR #1 remains draft and isolated from `main`.
+
+## Safety & data
 
 | Item | Status |
 | --- | --- |
-| Canonical catalogue/product types | DONE |
+| Isolated development branch | DONE |
+| Master plan + data contract | DONE |
+| Automated quality gate | DONE |
+| Google Sheet source identified | DONE |
+| Verified catalogue baseline | DONE — 145 SKUs / 8 categories |
+| Typed catalogue/product contract | DONE |
 | Central discount policy | DONE |
 | Deterministic pricing engine | DONE |
-| Unit/case/subtotal/saving mathematical consistency | DONE |
-| Catalogue validation guards | DONE |
-| Header-based CSV parser | DONE |
-| Price-source adapter independent of column positions | DONE |
-| Pricing unit tests | DONE |
-| Validation tests | DONE |
-| Price-source parser tests | DONE |
-| Inspect exact live Sheet schema | DONE |
-| Parse source category separator rows | DONE |
-| Normalize `Qty/Box` for all source SKUs | DONE |
-| Reconcile source base case price across all SKUs | DONE — 0 issues |
-| Reconcile all five source discount columns | DONE — 0 issues |
-| Build-time verified catalogue snapshot generator | DONE |
-| Build-time verified translation snapshot generator | DONE |
-| Derive product/category count instead of hardcoding | DONE |
-| Add live freshness/stale/fallback catalogue service | IN PROGRESS |
-| Reconcile legacy HTML SKUs/prices against source | IN PROGRESS |
-| Connect new preview UI to verified engine | IN PROGRESS |
-| Remove independent hardcoded `box-price` authority from replacement UI | IN PROGRESS |
+| Header-based source parser | DONE |
+| Base case + all discount tiers reconciled | DONE — 0 issues |
+| Build-time verified catalogue snapshot | DONE |
+| Direct current-sheet sync | DONE |
+| Runtime rejection of incomplete live catalogue | DONE |
+| Safe verified fallback | DONE |
 
-## Sprint 2 — i18n Rebuild
+## Internationalisation
 
 | Item | Status |
 | --- | --- |
-| Audit source translation sheet | DONE |
-| Verify duplicate source keys | DONE — 0 duplicates |
-| Verify EN/IT/FR/NL coverage | DONE — 107/107 complete |
-| Override wrong hardcoded catalogue count | DONE in generated snapshot |
-| Build locale loader/state | IN PROGRESS |
-| Migrate UI to semantic translation usage | IN PROGRESS |
-| Remove legacy key collisions from replacement UI | IN PROGRESS |
-| Persist locale and update document language | NEXT |
+| EN / IT / FR / NL coverage | DONE |
+| Locale persistence | DONE |
+| Document language updates | DONE |
+| Commercial microcopy translated | DONE |
+| i18n unit tests | DONE |
+| Buyer UI avoids mixed-language technical fallback text | DONE |
 
-Known legacy issues being removed rather than preserved:
-
-- Natural Line group-key inversion;
-- duplicated `cat07.group4` semantics;
-- Pure Cream / Carpaccio / Minced group collisions;
-- hardcoded 9-category cover statement.
-
-## Sprint 3 — Catalogue Information Architecture
+## Catalogue UX
 
 | Item | Status |
 | --- | --- |
-| Separate new preview from legacy `index.html` | IN PROGRESS |
-| Premium compact hero | IN PROGRESS |
-| Search by SKU/name/format | IN PROGRESS |
-| Persistent category navigation | IN PROGRESS |
-| Line/truffle filters | IN PROGRESS |
-| Desktop data table | IN PROGRESS |
-| Mobile product-card layout | IN PROGRESS |
-| Deep-link product/category state | NEXT |
+| Protected replacement preview | DONE |
+| Premium compact hero | DONE |
+| Full catalogue workspace | DONE |
+| SKU/name/format search | DONE |
+| Category navigation | DONE |
+| Line + truffle filters | DONE |
+| Desktop table | DONE |
+| Mobile product cards | DONE |
+| Deep-link state | DONE |
 
-## Sprint 4 — Dynamic Wholesale Pricing UX
-
-| Item | Status |
-| --- | --- |
-| Quantity selector per product | IN PROGRESS |
-| Active tier indicator | IN PROGRESS |
-| Derived unit/case/subtotal/saving | IN PROGRESS |
-| Tier ladder 1/2/3/5/10/15 | NEXT |
-
-## Sprint 5 — Quote & Conversion
+## Wholesale pricing
 
 | Item | Status |
 | --- | --- |
-| Add to Quote | IN PROGRESS |
-| Persistent quote basket | IN PROGRESS |
-| Quote recalculation from verified catalogue | IN PROGRESS |
-| WhatsApp request generation | IN PROGRESS |
-| Copy order | IN PROGRESS |
-| Email request | NEXT |
-| Printable/exportable quote | NEXT |
+| Quantity selector | DONE |
+| Dynamic unit/case/subtotal/saving | DONE |
+| Active tier + next-tier guidance | DONE |
+| Ladder 1 / 2 / 3 / 5 / 10 / 15 boxes | DONE |
+| EUR formatting | DONE |
 
-## Sprint 6+ — Hardening order
+## Quote & conversion
 
-1. Mobile + accessibility QA
-2. Performance optimization
-3. SEO/share/trust metadata
-4. Analytics funnel
-5. Visual regression + E2E
-6. Release hardening and production approval
+| Item | Status |
+| --- | --- |
+| Add/update quote | DONE |
+| Persistent basket | DONE |
+| Quantity editing | DONE |
+| Totals + saving | DONE |
+| Remove / clear | DONE |
+| WhatsApp request | DONE |
+| Email request | DONE |
+| Copy order | DONE |
+| Printable/exportable quote | NEXT — optional |
 
-## Merge rule
+## Mobile & accessibility
 
-No merge to `main` until:
+| Item | Status |
+| --- | --- |
+| Semantic controls | DONE |
+| Reduced-motion support | DONE |
+| Touch targets at least 44 px | DONE |
+| Mobile language switcher | DONE |
+| Quote safe-area handling | DONE |
+| No horizontal clipping | DONE — tested at 320 / 360 / 390 / 430 px |
+| Mobile buyer journey | DONE |
 
-- pricing reconciliation is complete;
-- automated checks pass;
-- preview is visually approved;
-- mobile QA passes;
-- i18n regression checks pass;
-- explicit production approval is given.
+## Performance / trust / analytics
+
+| Item | Status |
+| --- | --- |
+| Production minification | DONE |
+| JS/CSS bundle budget | DONE |
+| Catalogue cache/fallback strategy | DONE |
+| Preview noindex | DONE |
+| Release candidate canonical + Open Graph URL | DONE |
+| Visible verified timestamp | DONE |
+| ex-works / VAT / shipping note | DONE |
+| Buyer funnel events | DONE |
+| `dataLayer` forwarding when present | DONE |
+| Lighthouse CI | NEXT — optional hardening |
+| Dedicated OG image / app icons | NEXT — optional brand asset |
+
+## QA / release readiness
+
+| Item | Status |
+| --- | --- |
+| Typecheck | DONE |
+| Unit tests | DONE — 33 |
+| Preview integrity QA | DONE |
+| Chromium desktop E2E | DONE |
+| Chromium mobile E2E | DONE — 320 / 360 / 390 / 430 px |
+| QA screenshot artifact | DONE |
+| Playwright report artifact | DONE |
+| Verified preview build artifact | DONE |
+| Release-candidate artifact | DONE |
+| Release checklist | DONE — `docs/RELEASE.md` |
+| Rollback runbook | DONE — `docs/RELEASE.md` |
+| Automatic Vercel branch preview | BLOCKED — current project history only shows Git deployments from `main` |
+| Final approval | NEXT |
+
+## Final gate
+
+The exact final head commit must pass the complete `Quality Gate`, final screenshots must be reviewed, and approval must be explicit before `main` is changed.
