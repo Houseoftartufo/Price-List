@@ -1,1204 +1,204 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>House of Tartufo — Price List 2026</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Lora:ital,wght@0,400;1,400&family=Nunito:wght@200;300;400;600&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --gold:#C9A84C;--gold2:#E8C97A;--gold-dim:rgba(201,168,76,.12);
-  --dark:#080604;--dark2:#110D08;--mid:#1A1408;
-  --cream:#F0E6CC;--text:#BFB09A;--text2:#857567;
-  --sm:clamp(11px,1.15vw,14px);--md:clamp(13px,1.5vw,16px);
-  --lg:clamp(17px,2.2vw,24px);--xl:clamp(30px,4.2vw,54px);--xxl:clamp(46px,7vw,100px);
-}
-html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);font-family:'Nunito',sans-serif;font-weight:300;cursor:none}
-#loader{position:fixed;inset:0;z-index:1000;background:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
-#loader.out{opacity:0;transform:translateY(-30px);pointer-events:none}
-.ld-sub{font-size:var(--sm);letter-spacing:.25em;color:var(--text);opacity:0;text-transform:uppercase;transition:opacity 1s .35s}
-.ld-sub.v{opacity:.55}
-.ld-line{width:0;height:1px;background:var(--gold);transition:width 1.4s .15s cubic-bezier(.16,1,.3,1)}
-.ld-line.v{width:100px}
-#cdot{position:fixed;z-index:9999;pointer-events:none;width:7px;height:7px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%)}
-#cring{position:fixed;z-index:9998;pointer-events:none;width:30px;height:30px;border-radius:50%;border:1px solid rgba(201,168,76,.35);transform:translate(-50%,-50%)}
-#lang-sw{position:fixed;top:16px;right:108px;z-index:200;display:flex;align-items:center;white-space:nowrap;border:1px solid rgba(201,168,76,.3);background:rgba(8,6,4,.85);backdrop-filter:blur(10px)}
-.lng-btn{font-family:'Nunito',sans-serif;font-size:clamp(9px,.9vw,11px);letter-spacing:.2em;color:var(--text2);background:transparent;border:none;border-right:1px solid rgba(201,168,76,.2);cursor:pointer;padding:7px 16px;text-transform:uppercase;transition:color .2s,background .2s}
-.lng-btn:last-child{border-right:none}
-.lng-btn:hover{color:var(--gold)}
-.lng-btn.active{color:var(--dark);background:var(--gold);font-weight:600}
-#progress{position:fixed;top:0;left:0;height:3px;z-index:100;background:linear-gradient(90deg,var(--gold),var(--gold2));width:0%;transition:width .55s cubic-bezier(.16,1,.3,1)}
-#slide-label{position:fixed;top:24px;left:32px;z-index:100;font-size:var(--sm);letter-spacing:.25em;color:var(--text2);text-transform:uppercase}
-#slide-counter{position:fixed;top:24px;right:32px;z-index:100;font-family:'Cormorant Garamond',serif;font-size:var(--sm);letter-spacing:.2em;color:var(--gold);font-weight:300}
-#nav{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:100;display:flex;gap:8px;align-items:center}
-.ndot{width:22px;height:2px;background:rgba(201,168,76,.3);cursor:pointer;transition:all .4s cubic-bezier(.16,1,.3,1)}
-.ndot.active{width:44px;background:var(--gold)}
-.nav-arrow{position:fixed;top:50%;transform:translateY(-50%);z-index:100;width:48px;height:48px;border:1px solid rgba(201,168,76,.35);background:rgba(8,6,4,.75);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .3s,background .3s;backdrop-filter:blur(6px)}
-.nav-arrow:hover{border-color:rgba(201,168,76,.6);background:rgba(8,6,4,.95)}
-.nav-arrow svg{width:18px;height:18px}
-#nav-prev{left:16px}
-#nav-next{right:16px}
-#bgc{position:fixed;inset:0;z-index:0;pointer-events:none}
-#slides{position:fixed;inset:0;z-index:10}
-.slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .85s cubic-bezier(.16,1,.3,1);padding:52px 40px 48px}
-.slide.active{opacity:1;pointer-events:all}
-.slide::before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 80% 80% at 50% 50%,transparent 25%,rgba(0,0,0,.72) 100%)}
-.slide::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");opacity:.022;background-size:180px}
-.inner{position:relative;z-index:10;width:100%;max-width:1380px}
-.r{opacity:0;transform:translateY(18px);transition:opacity .85s cubic-bezier(.16,1,.3,1),transform .85s cubic-bezier(.16,1,.3,1)}
-.slide.active .r{opacity:1;transform:none}
-.slide.active .r:nth-child(1){transition-delay:.04s}
-.slide.active .r:nth-child(2){transition-delay:.15s}
-.slide.active .r:nth-child(3){transition-delay:.26s}
-.slide.active .r:nth-child(4){transition-delay:.37s}
-.slide.active .r:nth-child(5){transition-delay:.48s}
-.slide.active .r:nth-child(6){transition-delay:.59s}
-.slide.active .r:nth-child(7){transition-delay:.70s}
-.co{position:absolute;z-index:10;pointer-events:none}
-.co-tl{top:14px;left:14px}.co-tr{top:14px;right:14px;transform:scaleX(-1)}
-.co-bl{bottom:14px;left:14px;transform:scaleY(-1)}.co-br{bottom:14px;right:14px;transform:scale(-1)}
-.eyebrow{font-size:var(--sm);letter-spacing:.3em;color:var(--gold);text-transform:uppercase;margin-bottom:10px}
-.headline{font-family:'Cormorant Garamond',serif;font-size:var(--xxl);font-weight:300;color:var(--cream);line-height:1.05}
-.headline em{font-style:italic;color:var(--gold)}
-.sub{font-family:'Lora',serif;font-size:var(--lg);color:var(--text);font-weight:400;line-height:1.5;margin-bottom:20px}
-.sub em{font-style:italic;color:var(--gold2)}
-.divider{width:50px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:16px auto}
-.tbl-wrap{overflow-y:auto;max-height:calc(100vh - 185px);scrollbar-width:thin;scrollbar-color:rgba(201,168,76,.5) rgba(201,168,76,.08)}
-.tbl-wrap::-webkit-scrollbar{width:4px}
-.tbl-wrap::-webkit-scrollbar-track{background:rgba(201,168,76,.05)}
-.tbl-wrap::-webkit-scrollbar-thumb{background:rgba(201,168,76,.5);border-radius:2px}
-.product-table{width:100%;border-collapse:collapse}
-.product-table thead tr{border-bottom:2px solid rgba(201,168,76,.3);background:rgba(201,168,76,.04)}
-.product-table thead th{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(11px,1.15vw,14px);letter-spacing:.2em;color:#E8C97A;text-transform:uppercase;padding:8px 10px;text-align:left;white-space:nowrap}
-.product-table thead th.r-align{text-align:right}
-.product-table thead th.moq{color:rgba(201,168,76,.5);font-size:clamp(9px,1vw,11px)}
-.product-table tbody tr{border-bottom:1px solid rgba(201,168,76,.12);transition:background .2s}
-.product-table tbody tr:nth-child(even){background:rgba(201,168,76,.05)}
-.product-table tbody tr:hover{background:rgba(201,168,76,.07)}
-.product-table tbody td{padding:9px 10px;color:var(--text);vertical-align:middle;line-height:1.5}
-.product-table tbody td.code{font-family:'Cormorant Garamond',serif;color:var(--gold);font-size:clamp(9px,.9vw,11px);opacity:.6;white-space:nowrap}
-.product-table tbody td.name{color:#FFFFFF;font-size:clamp(13px,1.35vw,16px);font-weight:400}
-.product-table tbody td.size{color:var(--text2);white-space:nowrap;font-size:clamp(10px,.95vw,12px)}
-.product-table tbody td.shelf{color:var(--text2);white-space:nowrap;font-size:clamp(10px,.95vw,12px)}
-.product-table tbody td.price{text-align:right;font-family:'Cormorant Garamond',serif;font-size:clamp(18px,2vw,24px);color:#F0C050;white-space:nowrap;font-weight:700;letter-spacing:.02em}
-.product-table tbody td.price-best{text-align:right;font-family:'Cormorant Garamond',serif;font-size:clamp(17px,1.8vw,22px);color:rgba(240,192,80,.65);white-space:nowrap;font-weight:600}
-.product-table tbody td.box-price{text-align:right;font-family:'Cormorant Garamond',serif;font-size:clamp(16px,1.8vw,20px);color:#C8B97A;white-space:nowrap;font-weight:500}
-.table-cols{display:grid;gap:20px}
-.table-cols.two{grid-template-columns:1fr 1fr}
-.table-cols.three{grid-template-columns:1fr 1fr 1fr}
-.col-block{background:rgba(20,14,8,.5);border:1px solid rgba(201,168,76,.1);padding:16px 18px;backdrop-filter:blur(6px)}
-.col-block::before{content:'';display:block;height:2px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.5),transparent);margin-bottom:16px}
-.col-title{font-family:'Cormorant Garamond',serif;font-size:clamp(14px,1.5vw,18px);font-weight:400;color:var(--gold);letter-spacing:.12em;margin-bottom:12px;margin-top:4px}
-.disc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;width:100%;max-width:1000px}
-.disc-card{background:rgba(20,14,8,.6);border:1px solid rgba(201,168,76,.1);padding:24px 16px;text-align:center;backdrop-filter:blur(6px);transition:border-color .3s}
-.disc-card:hover{border-color:rgba(201,168,76,.35)}
-.disc-card .moq-label{font-size:clamp(9px,.9vw,11px);letter-spacing:.25em;color:var(--text2);text-transform:uppercase;margin-bottom:8px}
-.disc-card .moq-val{font-family:'Cormorant Garamond',serif;font-size:clamp(28px,3.5vw,44px);color:var(--gold);font-weight:300;line-height:1}
-.disc-card .moq-unit{font-size:var(--sm);color:var(--text2);margin-top:4px}
-.disc-card .disc-pct{font-family:'Cormorant Garamond',serif;font-size:clamp(20px,2.5vw,32px);color:var(--cream);margin-top:12px;padding-top:12px;border-top:1px solid rgba(201,168,76,.12)}
-#cvc{position:absolute;inset:0;z-index:0;pointer-events:none}
-#ctac{position:absolute;inset:0;z-index:0;pointer-events:none}
-.cover-logo{height:clamp(90px,12vw,160px);width:auto;margin-bottom:20px}
-.cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:28px}
-.btn-p{font-family:'Nunito',sans-serif;font-size:var(--sm);letter-spacing:.2em;text-transform:uppercase;color:var(--dark);background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;padding:14px 36px;cursor:pointer;transition:opacity .3s,transform .3s;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
-.btn-p:hover{opacity:.82;transform:translateY(-2px)}
-.btn-s{font-family:'Nunito',sans-serif;font-size:var(--sm);letter-spacing:.2em;text-transform:uppercase;color:var(--gold);background:transparent;border:1px solid rgba(201,168,76,.35);padding:14px 36px;cursor:pointer;transition:border-color .3s,transform .3s;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
-.btn-s:hover{border-color:var(--gold);transform:translateY(-2px)}
-.social-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px}
-.soc-btn{width:38px;height:38px;border:1px solid rgba(201,168,76,.2);display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:border-color .3s,transform .3s;background:rgba(8,6,4,.5)}
-.soc-btn:hover{border-color:rgba(201,168,76,.6);transform:translateY(-2px)}
-.soc-btn svg{width:16px;height:16px;fill:var(--gold);opacity:.7;transition:opacity .3s}
-.soc-btn:hover svg{opacity:1}
-.badge .dot{width:5px;height:5px;border-radius:50%;background:var(--gold);animation:pulse 1.6s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
-@media(max-width:1100px){.table-cols.three{grid-template-columns:1fr 1fr}}
-@media(max-width:768px){
-  .table-cols.two,.table-cols.three{grid-template-columns:1fr}
-  .disc-grid{grid-template-columns:repeat(3,1fr)}
-  .slide{padding:52px 16px 44px}
-  #lang-sw{top:12px}
-  .nav-arrow{width:40px;height:40px}
-  #nav-prev{left:8px}
-  #nav-next{right:8px}
-  #lang-sw{top:14px;right:60px}
-  .tbl-wrap{max-height:calc(100vh - 155px)}
-  .disc-card{padding:16px 10px}
-  .btn-p,.btn-s{padding:12px 20px}
-}
-@media(max-width:480px){
-  .disc-grid{grid-template-columns:repeat(2,1fr);gap:3px}
-  #slide-label{font-size:9px;left:20px}
-  #slide-counter{font-size:10px;right:20px}
-}
-</style>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f6f2ea" />
+    <meta
+      name="description"
+      content="House of Tartufo wholesale catalogue: verified B2B prices, volume discounts and quote requests."
+    />
+    <meta name="robots" content="index,follow" />
+    <meta property="og:title" content="House of Tartufo — Wholesale Catalogue" />
+    <meta property="og:description" content="Verified B2B catalogue with volume pricing and quote requests." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://houseoftartufo-price-list.vercel.app/" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="canonical" href="https://houseoftartufo-price-list.vercel.app/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="/src/styles/preview-enhancements.css" />
+    <title>House of Tartufo — Wholesale Catalogue</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#catalogue">Skip to catalogue</a>
 
-</head>
-<body>
+    <header class="site-header" id="top">
+      <a class="brand" href="#top" aria-label="House of Tartufo catalogue home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+        <span class="brand-words"><strong>HOUSE</strong><span>OF TARTUFO</span></span>
+      </a>
 
-<!-- LOADER -->
-<div id="loader">
-  <img src="data:image/png;base64,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" alt="HOT" style="height:clamp(65px,9vw,110px);opacity:0;transition:opacity 1s">
-  <div class="ld-line"></div>
-  <div class="ld-sub" data-i18n="loader.subtitle">Price List 2026</div>
-</div>
-
-<!-- CURSOR -->
-<div id="cdot"></div><div id="cring"></div>
-<div id="lang-sw">
-  <button class="lng-btn active" onclick="setLang('en')">EN</button>
-  <button class="lng-btn" onclick="setLang('it')">IT</button>
-  <button class="lng-btn" onclick="setLang('fr')">FR</button>
-  <button class="lng-btn" onclick="setLang('nl')">NL</button>
-</div>
-<div id="progress"></div>
-<div id="slide-label"></div>
-<div id="slide-counter"></div>
-<div id="nav"></div>
-
-<!-- NAV ARROWS -->
-<div class="nav-arrow" id="nav-prev" onclick="goTo(current-1)">
-  <svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="rgba(201,168,76,.7)" stroke-width="1.2"/></svg>
-</div>
-<div class="nav-arrow" id="nav-next" onclick="goTo(current+1)">
-  <svg viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="rgba(201,168,76,.7)" stroke-width="1.2"/></svg>
-</div>
-
-<canvas id="bgc"></canvas>
-
-<div id="slides">
-
-<!-- ══════════════════════════════════════════
-     SLIDE 1 — COVER
-══════════════════════════════════════════ -->
-<div class="slide active" data-label="Price List 2026">
-  <canvas id="cvc"></canvas>
-  <div class="co co-tl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-tr"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-bl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-br"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="inner" style="text-align:center">
-    <div class="r" style="display:flex;justify-content:center"><img class="cover-logo" src="data:image/png;base64,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" alt="House of Tartufo"></div>
-    <div class="r eyebrow" data-i18n="cover.eyebrow">House of Tartufo — Wholesale Catalogue</div>
-    <h1 class="r headline"><em data-i18n="cover.headline1">Official</em><br><span data-i18n="cover.headline2">Price List 2026</span></h1>
-    <div class="r divider"></div>
-    <p class="r sub"><span data-i18n="cover.sub1">120+ Products · 9 Categories</span><br><em data-i18n="cover.sub2">Up to 25% volume discount</em></p>
-    <div class="r" style="font-size:var(--sm);letter-spacing:.2em;color:rgba(201,168,76,.35);text-transform:uppercase;margin-top:8px" data-i18n="ui.navigate">Navigate with ← → or swipe</div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════
-     SLIDE 2 — SAUCES & CONDIMENTS
-══════════════════════════════════════════ -->
-<div class="slide" data-label="Sauces & Condiments">
-  <div class="co co-tl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-tr"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-bl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-br"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="inner">
-    <div class="r eyebrow" style="text-align:center" data-i18n="cat01.eyebrow">Category 01</div>
-    <h2 class="r" style="font-family:'Cormorant Garamond',serif;font-size:var(--xl);font-weight:300;color:var(--cream);text-align:center;margin-bottom:4px"><span data-i18n="cat01.title1">Sauces &amp;&nbsp;</span><em style="color:var(--gold)" data-i18n="cat01.title2">Condiments</em></h2>
-    <div class="r divider"></div>
-    <div class="scroll-hint" data-i18n="ui.scroll">↕ scroll</div><div class="r tbl-wrap">
-      <div class="table-cols two" style="gap:16px">
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat01.group1">Ragouts, Tomato &amp; Mushroom</div>
-          <table class="product-table">
-            <thead><tr>
-              <th>#</th><th>Product</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th>
-            </tr></thead>
-            <tbody>
-              <tr><td class="code">1</td><td class="name">Black Truffle Bolognese Ragout</td><td class="size">170ml</td><td class="price">€6.36</td><td class="price-best">€4.77</td></tr>
-              <tr><td class="code">2</td><td class="name">Tomato &amp; Black Truffle Sauce</td><td class="size">170ml</td><td class="price">€6.36</td><td class="price-best">€4.77</td></tr>
-              <tr><td class="code">3</td><td class="name">Mushroom &amp; Truffle Sauce</td><td class="size">170ml</td><td class="price">€6.36</td><td class="price-best">€4.77</td></tr>
-              <tr><td class="code">4</td><td class="name">Porcini Mushroom Sauce</td><td class="size">170ml</td><td class="price">€6.36</td><td class="price-best">€4.77</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:14px" data-i18n="cat01.group2">Tartufata &amp; Condiments (30g)</div>
-          <table class="product-table">
-            <thead><tr>
-              <th>#</th><th>Product</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th>
-            </tr></thead>
-            <tbody>
-              <tr><td class="code">40</td><td class="name">Tartufata – Summer Truffle 3%</td><td class="price">€3.20</td><td class="price-best">€2.40</td></tr>
-              <tr><td class="code">41</td><td class="name">Tartufata White (Bianchetto 2%)</td><td class="price">€3.20</td><td class="price-best">€2.40</td></tr>
-              <tr><td class="code">42</td><td class="name">Alfredo Cream – Bianchetto</td><td class="price">€3.20</td><td class="price-best">€2.40</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:14px" data-i18n="cat01.group3">Other Condiments</div>
-          <table class="product-table">
-            <thead><tr>
-              <th>#</th><th>Product</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th>
-            </tr></thead>
-            <tbody>
-              <tr><td class="code">36</td><td class="name">Olive Paté – Truffle Flavored</td><td class="size">80g</td><td class="price">€4.80</td><td class="price-best">€3.60</td></tr>
-              <tr><td class="code">37</td><td class="name">White Truffle Genovese Pesto</td><td class="size">80g</td><td class="price">€6.36</td><td class="price-best">€4.77</td></tr>
-              <tr><td class="code">38</td><td class="name">Truffle Mayonnaise</td><td class="size">120g</td><td class="price">€6.00</td><td class="price-best">€4.50</td></tr>
-              <tr><td class="code">39</td><td class="name">Truffle Ketchup</td><td class="size">85g</td><td class="price">€4.00</td><td class="price-best">€3.00</td></tr>
-              <tr><td class="code">56</td><td class="name">Truffle Ketchup</td><td class="size">30g</td><td class="price">€2.80</td><td class="price-best">€2.10</td></tr>
-            </tbody>
-          </table>
+      <div class="header-actions">
+        <div class="source-state" id="source-state" aria-live="polite">
+          <span class="state-dot" aria-hidden="true"></span>
+          <span id="source-state-text">Loading verified prices…</span>
         </div>
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat01.group4">Truffled Sauce – Summer Truffle</div>
-          <table class="product-table">
-            <thead><tr>
-              <th>#</th><th>%</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th>
-            </tr></thead>
-            <tbody>
-              <tr><td class="code">15</td><td class="name">3%</td><td class="size">80g</td><td class="price">€5.00</td><td class="price-best">€3.75</td></tr>
-              <tr><td class="code">16</td><td class="name">3%</td><td class="size">170g</td><td class="price">€8.18</td><td class="price-best">€6.14</td></tr>
-              <tr><td class="code">17</td><td class="name">3%</td><td class="size">500g</td><td class="price">€15.00</td><td class="price-best">€11.25</td></tr>
-              <tr><td class="code">18</td><td class="name">5%</td><td class="size">80g</td><td class="price">€5.64</td><td class="price-best">€4.23</td></tr>
-              <tr><td class="code">19</td><td class="name">5%</td><td class="size">170g</td><td class="price">€9.27</td><td class="price-best">€6.95</td></tr>
-              <tr><td class="code">20</td><td class="name">5%</td><td class="size">500g</td><td class="price">€16.17</td><td class="price-best">€12.13</td></tr>
-              <tr><td class="code">21</td><td class="name">10%</td><td class="size">80g</td><td class="price">€6.73</td><td class="price-best">€5.05</td></tr>
-              <tr><td class="code">22</td><td class="name">10%</td><td class="size">170g</td><td class="price">€10.55</td><td class="price-best">€7.91</td></tr>
-              <tr><td class="code">23</td><td class="name">10%</td><td class="size">500g</td><td class="price">€18.33</td><td class="price-best">€13.75</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:14px" data-i18n="cat01.group5">Alfredo Cream – Bianchetto &amp; White Truffle</div>
-          <table class="product-table">
-            <thead><tr>
-              <th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th>
-            </tr></thead>
-            <tbody>
-              <tr><td class="code">24</td><td class="name">80g</td><td class="price">€6.73</td><td class="price-best">€5.05</td></tr>
-              <tr><td class="code">25</td><td class="name">180g</td><td class="price">€10.50</td><td class="price-best">€7.88</td></tr>
-              <tr><td class="code">26</td><td class="name">500g</td><td class="price">€21.08</td><td class="price-best">€15.81</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:14px" data-i18n="cat01.group6">White Truffled Sauce – Bianchetto 2%</div>
-          <table class="product-table">
-            <thead><tr>
-              <th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th>
-            </tr></thead>
-            <tbody>
-              <tr><td class="code">27</td><td class="name">80g</td><td class="price">€5.64</td><td class="price-best">€4.23</td></tr>
-              <tr><td class="code">28</td><td class="name">170g</td><td class="price">€10.00</td><td class="price-best">€7.50</td></tr>
-              <tr><td class="code">29</td><td class="name">500g</td><td class="price">€19.50</td><td class="price-best">€14.63</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:14px" data-i18n="cat01.group7">Spicy · Pumpkin · Porcini Creams</div>
-          <table class="product-table">
-            <thead><tr>
-              <th>#</th><th>Product</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th>
-            </tr></thead>
-            <tbody>
-              <tr><td class="code">30</td><td class="name">Spicy Truffle Sauce</td><td class="size">80g</td><td class="price">€5.64</td><td class="price-best">€4.23</td></tr>
-              <tr><td class="code">31</td><td class="name">Spicy Truffle Sauce</td><td class="size">180g</td><td class="price">€9.27</td><td class="price-best">€6.95</td></tr>
-              <tr><td class="code">32</td><td class="name">Pumpkin Cream – Summer Truffle</td><td class="size">80g</td><td class="price">€6.00</td><td class="price-best">€4.50</td></tr>
-              <tr><td class="code">33</td><td class="name">Pumpkin Cream – Summer Truffle</td><td class="size">180g</td><td class="price">€9.27</td><td class="price-best">€6.95</td></tr>
-              <tr><td class="code">34</td><td class="name">Porcini Cream – Summer Truffle</td><td class="size">80g</td><td class="price">€5.60</td><td class="price-best">€4.20</td></tr>
-              <tr><td class="code">35</td><td class="name">Porcini Cream – Summer Truffle</td><td class="size">180g</td><td class="price">€9.27</td><td class="price-best">€6.95</td></tr>
-            </tbody>
-          </table>
+
+        <div class="language-switcher" aria-label="Language">
+          <button type="button" data-locale="en">EN</button>
+          <button type="button" data-locale="it">IT</button>
+          <button type="button" data-locale="fr">FR</button>
+          <button type="button" data-locale="nl">NL</button>
         </div>
+
+        <button class="quote-trigger" id="quote-trigger" type="button" aria-haspopup="dialog">
+          <span data-ui="quote">Quote</span>
+          <span class="quote-count" id="quote-count">0</span>
+        </button>
       </div>
-    </div>
-    <div class="r" style="text-align:center;font-size:var(--sm);color:var(--text2);margin-top:10px;letter-spacing:.15em">
-      €/unit = standard price · <span style="color:rgba(232,201,122,.5)">Best</span> = MOQ 15 boxes (−25%)
-    </div>
-  </div>
-</div>
+    </header>
 
-<!-- ══════════════════════════════════════════
-     SLIDE 3 — OILS
-══════════════════════════════════════════ -->
-<div class="slide" data-label="Truffle Oils">
-  <div class="co co-tl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-tr"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-bl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-br"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="inner">
-    <div class="r eyebrow" style="text-align:center" data-i18n="cat02.eyebrow">Category 02</div>
-    <h2 class="r" style="font-family:'Cormorant Garamond',serif;font-size:var(--xl);font-weight:300;color:var(--cream);text-align:center;margin-bottom:4px"><span data-i18n="cat02.title1">Truffle </span><em style="color:var(--gold)" data-i18n="cat02.title2">Oils</em></h2>
-    <div class="r divider"></div>
-    <div class="scroll-hint" data-i18n="ui.scroll">↕ scroll</div><div class="r tbl-wrap">
-      <div class="table-cols three" style="gap:14px">
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat02.group1">White Truffle – Extra Virgin Olive Oil</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">57</td><td class="name">60ml</td><td class="price">€4.40</td><td class="price-best">€3.30</td></tr>
-              <tr><td class="code">58</td><td class="name">100ml</td><td class="price">€5.64</td><td class="price-best">€4.23</td></tr>
-              <tr><td class="code">59</td><td class="name">250ml</td><td class="price">€10.36</td><td class="price-best">€7.77</td></tr>
-              <tr><td class="code">60</td><td class="name">500ml</td><td class="price">€17.83</td><td class="price-best">€13.38</td></tr>
-              <tr><td class="code">61</td><td class="name">1000ml</td><td class="price">€26.46</td><td class="price-best">€19.85</td></tr>
-              <tr><td class="code">62</td><td class="name">5L</td><td class="price">€107.43</td><td class="price-best">€80.57</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat02.group2">Black Truffle – Extra Virgin Olive Oil</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">63</td><td class="name">60ml</td><td class="price">€4.80</td><td class="price-best">€3.60</td></tr>
-              <tr><td class="code">64</td><td class="name">100ml</td><td class="price">€6.00</td><td class="price-best">€4.50</td></tr>
-              <tr><td class="code">65</td><td class="name">250ml</td><td class="price">€10.18</td><td class="price-best">€7.64</td></tr>
-              <tr><td class="code">66</td><td class="name">5L</td><td class="price">€104.57</td><td class="price-best">€78.43</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat02.group3">Truffle Harmony Oils (Dried Truffle)</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Product</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">67</td><td class="name">Harmony – Dried White Truffle</td><td class="size">100ml</td><td class="price">€13.67</td><td class="price-best">€10.25</td></tr>
-              <tr><td class="code">68</td><td class="name">Harmony – Dried Black Truffle</td><td class="size">100ml</td><td class="price">€13.67</td><td class="price-best">€10.25</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat02.group5">White Truffle Sunflower Oil</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">77</td><td class="name">100ml</td><td class="price">€5.82</td><td class="price-best">€4.36</td></tr>
-              <tr><td class="code">78</td><td class="name">250ml</td><td class="price">€7.64</td><td class="price-best">€5.73</td></tr>
-              <tr><td class="code">79</td><td class="name">5000ml</td><td class="price">€71.71</td><td class="price-best">€53.79</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat02.group6">Balsamic</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Product</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">14</td><td class="name">Balsamic Vinegar Pearls</td><td class="size">50ml</td><td class="price">€10.82</td><td class="price-best">€8.11</td></tr>
-              <tr><td class="code">80</td><td class="name">White Truffle Balsamic Cream</td><td class="size">100ml</td><td class="price">€7.64</td><td class="price-best">€5.73</td></tr>
-              <tr><td class="code">81</td><td class="name">White Truffle Balsamic Spray</td><td class="size">100ml</td><td class="price">€5.82</td><td class="price-best">€4.36</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat02.group4">Infused Extra Virgin Olive Oils</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Flavour</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">69</td><td class="name">Porcini</td><td class="size">100ml</td><td class="price">€5.40</td><td class="price-best">€4.05</td></tr>
-              <tr><td class="code">70</td><td class="name">Porcini</td><td class="size">250ml</td><td class="price">€7.64</td><td class="price-best">€5.73</td></tr>
-              <tr><td class="code">71</td><td class="name">Lemon</td><td class="size">100ml</td><td class="price">€5.40</td><td class="price-best">€4.05</td></tr>
-              <tr><td class="code">72</td><td class="name">Lemon</td><td class="size">250ml</td><td class="price">€7.64</td><td class="price-best">€5.73</td></tr>
-              <tr><td class="code">73</td><td class="name">Rosemary</td><td class="size">100ml</td><td class="price">€5.40</td><td class="price-best">€4.05</td></tr>
-              <tr><td class="code">74</td><td class="name">Rosemary</td><td class="size">250ml</td><td class="price">€7.64</td><td class="price-best">€5.73</td></tr>
-              <tr><td class="code">75</td><td class="name">Chili</td><td class="size">100ml</td><td class="price">€5.40</td><td class="price-best">€4.05</td></tr>
-              <tr><td class="code">76</td><td class="name">Chili</td><td class="size">250ml</td><td class="price">€7.64</td><td class="price-best">€5.73</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <div class="r" style="text-align:center;font-size:var(--sm);color:var(--text2);margin-top:8px;letter-spacing:.15em">All oils: 2-year shelf life · 12 units/box (except 500ml 6/box · 5L 4/box) · <span style="color:rgba(232,201,122,.5)">Best</span> = MOQ 15 (−25%)</div>
-  </div>
-</div>
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-content">
+          <p class="eyebrow" data-ui="heroEyebrow">House of Tartufo · B2B</p>
+          <h1 id="hero-title" data-ui="heroTitle">The wholesale catalogue, built to move fast.</h1>
+          <p class="hero-copy" data-ui="heroBody">
+            Search, compare volume pricing and prepare a quote without leaving the catalogue.
+          </p>
 
-<!-- ══════════════════════════════════════════
-     SLIDE 4 — BUTTERS
-══════════════════════════════════════════ -->
-<div class="slide" data-label="Butters">
-  <div class="co co-tl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-tr"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-bl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-br"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="inner">
-    <div class="r eyebrow" style="text-align:center" data-i18n="cat03.eyebrow">Category 03</div>
-    <h2 class="r" style="font-family:'Cormorant Garamond',serif;font-size:var(--xl);font-weight:300;color:var(--cream);text-align:center;margin-bottom:4px"><span data-i18n="cat03.title1">Truffle </span><em style="color:var(--gold)" data-i18n="cat03.title2">Butters</em></h2>
-    <div class="r divider"></div>
-    <div class="scroll-hint" data-i18n="ui.scroll">↕ scroll</div><div class="r tbl-wrap">
-      <div class="table-cols two" style="gap:16px">
-        <div class="col-block">
-          <div class="col-title">Butter with Summer Truffle 3% <span class="col-italic">(Standard)</span></div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best/unit</th></tr></thead>
-            <tbody>
-              <tr><td class="code">46</td><td class="name">80g</td><td class="price">€6.73</td><td class="box-price">€80.73</td><td class="price-best">€5.05</td></tr>
-              <tr><td class="code">47</td><td class="name">160g</td><td class="price">€11.67</td><td class="box-price">€140.00</td><td class="price-best">€8.75</td></tr>
-              <tr><td class="code">48</td><td class="name">450g</td><td class="price">€24.15</td><td class="box-price">€289.85</td><td class="price-best">€18.12</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:14px">Butter with Bianchetto Truffle 6% <span class="col-italic">(Standard)</span></div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best/unit</th></tr></thead>
-            <tbody>
-              <tr><td class="code">49</td><td class="name">80g</td><td class="price">€7.82</td><td class="box-price">€93.82</td><td class="price-best">€5.86</td></tr>
-              <tr><td class="code">50</td><td class="name">160g</td><td class="price">€13.33</td><td class="box-price">€160.00</td><td class="price-best">€10.00</td></tr>
-              <tr><td class="code">51</td><td class="name">450g</td><td class="price">€32.62</td><td class="box-price">€391.38</td><td class="price-best">€24.46</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="col-block">
-          <div class="col-title">Butter Dressing – Summer Truffle <span class="col-italic">(Natural Line)</span></div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best/unit</th></tr></thead>
-            <tbody>
-              <tr><td class="code">145</td><td class="name">80g</td><td class="price">€9.09</td><td class="box-price">€109.09</td><td class="price-best">€6.82</td></tr>
-              <tr><td class="code">146</td><td class="name">160g</td><td class="price">€15.50</td><td class="box-price">€186.00</td><td class="price-best">€11.63</td></tr>
-              <tr><td class="code">147</td><td class="name">450g</td><td class="price">€26.92</td><td class="box-price">€323.08</td><td class="price-best">€20.19</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:14px">Butter Dressing – White Truffle <span class="col-italic">(Natural Line)</span></div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best/unit</th></tr></thead>
-            <tbody>
-              <tr><td class="code">148</td><td class="name">80g</td><td class="price">€10.83</td><td class="box-price">€130.00</td><td class="price-best">€8.13</td></tr>
-              <tr><td class="code">149</td><td class="name">160g</td><td class="price">€17.33</td><td class="box-price">€208.00</td><td class="price-best">€13.00</td></tr>
-              <tr><td class="code">150</td><td class="name">450g</td><td class="price">€36.57</td><td class="box-price">€438.86</td><td class="price-best">€27.43</td></tr>
-            </tbody>
-          </table>
-          <div style="margin-top:16px;padding:12px;background:rgba(201,168,76,.05);border-left:2px solid rgba(201,168,76,.3)">
-            <div style="font-size:var(--sm);color:var(--text2);letter-spacing:.1em">All butters: 3-year shelf life · 12 units/box</div>
+          <div class="hero-metrics" aria-label="Catalogue summary">
+            <div><strong id="metric-products">—</strong><span data-ui="products">products</span></div>
+            <div><strong id="metric-categories">—</strong><span data-ui="categories">categories</span></div>
+            <div><strong>25%</strong><span data-ui="upToDiscount">Up to 25% volume discount</span></div>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- ══════════════════════════════════════════
-     SLIDE 5 — PURE CREAMS
-══════════════════════════════════════════ -->
-<div class="slide" data-label="Pure Creams">
-  <div class="co co-tl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-tr"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-bl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-br"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="inner">
-    <div class="r eyebrow" style="text-align:center" data-i18n="cat04.eyebrow">Category 04</div>
-    <h2 class="r" style="font-family:'Cormorant Garamond',serif;font-size:var(--xl);font-weight:300;color:var(--cream);text-align:center;margin-bottom:4px"><span data-i18n="cat04.title1">Pure </span><em style="color:var(--gold)" data-i18n="cat04.title2">Truffle Creams</em></h2>
-    <div class="r divider"></div>
-    <div class="scroll-hint" data-i18n="ui.scroll">↕ scroll</div><div class="r tbl-wrap">
-      <div class="table-cols two" style="gap:16px">
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat04.group1">Pure White Truffle Cream</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best/unit</th></tr></thead>
-            <tbody>
-              <tr><td class="code">82</td><td class="name">30g</td><td class="price">€23.38</td><td class="box-price">€280.62</td><td class="price-best">€17.54</td></tr>
-              <tr><td class="code">83</td><td class="name">80g</td><td class="price">€50.29</td><td class="box-price">€603.43</td><td class="price-best">€37.71</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat04.group2">Pure Summer Truffle Cream</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best/unit</th></tr></thead>
-            <tbody>
-              <tr><td class="code">84</td><td class="name">45g</td><td class="price">€9.82</td><td class="box-price">€117.82</td><td class="price-best">€7.36</td></tr>
-              <tr><td class="code">85</td><td class="name">80g</td><td class="price">€17.00</td><td class="box-price">€204.00</td><td class="price-best">€12.75</td></tr>
-              <tr><td class="code">86</td><td class="name">170g</td><td class="price">€26.46</td><td class="box-price">€317.54</td><td class="price-best">€19.85</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat04.group5">Pure Bianchetto Truffle Cream</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best/unit</th></tr></thead>
-            <tbody>
-              <tr><td class="code">98</td><td class="name">45g</td><td class="price">€9.09</td><td class="box-price">€109.09</td><td class="price-best">€6.82</td></tr>
-              <tr><td class="code">99</td><td class="name">80g</td><td class="price">€14.17</td><td class="box-price">€170.00</td><td class="price-best">€10.63</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat04.group4">Pure Black Truffle Cream</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best/unit</th></tr></thead>
-            <tbody>
-              <tr><td class="code">106</td><td class="name">130g</td><td class="price">€31.08</td><td class="box-price">€372.92</td><td class="price-best">€23.31</td></tr>
-            </tbody>
-          </table>
+          <a class="primary-cta" href="#catalogue" data-ui="browse">Browse catalogue</a>
         </div>
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat04.group3">Summer Truffle Carpaccio</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best/unit</th></tr></thead>
-            <tbody>
-              <tr><td class="code">87</td><td class="name">45g</td><td class="price">€8.55</td><td class="box-price">€102.55</td><td class="price-best">€6.41</td></tr>
-              <tr><td class="code">88</td><td class="name">80g</td><td class="price">€12.67</td><td class="box-price">€152.00</td><td class="price-best">€9.50</td></tr>
-              <tr><td class="code">89</td><td class="name">170g</td><td class="price">€21.85</td><td class="box-price">€262.15</td><td class="price-best">€16.38</td></tr>
-              <tr><td class="code">90</td><td class="name">500g (with Aroma)</td><td class="price">€57.43</td><td class="box-price">€689.14</td><td class="price-best">€43.07</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat04.group6">Bianchetto Truffle Carpaccio</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best/unit</th></tr></thead>
-            <tbody>
-              <tr><td class="code">100</td><td class="name">45g</td><td class="price">€16.17</td><td class="box-price">€194.00</td><td class="price-best">€12.13</td></tr>
-              <tr><td class="code">101</td><td class="name">80g</td><td class="price">€25.69</td><td class="box-price">€308.31</td><td class="price-best">€19.27</td></tr>
-              <tr><td class="code">102</td><td class="name">170g</td><td class="price">€44.57</td><td class="box-price">€534.86</td><td class="price-best">€33.43</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat04.group4">Minced Summer Truffle</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best/unit</th></tr></thead>
-            <tbody>
-              <tr><td class="code">91</td><td class="name">80g</td><td class="price">€12.67</td><td class="box-price">€152.00</td><td class="price-best">€9.50</td></tr>
-              <tr><td class="code">92</td><td class="name">170g</td><td class="price">€21.85</td><td class="box-price">€262.15</td><td class="price-best">€16.38</td></tr>
-              <tr><td class="code">93</td><td class="name">500g</td><td class="price">€57.43</td><td class="box-price">€689.14</td><td class="price-best">€43.07</td></tr>
-            </tbody>
-          </table>
-          <div style="margin-top:16px;padding:10px 12px;background:rgba(201,168,76,.05);border-left:2px solid rgba(201,168,76,.3)">
-            <div style="font-size:var(--sm);color:var(--text2);letter-spacing:.1em">All pure creams &amp; carpaccio: 3-year shelf life · 12 units/box</div>
+      </section>
+
+      <section class="pricing-band" aria-labelledby="volume-pricing-title">
+        <div class="pricing-band-copy">
+          <p class="eyebrow" data-ui="volumePricing">Volume pricing</p>
+          <h2 id="volume-pricing-title" data-ui="volumePricing">Volume pricing</h2>
+          <p data-ui="volumePricingBody">Discounts apply per product according to the number of cases ordered.</p>
+        </div>
+        <div class="discount-ladder" id="discount-ladder" aria-label="Volume discount tiers"></div>
+      </section>
+
+      <section class="catalogue-shell" id="catalogue" aria-labelledby="catalogue-title">
+        <div class="catalogue-heading">
+          <div>
+            <p class="eyebrow" id="catalogue-eyebrow">2026 · Wholesale</p>
+            <h2 id="catalogue-title">Catalogue</h2>
           </div>
+          <p class="catalogue-result" id="catalogue-result" aria-live="polite"></p>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- ══════════════════════════════════════════
-     SLIDE 6 — BRINE, MINCED BLACK & JUICE
-══════════════════════════════════════════ -->
-<div class="slide" data-label="Brine & Whole Truffle">
-  <div class="co co-tl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-tr"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-bl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-br"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="inner">
-    <div class="r eyebrow" style="text-align:center" data-i18n="cat05.eyebrow">Category 05</div>
-    <h2 class="r" style="font-family:'Cormorant Garamond',serif;font-size:var(--xl);font-weight:300;color:var(--cream);text-align:center;margin-bottom:4px"><span data-i18n="cat05.title1">Brine, Minced </span><em style="color:var(--gold)" data-i18n="cat05.title2">&amp; Juice</em></h2>
-    <div class="r divider"></div>
-    <div class="scroll-hint" data-i18n="ui.scroll">↕ scroll</div><div class="r tbl-wrap">
-      <div class="table-cols three" style="gap:14px">
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat05.group1">Whole Summer Truffle in Brine</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">94</td><td class="name">13/17g</td><td class="price">€5.40</td><td class="price-best">€4.05</td></tr>
-              <tr><td class="code">95</td><td class="name">25/30g</td><td class="price">€6.73</td><td class="price-best">€5.05</td></tr>
-              <tr><td class="code">96</td><td class="name">50/65g</td><td class="price">€11.67</td><td class="price-best">€8.75</td></tr>
-              <tr><td class="code">97</td><td class="name">250/300g</td><td class="price">€46.00</td><td class="price-best">€34.50</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat05.group2">Bianchetto Truffle in Brine</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">103</td><td class="name">12/30g</td><td class="price">€7.64</td><td class="price-best">€5.73</td></tr>
-              <tr><td class="code">104</td><td class="name">25/90g</td><td class="price">€12.00</td><td class="price-best">€9.00</td></tr>
-              <tr><td class="code">105</td><td class="name">50/130g</td><td class="price">€18.77</td><td class="price-best">€14.08</td></tr>
+        <div class="toolbar" aria-label="Catalogue controls">
+          <label class="search-field" for="catalogue-search">
+            <span class="sr-only" data-ui="searchLabel">Search catalogue</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+              <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+              <path d="m16.5 16.5 4 4" fill="none" stroke="currentColor" stroke-width="1.6"></path>
+            </svg>
+            <input
+              id="catalogue-search"
+              type="search"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="Search SKU, product, size…"
+            />
+            <kbd>/</kbd>
+          </label>
+
+          <label class="filter-select">
+            <span class="sr-only">Line</span>
+            <select id="line-filter">
+              <option value="all" data-ui-option="allLines">All lines</option>
+              <option value="standard" data-ui-option="standardLine">Standard</option>
+              <option value="natural" data-ui-option="naturalLine">Natural Line</option>
+            </select>
+          </label>
+
+          <label class="filter-select">
+            <span class="sr-only">Truffle type</span>
+            <select id="truffle-filter">
+              <option value="all" data-ui-option="allTruffles">All truffles</option>
+              <option value="white" data-ui-option="white">White</option>
+              <option value="black" data-ui-option="black">Black</option>
+              <option value="summer" data-ui-option="summer">Summer</option>
+              <option value="bianchetto" data-ui-option="bianchetto">Bianchetto</option>
+              <option value="mixed" data-ui-option="mixed">Mixed</option>
+              <option value="none" data-ui-option="none">Other</option>
+            </select>
+          </label>
+        </div>
+
+        <nav class="category-nav" id="category-nav" aria-label="Product categories"></nav>
+
+        <div class="catalogue-notice" id="catalogue-notice" hidden role="status"></div>
+
+        <div class="catalogue-table-wrap">
+          <table class="catalogue-table" id="catalogue-table">
+            <thead>
+              <tr>
+                <th scope="col" data-ui="product">Product</th>
+                <th scope="col" data-ui="size">Size</th>
+                <th scope="col" data-ui="casePack">Case pack</th>
+                <th scope="col" data-ui="basePrice">Base price</th>
+                <th scope="col" data-ui="bestPrice">Best price</th>
+                <th scope="col" data-ui="cases">Cases</th>
+                <th scope="col" data-ui="yourPrice">Your price</th>
+                <th scope="col" data-ui="subtotal">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody id="product-rows">
+              <tr class="loading-row">
+                <td colspan="8">Loading verified catalogue…</td>
+              </tr>
             </tbody>
           </table>
         </div>
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat05.group3">Whole Black Truffle in Brine</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">107</td><td class="name">25/30g</td><td class="price">€31.08</td><td class="box-price">€372.92</td><td class="price-best">€23.31</td></tr>
-              <tr><td class="code">108</td><td class="name">50/65g</td><td class="price">€56.00</td><td class="box-price">€672.00</td><td class="price-best">€42.00</td></tr>
-              <tr><td class="code">109</td><td class="name">100/130g</td><td class="price">€107.43</td><td class="box-price">€1,289.14</td><td class="price-best">€80.57</td></tr>
-              <tr><td class="code">110</td><td class="name">200/260g</td><td class="price">€200.29</td><td class="box-price">€2,403.43</td><td class="price-best">€150.21</td></tr>
-            </tbody>
-          </table>
+
+        <div class="empty-state" id="empty-state" hidden>
+          <p data-ui="noResults">No products match these filters.</p>
+          <button type="button" id="reset-filters" data-ui="resetFilters">Reset filters</button>
         </div>
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat05.group4">Minced Black Truffle</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">114</td><td class="name">50/65g</td><td class="price">€29.54</td><td class="box-price">€354.46</td><td class="price-best">€22.15</td></tr>
-              <tr><td class="code">115</td><td class="name">100/130g</td><td class="price">€53.14</td><td class="box-price">€637.71</td><td class="price-best">€39.86</td></tr>
-              <tr><td class="code">116</td><td class="name">385/650g</td><td class="price">€113.14</td><td class="box-price">€1,357.71</td><td class="price-best">€84.86</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat05.group6_bj">Black Truffle Juice</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">111</td><td class="name">50ml</td><td class="price">€7.64</td><td class="box-price">€91.64</td><td class="price-best">€5.73</td></tr>
-              <tr><td class="code">112</td><td class="name">100ml</td><td class="price">€13.33</td><td class="box-price">€160.00</td><td class="price-best">€10.00</td></tr>
-              <tr><td class="code">113</td><td class="name">200ml</td><td class="price">€21.85</td><td class="box-price">€262.15</td><td class="price-best">€16.38</td></tr>
-            </tbody>
-          </table>
-          <div style="margin-top:12px;padding:10px 12px;background:rgba(201,168,76,.05);border-left:2px solid rgba(201,168,76,.3)">
-            <div style="font-size:var(--sm);color:var(--text2);letter-spacing:.1em">All: 3-year shelf life · 12 units/box</div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="brand brand-footer" aria-label="House of Tartufo">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+        <span class="brand-words"><strong>HOUSE</strong><span>OF TARTUFO</span></span>
+      </div>
+      <p data-ui="exWorks">Prices ex-works, excluding VAT and shipping.</p>
+      <a href="https://houseoftartufo.com" target="_blank" rel="noopener">houseoftartufo.com ↗</a>
+    </footer>
+
+    <dialog class="quote-dialog" id="quote-dialog" aria-labelledby="quote-title">
+      <div class="quote-panel">
+        <header class="quote-header">
+          <div>
+            <p class="eyebrow">House of Tartufo · B2B</p>
+            <h2 id="quote-title" data-ui="quoteTitle">Quote request</h2>
           </div>
+          <button class="icon-button" id="quote-close" type="button" aria-label="Close quote">×</button>
+        </header>
+
+        <div class="quote-lines" id="quote-lines"></div>
+
+        <div class="quote-summary" id="quote-summary" hidden>
+          <div><span data-ui="total">Estimated total</span><strong id="quote-total">€0.00</strong></div>
+          <div><span data-ui="saving">Saving</span><strong id="quote-saving">€0.00</strong></div>
+          <p data-ui="exWorks">Prices ex-works, excluding VAT and shipping.</p>
+        </div>
+
+        <div class="quote-actions" id="quote-actions" hidden>
+          <button class="secondary-button" id="copy-order" type="button" data-ui="copyOrder">Copy order</button>
+          <a class="primary-button" id="whatsapp-order" href="#" target="_blank" rel="noopener" data-ui="whatsapp">
+            Send on WhatsApp
+          </a>
+          <a class="secondary-button" id="email-order" href="#" data-ui="email">Send by email</a>
+          <button class="text-button" id="clear-quote" type="button" data-ui="clearQuote">Clear quote</button>
         </div>
       </div>
-    </div>
-  </div>
-</div>
+    </dialog>
 
-<!-- ══════════════════════════════════════════
-     SLIDE 7 — SALTS, HONEYS & NUTS
-══════════════════════════════════════════ -->
-<div class="slide" data-label="Salts, Honey & Nuts">
-  <div class="co co-tl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-tr"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-bl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-br"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="inner">
-    <div class="r eyebrow" style="text-align:center" data-i18n="cat06.eyebrow">Category 06</div>
-    <h2 class="r" style="font-family:'Cormorant Garamond',serif;font-size:var(--xl);font-weight:300;color:var(--cream);text-align:center;margin-bottom:4px"><span data-i18n="cat06.title1">Salts, Honey </span><em style="color:var(--gold)" data-i18n="cat06.title2">&amp; Nuts</em></h2>
-    <div class="r divider"></div>
-    <div class="scroll-hint" data-i18n="ui.scroll">↕ scroll</div><div class="r tbl-wrap">
-      <div class="table-cols three" style="gap:14px">
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat06.group1">Premium Salts with Truffle (100g)</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Variety</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">5</td><td class="name">Hawaiian Red Salt</td><td class="price">€9.09</td><td class="price-best">€6.82</td></tr>
-              <tr><td class="code">6</td><td class="name">Grey Salt</td><td class="price">€6.36</td><td class="price-best">€4.77</td></tr>
-              <tr><td class="code">7</td><td class="name">Hawaiian Black Salt</td><td class="price">€5.82</td><td class="price-best">€4.36</td></tr>
-              <tr><td class="code">8</td><td class="name">Himalayan Pink Salt</td><td class="price">€5.82</td><td class="price-best">€4.36</td></tr>
-              <tr><td class="code">9</td><td class="name">Persian Blue Salt</td><td class="price">€5.64</td><td class="price-best">€4.23</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat06.group2">Sea Salt with Truffle</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Variety</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">43/52</td><td class="name">Summer Truffle</td><td class="size">30g</td><td class="price">€2.60</td><td class="price-best">€1.95</td></tr>
-              <tr><td class="code">44/53</td><td class="name">White Truffle</td><td class="size">30g</td><td class="price">€2.60</td><td class="price-best">€1.95</td></tr>
-              <tr><td class="code">54</td><td class="name">Summer Truffle</td><td class="size">120g</td><td class="price">€5.40</td><td class="price-best">€4.05</td></tr>
-              <tr><td class="code">55</td><td class="name">White Truffle</td><td class="size">120g</td><td class="price">€5.40</td><td class="price-best">€4.05</td></tr>
-              <tr><td class="code">131</td><td class="name">Truffle Flakes &amp; Hawaiian Salt</td><td class="size">20g</td><td class="price">€13.17</td><td class="price-best">€9.88</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat06.group3">Acacia Honey with Truffle</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">45</td><td class="name">30g</td><td class="price">€3.20</td><td class="price-best">€2.40</td></tr>
-              <tr><td class="code">134</td><td class="name">110g</td><td class="price">€7.45</td><td class="price-best">€5.59</td></tr>
-              <tr><td class="code">135</td><td class="name">220g</td><td class="price">€13.50</td><td class="price-best">€10.13</td></tr>
-              <tr><td class="code">136</td><td class="name">650g</td><td class="price">€28.77</td><td class="price-best">€21.58</td></tr>
-              <tr><td class="code">137</td><td class="name">Spicy Honey 110g</td><td class="price">€6.73</td><td class="price-best">€5.05</td></tr>
-              <tr><td class="code">141</td><td class="name">Natural Line 110g</td><td class="price">€9.64</td><td class="price-best">€7.23</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat06.group4">Truffle Nuts (80g · 16/box)</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Variety</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">10</td><td class="name">Truffle Cashews</td><td class="price">€5.73</td><td class="price-best">€4.30</td></tr>
-              <tr><td class="code">11</td><td class="name">Truffle Almonds</td><td class="price">€6.00</td><td class="price-best">€4.50</td></tr>
-              <tr><td class="code">13</td><td class="name">Truffle Walnuts</td><td class="price">€5.82</td><td class="price-best">€4.36</td></tr>
-            </tbody>
-          </table>
-          <div style="margin-top:14px;padding:12px;background:rgba(201,168,76,.05);border-left:2px solid rgba(201,168,76,.3)">
-            <div style="font-size:var(--sm);color:var(--text2);letter-spacing:.1em;line-height:1.6">
-              All salts: 2-year shelf life · 12/box<br>Honeys: 2-year shelf life · 12/box<br>Nuts: 1-year shelf life · 16/box
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════
-     SLIDE 8 — PASTA, READY MEALS & SNACKS
-══════════════════════════════════════════ -->
-<div class="slide" data-label="Pasta & Ready Meals">
-  <div class="co co-tl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-tr"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-bl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-br"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="inner">
-    <div class="r eyebrow" style="text-align:center" data-i18n="cat07.eyebrow">Category 07</div>
-    <h2 class="r" style="font-family:'Cormorant Garamond',serif;font-size:var(--xl);font-weight:300;color:var(--cream);text-align:center;margin-bottom:4px"><span data-i18n="cat07.title1">Pasta, Meals </span><em style="color:var(--gold)" data-i18n="cat07.title2">&amp; Snacks</em></h2>
-    <div class="r divider"></div>
-    <div class="scroll-hint" data-i18n="ui.scroll">↕ scroll</div><div class="r tbl-wrap">
-      <div class="table-cols three" style="gap:14px">
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat07.group1">Truffle Pasta (250g · 2yr · 12/box)</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Product</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">117</td><td class="name">White Truffle Tagliatelle</td><td class="price">€6.73</td><td class="price-best">€5.05</td></tr>
-              <tr><td class="code">119</td><td class="name">Black Truffle Tagliolini</td><td class="price">€6.73</td><td class="price-best">€5.05</td></tr>
-              <tr><td class="code">120</td><td class="name">Black Truffle Tagliatelle</td><td class="price">€6.73</td><td class="price-best">€5.05</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat07.group2">Gnocchi &amp; Risotto</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Product</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">118</td><td class="name">Fresh Truffle Gnocchi</td><td class="size">500g</td><td class="price">€5.40</td><td class="price-best">€4.05</td></tr>
-              <tr><td class="code">121</td><td class="name">Truffle Risotto</td><td class="size">170g</td><td class="price">€6.73</td><td class="price-best">€5.05</td></tr>
-              <tr><td class="code">122</td><td class="name">Rice with Truffle</td><td class="size">300g</td><td class="price">€10.67</td><td class="price-best">€8.00</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat07.group4">Seasonings &amp; Instant Meals</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Product</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">127</td><td class="name">Truffle Mashed Potato</td><td class="size">75g</td><td class="price">€5.20</td><td class="price-best">€3.90</td></tr>
-              <tr><td class="code">128</td><td class="name">Polenta – Summer Truffle</td><td class="size">125g</td><td class="price">€5.10</td><td class="price-best">€3.83</td></tr>
-              <tr><td class="code">129</td><td class="name">Truffle Dust Seasoning</td><td class="size">50g</td><td class="price">€6.00</td><td class="price-best">€4.50</td></tr>
-              <tr><td class="code">130</td><td class="name">Truffle Mix Seasoning</td><td class="size">50g</td><td class="price">€6.00</td><td class="price-best">€4.50</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat07.group4">Artisan Cheeses (800g · 9mo · 1/box)</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Product</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">132</td><td class="name">Caciocavallo – Summer Truffle</td><td class="price">€31.08</td><td class="price-best">€23.31</td></tr>
-              <tr><td class="code">133</td><td class="name">Pecorino – Summer Truffle</td><td class="price">€37.23</td><td class="price-best">€27.92</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat07.group3">Snacks &amp; Pantry</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Product</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">138</td><td class="name">Truffle Tarallini</td><td class="size">200g</td><td class="price">€5.82</td><td class="price-best">€4.36</td></tr>
-            </tbody>
-          </table>
-          <div style="margin-top:14px;padding:10px 12px;background:rgba(201,168,76,.05);border-left:2px solid rgba(201,168,76,.3)">
-            <div style="font-size:var(--sm);color:var(--text2);letter-spacing:.1em;line-height:1.6">
-              Risotto: 24/box · Rice: 24/box<br>Seasonings: 18-month shelf life<br>Gnocchi: 1-year shelf life
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════
-     SLIDE 9 — NATURAL LINE
-══════════════════════════════════════════ -->
-<div class="slide" data-label="Natural Line">
-  <div class="co co-tl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-tr"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-bl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-br"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="inner">
-    <div class="r eyebrow" style="text-align:center" data-i18n="cat08.eyebrow">Category 08</div>
-    <h2 class="r" style="font-family:'Cormorant Garamond',serif;font-size:var(--xl);font-weight:300;color:var(--cream);text-align:center;margin-bottom:4px"><em style="color:var(--gold)" data-i18n="cat08.title1">Natural</em><span data-i18n="cat08.title2"> Line</span></h2>
-    <div class="r divider"></div>
-    <div class="scroll-hint" data-i18n="ui.scroll">↕ scroll</div><div class="r tbl-wrap">
-      <div class="table-cols two" style="gap:16px">
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat08.group1">Premium Oils – Natural Line</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Product</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">139</td><td class="name">White Truffle EVOO – Natural</td><td class="size">250ml</td><td class="price">€19.38</td><td class="price-best">€14.54</td></tr>
-              <tr><td class="code">140</td><td class="name">Black Truffle EVOO – Natural</td><td class="size">250ml</td><td class="price">€17.33</td><td class="price-best">€13.00</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat08.group2">Tartufata – Natural Line</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">142</td><td class="name">80g</td><td class="price">€6.00</td><td class="box-price">€72.00</td><td class="price-best">€4.50</td></tr>
-              <tr><td class="code">143</td><td class="name">170g</td><td class="price">€10.91</td><td class="box-price">€130.91</td><td class="price-best">€8.18</td></tr>
-              <tr><td class="code">144</td><td class="name">500g</td><td class="price">€20.00</td><td class="box-price">€240.00</td><td class="price-best">€15.00</td></tr>
-            </tbody>
-          </table>
-          <div class="col-title" style="margin-top:12px" data-i18n="cat08.group3">Acacia Honey – Natural Line</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">141</td><td class="name">110g</td><td class="price">€9.64</td><td class="price-best">€7.23</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="col-block">
-          <div class="col-title" data-i18n="cat08.group5">Summer Truffle Carpaccio – Natural Line</div>
-          <table class="product-table">
-            <thead><tr><th>#</th><th>Size</th><th class="r-align">€/unit</th><th class="r-align">€/box</th><th class="r-align moq">Best</th></tr></thead>
-            <tbody>
-              <tr><td class="code">151</td><td class="name">45g</td><td class="price">€12.67</td><td class="box-price">€152.00</td><td class="price-best">€9.50</td></tr>
-              <tr><td class="code">152</td><td class="name">80g</td><td class="price">€21.45</td><td class="box-price">€257.45</td><td class="price-best">€16.09</td></tr>
-              <tr><td class="code">153</td><td class="name">170g</td><td class="price">€36.00</td><td class="box-price">€432.00</td><td class="price-best">€27.00</td></tr>
-            </tbody>
-          </table>
-          <div style="margin-top:16px;padding:14px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15)">
-            <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(13px,1.5vw,17px);color:var(--gold);margin-bottom:6px;font-style:italic" data-i18n="cat08.about_title">About the Natural Line</div>
-            <div style="font-size:var(--sm);color:var(--text2);letter-spacing:.08em;line-height:1.7">
-              The Natural Line features premium formulations with no artificial additives, higher truffle concentrations, and elevated ingredient sourcing. All products carry a 3-year shelf life and come in 12 units per box.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════
-     SLIDE 10 — DISCOUNT STRUCTURE
-══════════════════════════════════════════ -->
-<div class="slide" data-label="Volume Discounts">
-  <div class="co co-tl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-tr"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-bl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-br"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="inner" style="text-align:center">
-    <div class="r eyebrow" data-i18n="disc.eyebrow">Wholesale Policy</div>
-    <h2 class="r" style="font-family:'Cormorant Garamond',serif;font-size:var(--xl);font-weight:300;color:var(--cream);text-align:center;margin-bottom:4px"><span data-i18n="disc.title1">Volume </span><em style="color:var(--gold)" data-i18n="disc.title2">Discount Structure</em></h2>
-    <div class="r divider"></div>
-    <p class="r" style="font-size:var(--md);color:var(--text);letter-spacing:.05em;margin-bottom:28px" data-i18n="disc.subtitle">Discounts applied per product, per order tier</p>
-    <div class="r disc-grid" style="margin:0 auto;max-width:950px">
-      <div class="disc-card">
-        <div class="moq-label" data-i18n="ui.moq_label">MOQ</div>
-        <div class="moq-val">2</div>
-        <div class="moq-unit" data-i18n="ui.boxes_per_product">boxes per product</div>
-        <div class="disc-pct">−5%</div>
-      </div>
-      <div class="disc-card">
-        <div class="moq-label">MOQ</div>
-        <div class="moq-val">3</div>
-        <div class="moq-unit" data-i18n="ui.boxes_per_product">boxes per product</div>
-        <div class="disc-pct">−10%</div>
-      </div>
-      <div class="disc-card" style="border-color:rgba(201,168,76,.25)">
-        <div class="moq-label">MOQ</div>
-        <div class="moq-val">5</div>
-        <div class="moq-unit" data-i18n="ui.boxes_per_product">boxes per product</div>
-        <div class="disc-pct">−15%</div>
-      </div>
-      <div class="disc-card" style="border-color:rgba(201,168,76,.3)">
-        <div class="moq-label">MOQ</div>
-        <div class="moq-val">10</div>
-        <div class="moq-unit" data-i18n="ui.boxes_per_product">boxes per product</div>
-        <div class="disc-pct">−20%</div>
-      </div>
-      <div class="disc-card" style="border-color:rgba(201,168,76,.4);background:rgba(30,20,8,.7)">
-        <div class="moq-label">MOQ</div>
-        <div class="moq-val" style="color:var(--gold2)">15</div>
-        <div class="moq-unit" data-i18n="ui.boxes_per_product">boxes per product</div>
-        <div class="disc-pct" style="color:var(--gold)">−25%</div>
-      </div>
-    </div>
-    <p class="r" style="font-size:var(--sm);color:var(--text2);margin-top:24px;letter-spacing:.12em"><span data-i18n="disc.note">Prices shown in catalogue are base (pre-discount). All prices ex-works, excl. VAT &amp; shipping.</span></p>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════
-     SLIDE 11 — CTA
-══════════════════════════════════════════ -->
-<div class="slide" data-label="Contact" id="s-cta">
-  <canvas id="ctac"></canvas>
-  <div class="co co-tl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-tr"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-bl"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="co co-br"><svg width="36" height="36"><path d="M0 36V0h36" fill="none" stroke="rgba(201,168,76,.3)" stroke-width="1"/><circle cx="0" cy="0" r="2.5" fill="rgba(201,168,76,.45)"/></svg></div>
-  <div class="inner" style="text-align:center">
-    <div class="r" style="display:flex;justify-content:center;margin-bottom:12px"><img src="data:image/png;base64,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" alt="HOT" style="height:clamp(55px,7vw,90px)"></div>
-    <div class="r eyebrow" data-i18n="cta.eyebrow">House of Tartufo &mdash; 2026</div>
-    <h2 class="r" style="font-family:'Cormorant Garamond',serif;font-size:var(--xxl);font-weight:300;color:var(--cream)"><span data-i18n="cta.headline">Let&#39;s Talk</span></h2>
-    <div class="r divider"></div>
-    <p class="r" style="font-family:'Lora',serif;font-size:var(--lg);color:var(--text);line-height:1.6;max-width:560px;margin:0 auto 8px" data-i18n="cta.sub1">120 products. One supplier. Unmatched quality.</p>
-    <p class="r" style="font-size:var(--md);color:var(--text2);max-width:500px;margin:0 auto" data-i18n="cta.sub2">Every shipment backed by Italian craftsmanship and direct truffle sourcing.</p>
-    <div class="r cta-row">
-      <a class="btn-p" href="https://wa.me/32480205715" target="_blank" rel="noopener"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg><span data-i18n="cta.btn1">Place an Order</span></a>
-      <a class="btn-s" href="https://houseoftartufo.com" target="_blank" rel="noopener"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg><span data-i18n="cta.btn2">Visit Website</span></a>
-    </div>
-    <div class="r social-row">
-      <a class="soc-btn" href="https://www.instagram.com/houseoftartufo/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
-      <a class="soc-btn" href="https://www.facebook.com/p/House-of-Tartufo-61572843099333/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
-      <a class="soc-btn" href="https://be.linkedin.com/company/house-of-tartufo" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
-      <a class="soc-btn" href="https://www.tiktok.com/@houseoftartufo" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg></a>
-      <a class="soc-btn" href="https://x.com/houseoftartufo" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.742l7.74-8.855L1.254 2.25H8.08l4.258 5.628 5.906-5.628zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
-    </div>
-    <a class="r" href="mailto:admin@houseoftartufo.com" style="display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-size:var(--sm);letter-spacing:.18em;color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(201,168,76,.25);padding-bottom:2px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>admin@houseoftartufo.com</a>
-    <div class="r" style="margin-top:14px;font-family:'Cormorant Garamond',serif;font-size:var(--md);color:rgba(201,168,76,.3);letter-spacing:.15em;font-style:italic" data-i18n="cta.footer">House of Tartufo — Italian Truffles Since Forever</div>
-  </div>
-</div>
-
-</div><!-- /slides -->
-
-
-
-<script>
-// ─── CURSOR ───────────────────────────────────────────────
-const dot=document.getElementById('cdot'),ring=document.getElementById('cring');
-let mx=innerWidth/2,my=innerHeight/2,rx=mx,ry=my;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px'});
-(function tick(){rx+=(mx-rx)*.09;ry+=(my-ry)*.09;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(tick)})();
-
-// ─── TRANSLATION DATABASE (hardcoded from sheet) ──────────
-const DB={
-"cat01.title1":{"en":"Sauces &","it":"Salse &","fr":"Sauces &","nl":"Sauzen &"},
-"cat01.title2":{"en":"Condiments","it":"Condimenti","fr":"Condiments","nl":"Condimenten"},
-"cat02.title1":{"en":"Truffle","it":"Olio al","fr":"Huiles à la","nl":"Truffel"},
-"cat02.title2":{"en":"Oils","it":"Tartufo","fr":"Truffe","nl":"Oliën"},
-"cat03.title1":{"en":"Truffle","it":"Burro al","fr":"Beurres à la","nl":"Truffel"},
-"cat03.title2":{"en":"Butters","it":"Tartufo","fr":"Truffe","nl":"Boter"},
-"cat04.title1":{"en":"Pure","it":"Pure","fr":"Crèmes de","nl":"Pure"},
-"cat04.title2":{"en":"Truffle Creams","it":"Creme di Tartufo","fr":"Truffe","nl":"Truffelcrèmes"},
-"cat05.title1":{"en":"Brine, Minced","it":"Salamoia, Tritato","fr":"Saumure, Haché","nl":"Pekel, Gehakt"},
-"cat05.title2":{"en":"& Juice","it":"& Succo","fr":"& Jus","nl":"& Sap"},
-"cat06.title1":{"en":"Salts, Honey","it":"Sali, Miele","fr":"Sels, Miel","nl":"Zouten, Honing"},
-"cat06.title2":{"en":"& Nuts","it":"& Frutta Secca","fr":"& Noix","nl":"& Noten"},
-"cat07.title1":{"en":"Pasta, Meals","it":"Pasta, Piatti","fr":"Pâtes, Plats","nl":"Pasta, Maaltijden"},
-"cat07.title2":{"en":"& Snacks","it":"& Snack","fr":"& Snacks","nl":"& Snacks"},
-"cat08.title1":{"en":"Natural","it":"Natural","fr":"Naturelle","nl":"Natuur"},
-"cat08.title2":{"en":" Line","it":" Line","fr":"Ligne ","nl":"lijn"},
-"disc.title1":{"en":"Volume","it":"Struttura","fr":"Structure de","nl":"Volume"},
-"disc.title2":{"en":"Discount Structure","it":"Sconti Volume","fr":"Remise Volume","nl":"Kortingsstructuur"},
-"loader.subtitle":{"en":"Price List 2026","it":"Listino Prezzi 2026","fr":"Liste des Prix 2026","nl":"Prijslijst 2026"},
-"cover.eyebrow":{"en":"House of Tartufo — Wholesale Catalogue","it":"House of Tartufo — Catalogo Wholesale","fr":"House of Tartufo — Catalogue Grossiste","nl":"House of Tartufo — Groothandel Catalogus"},
-"cover.headline1":{"en":"Official","it":"Ufficiale","fr":"Officielle","nl":"Officiële"},
-"cover.headline2":{"en":"Price List 2026","it":"Listino Prezzi 2026","fr":"Liste des Prix 2026","nl":"Prijslijst 2026"},
-"cover.sub1":{"en":"120+ Products · 9 Categories","it":"120+ Prodotti · 9 Categorie","fr":"120+ Produits · 9 Catégories","nl":"120+ Producten · 9 Categorieën"},
-"cover.sub2":{"en":"Up to 25% volume discount","it":"Fino al 25% di sconto volume","fr":"Jusqu'à 25% de remise volume","nl":"Tot 25% volumekorting"},
-"ui.navigate":{"en":"Navigate with ← → or swipe","it":"Naviga con ← → o scorri","fr":"Naviguez avec ← → ou glissez","nl":"Navigeer met ← → of swipe"},
-"ui.moq_label":{"en":"MOQ","it":"MOQ","fr":"MOQ","nl":"MOQ"},
-"ui.boxes_per_product":{"en":"boxes per product","it":"scatole per prodotto","fr":"boîtes par produit","nl":"dozen per product"},
-"cat01.eyebrow":{"en":"Category 01","it":"Categoria 01","fr":"Catégorie 01","nl":"Categorie 01"},
-"cat01.group1":{"en":"Ragouts, Tomato & Mushroom","it":"Ragù, Pomodoro & Funghi","fr":"Ragoûts, Tomate & Champignons","nl":"Ragouts, Tomaat & Paddenstoel"},
-"cat01.group2":{"en":"Tartufata & Condiments (30g)","it":"Tartufata & Condimenti (30g)","fr":"Tartufata & Condiments (30g)","nl":"Tartufata & Condimenten (30g)"},
-"cat01.group3":{"en":"Other Condiments","it":"Altri Condimenti","fr":"Autres Condiments","nl":"Overige Condimenten"},
-"cat01.group4":{"en":"Truffled Sauce – Summer Truffle","it":"Salsa Tartufata – Tartufo Estivo","fr":"Sauce Truffée – Truffe d'Été","nl":"Truffelsaus – Zomertruffle"},
-"cat01.group5":{"en":"Alfredo Cream – Bianchetto & White Truffle","it":"Crema Alfredo – Bianchetto & Tartufo Bianco","fr":"Crème Alfredo – Bianchetto & Truffe Blanche","nl":"Alfredo Crème – Bianchetto & Witte Truffel"},
-"cat01.group6":{"en":"White Truffled Sauce – Bianchetto 2%","it":"Salsa al Tartufo Bianco – Bianchetto 2%","fr":"Sauce Truffe Blanche – Bianchetto 2%","nl":"Witte Truffelsaus – Bianchetto 2%"},
-"cat01.group7":{"en":"Spicy · Pumpkin · Porcini Creams","it":"Crema Piccante · Zucca · Porcini","fr":"Crème Épicée · Potiron · Cèpes","nl":"Pittige · Pompoen · Porcini Crème"},
-"cat02.eyebrow":{"en":"Category 02","it":"Categoria 02","fr":"Catégorie 02","nl":"Categorie 02"},
-"cat02.group1":{"en":"White Truffle – Extra Virgin Olive Oil","it":"Olio EVO – Tartufo Bianco","fr":"Huile d'Olive – Truffe Blanche","nl":"Extra Vierge Olijfolie – Witte Truffel"},
-"cat02.group2":{"en":"Black Truffle – Extra Virgin Olive Oil","it":"Olio EVO – Tartufo Nero","fr":"Huile d'Olive – Truffe Noire","nl":"Extra Vierge Olijfolie – Zwarte Truffel"},
-"cat02.group3":{"en":"Truffle Harmony Oils (Dried Truffle)","it":"Olio Harmony (Tartufo Essiccato)","fr":"Huiles Harmony (Truffe Séchée)","nl":"Harmony Oliën (Gedroogde Truffel)"},
-"cat02.group4":{"en":"White Truffle Sunflower Oil","it":"Olio di Girasole al Tartufo Bianco","fr":"Huile de Tournesol Truffe Blanche","nl":"Zonnebloemolie Witte Truffel"},
-"cat02.group5":{"en":"Infused Extra Virgin Olive Oils","it":"Oli EVO Aromatizzati","fr":"Huiles d'Olive Aromatisées","nl":"Gearomatiseerde Extra Vierge Olijfolie"},
-"cat02.group6":{"en":"Balsamic","it":"Balsamico","fr":"Balsamique","nl":"Balsamico"},
-"cat03.eyebrow":{"en":"Category 03","it":"Categoria 03","fr":"Catégorie 03","nl":"Categorie 03"},
-"cat03.group1":{"en":"Butter with Summer Truffle 3% (Standard)","it":"Burro al Tartufo Estivo 3% (Standard)","fr":"Beurre Truffe d'Été 3% (Standard)","nl":"Boter Zomertruffle 3% (Standaard)"},
-"cat03.group2":{"en":"Butter with Bianchetto Truffle 6% (Standard)","it":"Burro al Bianchetto 6% (Standard)","fr":"Beurre Bianchetto 6% (Standard)","nl":"Boter Bianchetto 6% (Standaard)"},
-"cat03.group3":{"en":"Butter Dressing – Summer Truffle (Natural Line)","it":"Condimento al Burro – Tartufo Estivo (Natural Line)","fr":"Beurre Dressing – Truffe d'Été (Ligne Naturelle)","nl":"Boterdressing – Zomertruffle (Natuurlijn)"},
-"cat03.group4":{"en":"Butter Dressing – White Truffle (Natural Line)","it":"Condimento al Burro – Tartufo Bianco (Natural Line)","fr":"Beurre Dressing – Truffe Blanche (Ligne Naturelle)","nl":"Boterdressing – Witte Truffel (Natuurlijn)"},
-"cat04.eyebrow":{"en":"Category 04","it":"Categoria 04","fr":"Catégorie 04","nl":"Categorie 04"},
-"cat04.group1":{"en":"Pure White Truffle Cream","it":"Crema Pura di Tartufo Bianco","fr":"Crème Pure Truffe Blanche","nl":"Pure Witte Truffelcrème"},
-"cat04.group2":{"en":"Pure Summer Truffle Cream","it":"Crema Pura di Tartufo Estivo","fr":"Crème Pure Truffe d'Été","nl":"Pure Zomertruffelcrème"},
-"cat04.group3":{"en":"Pure Bianchetto Truffle Cream","it":"Crema Pura di Bianchetto","fr":"Crème Pure Bianchetto","nl":"Pure Bianchetto Truffelcrème"},
-"cat04.group4":{"en":"Pure Black Truffle Cream","it":"Crema Pura di Tartufo Nero","fr":"Crème Pure Truffe Noire","nl":"Pure Zwarte Truffelcrème"},
-"cat04.group5":{"en":"Summer Truffle Carpaccio","it":"Carpaccio di Tartufo Estivo","fr":"Carpaccio Truffe d'Été","nl":"Zomertruffle Carpaccio"},
-"cat04.group6":{"en":"Bianchetto Truffle Carpaccio","it":"Carpaccio di Bianchetto","fr":"Carpaccio Bianchetto","nl":"Bianchetto Truffel Carpaccio"},
-"cat05.eyebrow":{"en":"Category 05","it":"Categoria 05","fr":"Catégorie 05","nl":"Categorie 05"},
-"cat05.group1":{"en":"Whole Summer Truffle in Brine","it":"Tartufo Estivo Intero in Salamoia","fr":"Truffe d'Été Entière en Saumure","nl":"Hele Zomertruffle in Pekel"},
-"cat05.group2":{"en":"Bianchetto Truffle in Brine","it":"Bianchetto in Salamoia","fr":"Bianchetto en Saumure","nl":"Bianchetto in Pekel"},
-"cat05.group3":{"en":"Whole Black Truffle in Brine","it":"Tartufo Nero Intero in Salamoia","fr":"Truffe Noire Entière en Saumure","nl":"Hele Zwarte Truffel in Pekel"},
-"cat05.group4":{"en":"Summer Truffle Carpaccio – Natural Line","it":"Carpaccio Tartufo Estivo – Natural Line","fr":"Carpaccio Truffe d'Été – Ligne Naturelle","nl":"Zomertruffle Carpaccio – Natuurlijn"},
-"cat06.eyebrow":{"en":"Category 06","it":"Categoria 06","fr":"Catégorie 06","nl":"Categorie 06"},
-"cat06.group1":{"en":"Premium Salts with Truffle (100g)","it":"Sali Premium al Tartufo (100g)","fr":"Sels Premium à la Truffe (100g)","nl":"Premium Zouten met Truffel (100g)"},
-"cat06.group2":{"en":"Sea Salts with Truffle","it":"Sale Marino al Tartufo","fr":"Sels Marins à la Truffe","nl":"Zeezout met Truffel"},
-"cat06.group3":{"en":"Acacia Honey with Truffle","it":"Miele d'Acacia al Tartufo","fr":"Miel d'Acacia à la Truffe","nl":"Acaciahoning met Truffel"},
-"cat06.group4":{"en":"Truffle Flakes & Hawaiian Salt","it":"Scaglie di Tartufo & Sale delle Hawaii","fr":"Flocons de Truffe & Sel Hawaïen","nl":"Truffelschilfers & Hawaiiaans Zout"},
-"cat07.eyebrow":{"en":"Category 07","it":"Categoria 07","fr":"Catégorie 07","nl":"Categorie 07"},
-"cat07.group1":{"en":"Truffle Pasta","it":"Pasta al Tartufo","fr":"Pâtes à la Truffe","nl":"Truffelpasta"},
-"cat07.group2":{"en":"Rice & Risotto","it":"Riso & Risotto","fr":"Riz & Risotto","nl":"Rijst & Risotto"},
-"cat07.group3":{"en":"Side Dishes","it":"Contorni","fr":"Accompagnements","nl":"Bijgerechten"},
-"cat07.group4":{"en":"Seasonings","it":"Condimenti Secchi","fr":"Assaisonnements","nl":"Kruidenmengsels"},
-"cat08.eyebrow":{"en":"Category 08","it":"Categoria 08","fr":"Catégorie 08","nl":"Categorie 08"},
-"cat08.about_title":{"en":"About the Natural Line","it":"La Natural Line","fr":"La Ligne Naturelle","nl":"Over de Natuurlijn"},
-"cat08.group1":{"en":"Tartufata Sauce – Natural Line","it":"Salsa Tartufata – Natural Line","fr":"Sauce Tartufata – Ligne Naturelle","nl":"Tartufata Saus – Natuurlijn"},
-"cat08.group2":{"en":"Truffle Oils – Natural Line","it":"Oli al Tartufo – Natural Line","fr":"Huiles Truffées – Ligne Naturelle","nl":"Truffeloliën – Natuurlijn"},
-"cat08.group3":{"en":"Acacia Honey – Natural Line","it":"Miele d'Acacia – Natural Line","fr":"Miel d'Acacia – Ligne Naturelle","nl":"Acaciahoning – Natuurlijn"},
-"cat08.group5":{"en":"Summer Truffle Carpaccio – Natural Line","it":"Carpaccio Tartufo Estivo – Natural Line","fr":"Carpaccio Truffe d'Été – Ligne Naturelle","nl":"Zomertruffle Carpaccio – Natuurlijn"},
-"ui.scroll":{"en":"↕ scroll","it":"↕ scorri","fr":"↕ défiler","nl":"↕ scrollen"},
-"disc.eyebrow":{"en":"Wholesale Policy","it":"Politica Wholesale","fr":"Politique Grossiste","nl":"Groothandelsbeleid"},
-"disc.subtitle":{"en":"Discounts applied per product, per order tier","it":"Sconti applicati per prodotto, per fascia d'ordine","fr":"Remises appliquées par produit, par palier de commande","nl":"Kortingen per product, per bestelniveau"},
-"disc.note":{"en":"Prices shown in catalogue are base (pre-discount). All prices ex-works, excl. VAT & shipping.","it":"I prezzi nel catalogo sono di listino (pre-sconto). Tutti i prezzi sono ex-works, IVA esclusa.","fr":"Les prix du catalogue sont hors remise. Tous les prix sont départ usine, hors TVA et frais de port.","nl":"Catalogusprijzen zijn basisprijzen (voor korting). Alle prijzen ex-works, excl. BTW & verzending."},
-"cta.eyebrow":{"en":"House of Tartufo — 2026","it":"House of Tartufo — 2026","fr":"House of Tartufo — 2026","nl":"House of Tartufo — 2026"},
-"cta.headline":{"en":"Let's Talk","it":"Parliamo","fr":"Parlons","nl":"Laten We Praten"},
-"cta.sub1":{"en":"120 products. One supplier. Unmatched quality.","it":"120 prodotti. Un fornitore. Qualità ineguagliabile.","fr":"120 produits. Un fournisseur. Qualité inégalée.","nl":"120 producten. Één leverancier. Ongeëvenaarde kwaliteit."},
-"cta.sub2":{"en":"Every shipment backed by Italian craftsmanship and direct truffle sourcing.","it":"Ogni spedizione garantita dall'artigianato italiano e dall'approvvigionamento diretto di tartufi.","fr":"Chaque livraison garantie par le savoir-faire italien et l'approvisionnement direct en truffes.","nl":"Elke levering gedekt door Italiaans vakmanschap en directe truffelinkoop."},
-"cta.btn1":{"en":"Place an Order","it":"Effettua un Ordine","fr":"Passer une Commande","nl":"Bestelling Plaatsen"},
-"cta.btn2":{"en":"Visit Website","it":"Visita il Sito","fr":"Visiter le Site","nl":"Bezoek Website"},
-"cat05.group6_bj":{"en":"Black Truffle Juice","it":"Succo di Tartufo Nero","fr":"Jus de Truffe Noire","nl":"Zwarte Truffelsap"},
-"cta.footer":{"en":"House of Tartufo — Italian Truffles Since Forever","it":"House of Tartufo — Tartufi Italiani da Sempre","fr":"House of Tartufo — Truffes Italiennes pour Toujours","nl":"House of Tartufo — Italiaanse Truffels Voor Altijd"}
-};
-
-// Nav labels per lingua
-const NAV={
-  en:["Price List 2026","Sauces","Oils","Butters","Pure Creams","Brine & Whole","Salts & Honey","Pasta & Meals","Natural Line","Discounts","Contact"],
-  it:["Listino 2026","Salse","Oli","Burri","Creme Pure","Salamoia","Sali & Miele","Pasta & Piatti","Natural Line","Sconti","Contatto"],
-  fr:["Prix 2026","Sauces","Huiles","Beurres","Crèmes Pures","Saumure","Sels & Miel","Pâtes & Plats","Ligne Naturelle","Remises","Contact"],
-  nl:["Prijslijst 2026","Sauzen","Oliën","Boter","Pure Crèmes","Pekel","Zouten & Honing","Pasta & Maaltijden","Natuurlijn","Kortingen","Contact"]
-};
-
-// ─── LIVE SHEET OVERRIDE (sovrascrive DB se la sheet cambia) ──
-const SHEET_TRANS='https://docs.google.com/spreadsheets/d/e/2PACX-1vReWkxNwkrVotMwHMpcQRENgkt1cZRmdixrwW10TAHP6Y1In6BZHEbkQu9sI-vikg/pub?gid=29668113&single=true&output=csv';
-const SHEET_PRICES='https://docs.google.com/spreadsheets/d/e/2PACX-1vReWkxNwkrVotMwHMpcQRENgkt1cZRmdixrwW10TAHP6Y1In6BZHEbkQu9sI-vikg/pub?gid=86187412&single=true&output=csv';
-
-function csvLine(line){
-  const cols=[];let cur='',inQ=false;
-  for(let i=0;i<line.length;i++){
-    const ch=line[i];
-    if(ch==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
-    else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
-    else cur+=ch;
-  }
-  cols.push(cur.trim());
-  return cols;
-}
-
-async function fetchTranslations(){
-  try{
-    const r=await fetch(SHEET_TRANS+'&t='+Date.now());
-    if(!r.ok)return;
-    const rows=(await r.text()).split(/\r?\n/);
-    let started=false;
-    for(const row of rows){
-      const c=csvLine(row);
-      const key=c[0]||'';
-      if(key.toUpperCase()==='KEY'){started=true;continue;}
-      if(!started||!key||!key.includes('.'))continue;
-      if(!DB[key])DB[key]={};
-      ['en','it','fr','nl'].forEach((l,i)=>{if(c[i+1])DB[key][l]=c[i+1];});
-    }
-  }catch(e){}
-  applyLang();
-}
-
-async function fetchPrices(){
-  try{
-    const r=await fetch(SHEET_PRICES+'&t='+Date.now());
-    if(!r.ok)return;
-    const rows=(await r.text()).split(/\r?\n/);
-    let started=false;
-    for(const row of rows){
-      const c=csvLine(row);
-      const code=(c[0]||'').replace(/[€\s]/g,'');
-      if(code==='Code'){started=true;continue;}
-      if(!started||!code||isNaN(parseInt(code)))continue;
-      const unit=(c[5]||'').replace(/[€\s]/g,'');
-      const best=(c[11]||'').replace(/[€\s]/g,'');
-      document.querySelectorAll('td.code').forEach(td=>{
-        if(td.textContent.trim()!==code)return;
-        const tr=td.parentElement;
-        const pu=tr.querySelector('td.price'),pb=tr.querySelector('td.price-best');
-        if(pu&&unit){const v=parseFloat(unit.replace(',','.'));if(!isNaN(v))pu.textContent='€'+v.toFixed(2);}
-        if(pb&&best){const v=parseFloat(best.replace(',','.'));if(!isNaN(v))pb.textContent='€'+v.toFixed(2);}
-      });
-    }
-  }catch(e){}
-}
-
-// ─── LANGUAGE ENGINE ──────────────────────────────────────
-let currentLang='en';
-
-function applyLang(){
-  const lang=currentLang;
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const key=el.getAttribute('data-i18n');
-    const val=DB[key]&&DB[key][lang];
-    if(val)el.textContent=val;
-  });
-  // Nav labels
-  labels.splice(0,labels.length,...(NAV[lang]||NAV.en));
-  const lbl=document.getElementById('slide-label');
-  if(lbl)lbl.textContent=labels[current]||'';
-}
-
-function setLang(lang){
-  currentLang=lang;
-  document.querySelectorAll('.lng-btn').forEach(b=>
-    b.classList.toggle('active',b.textContent.trim().toLowerCase()===lang)
-  );
-  applyLang();
-}
-
-// ─── LOADER ───────────────────────────────────────────────
-window.addEventListener('load',()=>{
-  const l=document.getElementById('loader');
-  const img=l.querySelector('img'),s=l.querySelector('.ld-sub'),ln=l.querySelector('.ld-line');
-  setTimeout(()=>{if(img)img.style.opacity='1';if(ln)ln.classList.add('v');},80);
-  setTimeout(()=>{if(s)s.classList.add('v');},360);
-  setTimeout(()=>{l.classList.add('out');setTimeout(()=>l.remove(),900);},2100);
-});
-
-// ─── SLIDES ENGINE ────────────────────────────────────────
-const slides=document.querySelectorAll('.slide');
-const labels=[...NAV.en];
-const total=slides.length;
-let current=0,locked=false;
-
-function goTo(n){
-  if(n===current||locked)return;
-  locked=true;
-  slides[current].classList.remove('active');
-  current=Math.max(0,Math.min(n,total-1));
-  slides[current].classList.add('active');
-  updateUI();
-  if(current===total-1)initCta();
-  setTimeout(()=>locked=false,1000);
-}
-function updateUI(){
-  document.getElementById('progress').style.width=((current/(total-1))*100)+'%';
-  document.getElementById('slide-counter').textContent=(String(current+1).padStart(2,'0'))+' \u2014 '+(String(total).padStart(2,'0'));
-  document.getElementById('slide-label').textContent=labels[current]||'';
-  document.querySelectorAll('.ndot').forEach((d,i)=>d.classList.toggle('active',i===current));
-}
-const nav=document.getElementById('nav');
-for(let i=0;i<total;i++){
-  const d=document.createElement('div');
-  d.className='ndot'+(i===0?' active':'');
-  d.addEventListener('click',()=>goTo(i));
-  nav.appendChild(d);
-}
-updateUI();
-applyLang();
-fetchTranslations();
-fetchPrices();
-
-document.addEventListener('keydown',e=>{
-  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();goTo(current+1);}
-  if(e.key==='ArrowLeft')goTo(current-1);
-  if(e.key==='Escape')goTo(0);
-});
-let tsx=0;
-document.addEventListener('touchstart',e=>{tsx=e.touches[0].clientX;},{passive:true});
-document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tsx;if(Math.abs(dx)>44)dx<0?goTo(current+1):goTo(current-1);});
-
-// ─── BG CANVAS ────────────────────────────────────────────
-(function(){
-  const c=document.getElementById('bgc'),ctx=c.getContext('2d');
-  function resize(){c.width=innerWidth;c.height=innerHeight;}resize();
-  window.addEventListener('resize',resize);
-  const pool=[];
-  function mk(){return{x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.4+.3,vx:(Math.random()-.5)*.1,vy:-Math.random()*.2-.04,life:Math.random(),sp:Math.random()*.003+.0015};}
-  for(let i=0;i<80;i++)pool.push(mk());
-  (function anim(){requestAnimationFrame(anim);ctx.clearRect(0,0,c.width,c.height);for(const p of pool){p.life+=p.sp;if(p.life>1)Object.assign(p,mk(),{life:0,y:innerHeight+10});const a=Math.sin(p.life*Math.PI)*.28;p.x+=p.vx;p.y+=p.vy;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(201,168,76,${a})`;ctx.fill();}})();
-})();
-
-// ─── COVER CANVAS ─────────────────────────────────────────
-(function(){
-  const c=document.getElementById('cvc'),ctx=c.getContext('2d');
-  c.style.cssText='position:absolute;inset:0;z-index:0;pointer-events:none';
-  function resize(){c.width=innerWidth;c.height=innerHeight;}resize();
-  window.addEventListener('resize',resize);
-  const dust=[];
-  function mkd(){return{x:Math.random()*innerWidth,y:innerHeight+Math.random()*100,r:Math.random()*2.2+.4,vx:(Math.random()-.5)*.35,vy:-Math.random()*.7-.15,spin:Math.random()*Math.PI*2,dsp:(Math.random()-.5)*.015,life:0,sp:Math.random()*.005+.002};}
-  for(let i=0;i<220;i++)dust.push(mkd());
-  const blobs=[];
-  for(let i=0;i<5;i++)blobs.push({x:Math.random()*innerWidth,y:innerHeight*.45+Math.random()*200,r:Math.random()*160+70,sp:Math.random()*.003+.001,life:Math.random()});
-  let mmx=innerWidth/2,mmy=innerHeight/2;
-  document.addEventListener('mousemove',e=>{mmx=e.clientX;mmy=e.clientY;});
-  (function anim(){
-    requestAnimationFrame(anim);ctx.clearRect(0,0,c.width,c.height);
-    for(const b of blobs){b.life+=b.sp;if(b.life>1){b.life=0;b.x=Math.random()*innerWidth;b.y=innerHeight*.5+Math.random()*180;}const a=Math.sin(b.life*Math.PI)*.07;const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r);g.addColorStop(0,`rgba(120,80,40,${a})`);g.addColorStop(1,'rgba(0,0,0,0)');ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();}
-    const mg=ctx.createRadialGradient(mmx,mmy,0,mmx,mmy,200);mg.addColorStop(0,'rgba(201,168,76,.05)');mg.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=mg;ctx.fillRect(0,0,c.width,c.height);
-    for(const p of dust){p.life+=p.sp;if(p.life>1)Object.assign(p,mkd(),{life:0});const a=Math.sin(p.life*Math.PI)*.65;p.x+=p.vx;p.y+=p.vy;p.spin+=p.dsp;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.spin);ctx.beginPath();ctx.arc(0,0,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(201,168,76,${a})`;ctx.fill();ctx.restore();}
-  })();
-})();
-
-// ─── CTA CANVAS ───────────────────────────────────────────
-let ctaOk=false;
-function initCta(){
-  if(ctaOk)return;ctaOk=true;
-  const c=document.getElementById('ctac'),ctx=c.getContext('2d');
-  c.style.cssText='position:absolute;inset:0;z-index:0;pointer-events:none';
-  function resize(){c.width=innerWidth;c.height=innerHeight;}resize();
-  window.addEventListener('resize',resize);
-  const pts=[],rings=[];
-  setInterval(()=>{const cx=innerWidth/2,cy=innerHeight*.65;for(let i=0;i<6;i++){const ang=(Math.random()-.5)*Math.PI*.7-Math.PI/2,spd=Math.random()*3.5+.8;pts.push({x:cx,y:cy,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,r:Math.random()*1.8+.4,life:0,sp:Math.random()*.011+.005});}},90);
-  setInterval(()=>rings.push({r:0,a:.5}),1300);
-  (function anim(){
-    requestAnimationFrame(anim);ctx.clearRect(0,0,c.width,c.height);
-    const cx=innerWidth/2,cy=innerHeight*.65;
-    for(let i=rings.length-1;i>=0;i--){const rg=rings[i];rg.r+=1.6;rg.a-=.006;if(rg.a<=0){rings.splice(i,1);continue;}ctx.beginPath();ctx.arc(cx,cy,rg.r,0,Math.PI*2);ctx.strokeStyle=`rgba(201,168,76,${rg.a})`;ctx.lineWidth=1;ctx.stroke();}
-    for(let i=pts.length-1;i>=0;i--){const p=pts[i];p.life+=p.sp;p.vy+=.05;p.x+=p.vx;p.y+=p.vy;if(p.life>1){pts.splice(i,1);continue;}ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(201,168,76,${Math.sin(p.life*Math.PI)*.85})`;ctx.fill();}
-  })();
-}
-
-</script>
-</body>
+    <script type="module" src="/src/analytics.ts"></script>
+    <script type="module" src="/src/preview.ts"></script>
+  </body>
 </html>
