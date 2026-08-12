@@ -36,3 +36,14 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+      - name: Preview integrity
+        run: npm run qa:preview
+
+      - name: Upload verified build
+        uses: actions/upload-artifact@v4
+        with:
+          name: price-list-10x-dist
+          path: dist
+          if-no-files-found: error
+          retention-days: 7
