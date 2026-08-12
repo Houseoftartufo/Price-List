@@ -40,10 +40,21 @@ jobs:
       - name: Preview integrity
         run: npm run qa:preview
 
-      - name: Upload verified build
+      - name: Build release candidate
+        run: npm run release:candidate
+
+      - name: Upload verified preview build
         uses: actions/upload-artifact@v4
         with:
           name: price-list-10x-dist
           path: dist
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload production candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: price-list-10x-release-candidate
+          path: release-candidate
           if-no-files-found: error
           retention-days: 7
