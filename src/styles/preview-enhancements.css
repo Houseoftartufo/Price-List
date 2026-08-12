@@ -134,7 +134,7 @@
 
 @media (max-width: 820px) {
   .language-switcher {
-    display: flex;
+    display: flex !important;
   }
 
   .language-switcher button {
