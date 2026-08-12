@@ -1,9 +1,9 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 
-const BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vReWkxNwkrVotMwHMpcQRENgkt1cZRmdixrwW10TAHP6Y1In6BZHEbkQu9sI-vikg/pub';
-const PRODUCTS_URL = `${BASE}?gid=86187412&single=true&output=csv`;
-const TRANSLATIONS_URL = `${BASE}?gid=29668113&single=true&output=csv`;
 const SPREADSHEET_ID = '1qqOv6i2UrZZwtbW8awMzawBNs8f9UblGoL25QZf3u94';
+const BASE = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv`;
+const PRODUCTS_URL = `${BASE}&gid=86187412`;
+const TRANSLATIONS_URL = `${BASE}&gid=29668113`;
 const OUTPUT_DIR = new URL('../public/data/', import.meta.url);
 
 const DISCOUNT_POLICY = [
@@ -250,7 +250,7 @@ function parseTranslations(csv, productCount, categoryCount) {
   bundle.nl['cover.sub1'] = `${productCount} Producten · ${categoryCount} Categorieën`;
 
   if (degraded.length) {
-    console.warn(`TRANSLATIONS: published CSV has ${degraded.length} missing cell(s); safe fallback applied. First: ${degraded.slice(0, 8).join(', ')}.`);
+    console.warn(`TRANSLATIONS: direct Sheet export has ${degraded.length} missing cell(s); safe fallback applied. First: ${degraded.slice(0, 8).join(', ')}.`);
   }
 
   return { bundle, degradedCount: degraded.length };
@@ -295,4 +295,4 @@ await Promise.all([
   writeFile(new URL('translations.snapshot.json', OUTPUT_DIR), JSON.stringify(translations), 'utf8'),
 ]);
 
-console.log(`Verified catalogue snapshot: ${products.length} SKUs · ${categoryCount} categories · ${Object.keys(translations.en).length} translation keys · ${degradedCount} published translation fallback(s).`);
+console.log(`Verified catalogue snapshot: ${products.length} SKUs · ${categoryCount} categories · ${Object.keys(translations.en).length} translation keys · ${degradedCount} direct translation fallback(s).`);
