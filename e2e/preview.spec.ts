@@ -36,29 +36,31 @@ test('desktop buyer can find a SKU, price quantity and build a quote', async ({ 
   await page.screenshot({ path: 'qa-screenshots/desktop-buyer.png' });
 });
 
-test('390px mobile keeps languages, buyer controls and horizontal layout safe', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/preview.html?sku=46');
+for (const width of [320, 360, 390, 430]) {
+  test(`${width}px mobile keeps languages, buyer controls and horizontal layout safe`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/preview.html?sku=46');
 
-  await expect(page.locator('[data-locale="en"]')).toBeVisible();
-  await expect(page.locator('[data-locale="fr"]')).toBeVisible();
-  await expect(page.locator('#quote-trigger')).toBeVisible();
-  await expect(page.locator('#catalogue-search')).toBeVisible();
+    await expect(page.locator('[data-locale="en"]')).toBeVisible();
+    await expect(page.locator('[data-locale="fr"]')).toBeVisible();
+    await expect(page.locator('#quote-trigger')).toBeVisible();
+    await expect(page.locator('#catalogue-search')).toBeVisible();
 
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-  expect(overflow).toBeLessThanOrEqual(1);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow).toBeLessThanOrEqual(1);
 
-  const row = page.locator('tr[data-sku="46"]');
-  await expect(row).toBeVisible();
-  const decrement = row.locator('[data-qty-action="decrement"]');
-  const increment = row.locator('[data-qty-action="increment"]');
-  const decrementBox = await decrement.boundingBox();
-  const incrementBox = await increment.boundingBox();
-  expect(decrementBox?.height ?? 0).toBeGreaterThanOrEqual(44);
-  expect(incrementBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+    const row = page.locator('tr[data-sku="46"]');
+    await expect(row).toBeVisible();
+    const decrement = row.locator('[data-qty-action="decrement"]');
+    const increment = row.locator('[data-qty-action="increment"]');
+    const decrementBox = await decrement.boundingBox();
+    const incrementBox = await increment.boundingBox();
+    expect(decrementBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+    expect(incrementBox?.height ?? 0).toBeGreaterThanOrEqual(44);
 
-  await page.locator('[data-locale="fr"]').click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+    await page.locator('[data-locale="fr"]').click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
 
-  await page.screenshot({ path: 'qa-screenshots/mobile-390.png' });
-});
+    await page.screenshot({ path: `qa-screenshots/mobile-${width}.png` });
+  });
+}
