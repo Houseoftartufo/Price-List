@@ -14,7 +14,7 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -42,6 +42,30 @@ jobs:
 
       - name: Build release candidate
         run: npm run release:candidate
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser buyer QA
+        run: npm run test:e2e
+
+      - name: Upload QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: price-list-10x-qa-screenshots
+          path: qa-screenshots
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: price-list-10x-playwright-report
+          path: playwright-report
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Upload verified preview build
         uses: actions/upload-artifact@v4
