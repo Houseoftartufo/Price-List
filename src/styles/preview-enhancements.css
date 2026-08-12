@@ -144,6 +144,11 @@
     padding-inline: 7px;
   }
 
+  .filter-select,
+  .filter-select select {
+    min-width: 0;
+  }
+
   .quote-trigger,
   .category-chip,
   .add-button,
