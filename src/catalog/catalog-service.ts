@@ -30,6 +30,19 @@ function emitCatalogueError(stage: string, error: unknown): void {
   });
 }
 
+function assertContainsBaseline(candidate: Catalogue, baseline: Catalogue): void {
+  const candidateSkus = new Set(candidate.products.map((product) => product.sku));
+  const missing = baseline.products
+    .map((product) => product.sku)
+    .filter((sku) => !candidateSkus.has(sku));
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Catalogue is incomplete versus verified build snapshot: ${missing.length} SKU(s) missing (${missing.slice(0, 12).join(', ')}${missing.length > 12 ? ', …' : ''}).`,
+    );
+  }
+}
+
 function getStorage(): Storage | undefined {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return undefined;
@@ -50,7 +63,7 @@ function cacheVerifiedCatalogue(catalogue: Catalogue): void {
   }
 }
 
-function readStaleCatalogue(): Catalogue | undefined {
+function readStaleCatalogue(baseline?: Catalogue): Catalogue | undefined {
   const storage = getStorage();
   if (!storage) return undefined;
 
@@ -64,11 +77,12 @@ function readStaleCatalogue(): Catalogue | undefined {
       return undefined;
     }
 
-    const stale: Catalogue = {
+    const stale = assertValidCatalogue({
       ...parsed,
       freshness: 'stale',
-    };
-    return assertValidCatalogue(stale);
+    });
+    if (baseline) assertContainsBaseline(stale, baseline);
+    return stale;
   } catch (error) {
     emitCatalogueError('cache-read', error);
     try {
@@ -93,7 +107,7 @@ async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Respons
   }
 }
 
-async function loadLiveCatalogue(): Promise<Catalogue> {
+async function loadLiveCatalogue(baseline?: Catalogue): Promise<Catalogue> {
   const response = await fetchWithTimeout(`${LIVE_PRODUCTS_URL}&t=${Date.now()}`, LIVE_TIMEOUT_MS);
   if (!response.ok) throw new Error(`Live PRODUCTS source returned HTTP ${response.status}.`);
 
@@ -108,7 +122,7 @@ async function loadLiveCatalogue(): Promise<Catalogue> {
 
   const now = new Date();
   const products = rows.map(sourceRowToProduct);
-  const catalogue: Catalogue = {
+  const catalogue = assertValidCatalogue({
     schemaVersion: 1,
     catalogueVersion: versionFromDate(now),
     currency: 'EUR',
@@ -124,9 +138,10 @@ async function loadLiveCatalogue(): Promise<Catalogue> {
       sourceRowCount: products.length,
       categoryCount: new Set(products.map((product) => product.categoryId)).size,
     },
-  };
+  });
 
-  return assertValidCatalogue(catalogue);
+  if (baseline) assertContainsBaseline(catalogue, baseline);
+  return catalogue;
 }
 
 async function loadBuildSnapshot(): Promise<Catalogue> {
@@ -134,41 +149,47 @@ async function loadBuildSnapshot(): Promise<Catalogue> {
   if (!response.ok) throw new Error(`Catalogue fallback snapshot returned HTTP ${response.status}.`);
 
   const parsed = (await response.json()) as Catalogue;
-  const fallback: Catalogue = {
+  return assertValidCatalogue({
     ...parsed,
     source: 'snapshot',
     freshness: 'fallback',
-  };
-  return assertValidCatalogue(fallback);
+  });
 }
 
 export async function loadCatalogue(): Promise<CatalogueLoadResult> {
+  let baseline: Catalogue | undefined;
+  let baselineError: unknown;
   try {
-    const live = await loadLiveCatalogue();
+    baseline = await loadBuildSnapshot();
+  } catch (error) {
+    baselineError = error;
+    emitCatalogueError('baseline-snapshot', error);
+  }
+
+  try {
+    const live = await loadLiveCatalogue(baseline);
     cacheVerifiedCatalogue(live);
     return { catalogue: live };
   } catch (liveError) {
     emitCatalogueError('live-source', liveError);
 
-    const stale = readStaleCatalogue();
+    const stale = readStaleCatalogue(baseline);
     if (stale) {
       return {
         catalogue: stale,
-        warning: 'Live prices could not be refreshed. Showing the most recent verified prices saved on this device.',
+        warning: 'Live prices could not be refreshed completely. Showing the most recent verified prices saved on this device.',
       };
     }
 
-    try {
-      const fallback = await loadBuildSnapshot();
+    if (baseline) {
       return {
-        catalogue: fallback,
-        warning: 'Live prices could not be refreshed. Showing the last build-time verified catalogue snapshot.',
+        catalogue: baseline,
+        warning: 'Live prices could not be refreshed completely. Showing the last build-time verified catalogue snapshot.',
       };
-    } catch (snapshotError) {
-      emitCatalogueError('fallback-snapshot', snapshotError);
-      const liveMessage = liveError instanceof Error ? liveError.message : String(liveError);
-      const fallbackMessage = snapshotError instanceof Error ? snapshotError.message : String(snapshotError);
-      throw new Error(`Catalogue unavailable. Live: ${liveMessage} Fallback: ${fallbackMessage}`);
     }
+
+    const liveMessage = liveError instanceof Error ? liveError.message : String(liveError);
+    const fallbackMessage = baselineError instanceof Error ? baselineError.message : String(baselineError ?? 'unavailable');
+    throw new Error(`Catalogue unavailable. Live: ${liveMessage} Fallback: ${fallbackMessage}`);
   }
 }
