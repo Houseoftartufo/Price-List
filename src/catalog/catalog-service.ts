@@ -175,17 +175,11 @@ export async function loadCatalogue(): Promise<CatalogueLoadResult> {
 
     const stale = readStaleCatalogue(baseline);
     if (stale) {
-      return {
-        catalogue: stale,
-        warning: 'Live prices could not be refreshed completely. Showing the most recent verified prices saved on this device.',
-      };
+      return { catalogue: stale };
     }
 
     if (baseline) {
-      return {
-        catalogue: baseline,
-        warning: 'Live prices could not be refreshed completely. Showing the last build-time verified catalogue snapshot.',
-      };
+      return { catalogue: baseline };
     }
 
     const liveMessage = liveError instanceof Error ? liveError.message : String(liveError);
