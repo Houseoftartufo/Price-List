@@ -84,19 +84,20 @@ Given:
 - `D` = active discount rate.
 
 ```text
-baseCasePrice       = P × U
-discountedUnitPrice = P × (1 − D)
-discountedCasePrice = discountedUnitPrice × U
-subtotal            = discountedCasePrice × Q
-baseSubtotal        = baseCasePrice × Q
-saving               = baseSubtotal − subtotal
+baseUnitPrice       = roundToCents(P)
+discountedUnitPrice = roundToCents(baseUnitPrice × (1 − D))
+baseCasePrice       = roundToCents(baseUnitPrice × U)
+discountedCasePrice = roundToCents(discountedUnitPrice × U)
+subtotal            = roundToCents(discountedCasePrice × Q)
+baseSubtotal        = roundToCents(baseCasePrice × Q)
+saving              = roundToCents(baseSubtotal − subtotal)
 ```
 
 ### Rounding policy
 
-Commercial display values are rounded to 2 decimal places using standard decimal rounding at the presentation boundary.
+The buyer-facing unit price is rounded to cents first. Case price and subtotal are then derived from that rounded unit price.
 
-Internal calculations must use numeric values and should avoid repeatedly rounding intermediate values.
+This is intentional: every number visible in the UI must remain mathematically reproducible from the other visible numbers. A buyer must never see a displayed unit price whose multiplication produces a different displayed case total.
 
 ## Required source headers
 
