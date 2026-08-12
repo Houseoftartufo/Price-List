@@ -71,9 +71,27 @@ function col(index, ...aliases) {
   return undefined;
 }
 
+function normaliseMoneyNumber(value) {
+  const cleaned = String(value).replace(/[€$£\s'’]/g, '').replace(/[^0-9.,+-]/g, '');
+  const comma = cleaned.lastIndexOf(',');
+  const dot = cleaned.lastIndexOf('.');
+  if (comma >= 0 && dot >= 0) {
+    return comma > dot ? cleaned.replaceAll('.', '').replace(',', '.') : cleaned.replaceAll(',', '');
+  }
+  if (comma >= 0) {
+    const decimals = cleaned.length - comma - 1;
+    return decimals === 2 ? cleaned.replace(',', '.') : cleaned.replaceAll(',', '');
+  }
+  if (dot >= 0) {
+    const decimals = cleaned.length - dot - 1;
+    return decimals === 2 ? cleaned : cleaned.replaceAll('.', '');
+  }
+  return cleaned;
+}
+
 function money(value) {
   if (!value) return undefined;
-  const parsed = Number.parseFloat(String(value).replace(/[€$£\s]/g, '').replace(/\.(?=\d{3}(?:\D|$))/g, '').replace(',', '.'));
+  const parsed = Number.parseFloat(normaliseMoneyNumber(value));
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }
 
