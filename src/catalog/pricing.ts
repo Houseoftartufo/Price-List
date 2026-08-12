@@ -14,7 +14,10 @@ export function roundMoney(value: number): number {
     throw new Error(`Cannot round non-finite monetary value: ${value}`);
   }
 
-  return Math.round((value + Number.EPSILON) * 100) / 100;
+  // A tiny cent-scale tolerance neutralizes binary floating-point values such
+  // as 18.524999999999995 so commercial x.xx5 values follow spreadsheet-style
+  // half-up rounding rather than falling one cent below the expected result.
+  return Math.round((value + 1e-9) * 100) / 100;
 }
 
 export function getActiveDiscountTier(
