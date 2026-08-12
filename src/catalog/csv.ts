@@ -97,15 +97,34 @@ export function readCell(
   return value || undefined;
 }
 
+function normaliseMoneyNumber(value: string): string {
+  const cleaned = value.replace(/[€$£\s'’]/g, '').replace(/[^0-9.,+-]/g, '');
+  const comma = cleaned.lastIndexOf(',');
+  const dot = cleaned.lastIndexOf('.');
+
+  if (comma >= 0 && dot >= 0) {
+    if (comma > dot) {
+      return cleaned.replaceAll('.', '').replace(',', '.');
+    }
+    return cleaned.replaceAll(',', '');
+  }
+
+  if (comma >= 0) {
+    const decimals = cleaned.length - comma - 1;
+    return decimals === 2 ? cleaned.replace(',', '.') : cleaned.replaceAll(',', '');
+  }
+
+  if (dot >= 0) {
+    const decimals = cleaned.length - dot - 1;
+    return decimals === 2 ? cleaned : cleaned.replaceAll('.', '');
+  }
+
+  return cleaned;
+}
+
 export function parsePositiveMoney(value: string | undefined): number | undefined {
   if (!value) return undefined;
-
-  const cleaned = value
-    .replace(/[€$£\s]/g, '')
-    .replace(/\.(?=\d{3}(?:\D|$))/g, '')
-    .replace(',', '.');
-
-  const parsed = Number.parseFloat(cleaned);
+  const parsed = Number.parseFloat(normaliseMoneyNumber(value));
   if (!Number.isFinite(parsed) || parsed <= 0) return undefined;
   return parsed;
 }
