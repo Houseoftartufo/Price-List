@@ -13,6 +13,13 @@ const product: Product = {
   currency: 'EUR',
 };
 
+describe('commercial money rounding', () => {
+  it('matches spreadsheet half-up rounding for x.xx5 floating-point values', () => {
+    expect(roundMoney(19.5 * 0.95)).toBe(18.53);
+    expect(roundMoney(10.91 * 0.95)).toBe(10.36);
+  });
+});
+
 describe('wholesale discount policy', () => {
   it.each([
     [1, 0],
