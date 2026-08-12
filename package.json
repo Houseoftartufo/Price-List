@@ -13,7 +13,9 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "qa:preview": "node scripts/qa-preview.mjs",
+    "verify": "npm run typecheck && npm test && npm run build && npm run qa:preview"
   },
   "devDependencies": {
     "typescript": "^7.0.2",
