@@ -2,10 +2,11 @@ import './styles/preview.css';
 
 import { loadCatalogue } from './catalog/catalog-service';
 import { calculatePriceBreakdown, formatEur, roundMoney } from './catalog/pricing';
-import type { Catalogue, Product } from './catalog/types';
+import type { Catalogue, DiscountTier, Product } from './catalog/types';
 import {
   categoryText,
   getInitialLocale,
+  interpolateUi,
   loadTranslations,
   setDocumentLocale,
   sourceText,
@@ -16,6 +17,7 @@ import {
 
 const QUOTE_KEY = 'hot-price-list:quote:v1';
 const WHATSAPP_NUMBER = '32480205715';
+const QUOTE_EMAIL = 'admin@houseoftartufo.com';
 
 interface Filters {
   query: string;
@@ -72,6 +74,7 @@ const resultEl = byId<HTMLElement>('catalogue-result');
 const noticeEl = byId<HTMLElement>('catalogue-notice');
 const emptyEl = byId<HTMLElement>('empty-state');
 const tableEl = byId<HTMLTableElement>('catalogue-table');
+const ladderEl = byId<HTMLElement>('discount-ladder');
 const quoteDialog = byId<HTMLDialogElement>('quote-dialog');
 const quoteLinesEl = byId<HTMLElement>('quote-lines');
 const quoteSummaryEl = byId<HTMLElement>('quote-summary');
@@ -85,17 +88,33 @@ function productBySku(sku: string): Product | undefined {
   return catalogue.products.find((product) => product.sku === sku);
 }
 
+function sortedPolicy(): DiscountTier[] {
+  return [...catalogue.discountPolicy].sort((a, b) => a.minCases - b.minCases);
+}
+
+function nextTier(cases: number): DiscountTier | undefined {
+  return sortedPolicy().find((tier) => tier.minCases > cases);
+}
+
+function tierHint(cases: number): string {
+  const next = nextTier(cases);
+  if (!next) return uiText(locale, 'maxTier');
+  return interpolateUi(locale, 'nextTier', {
+    cases: next.minCases - cases,
+    discount: Math.round(next.discountRate * 100),
+  });
+}
+
 function readPersistedQuote(): void {
   try {
     const raw = window.localStorage.getItem(QUOTE_KEY);
     if (!raw) return;
     const parsed = JSON.parse(raw) as Array<[string, number]>;
     for (const entry of parsed) {
-      const sku = entry[0];
-      const cases = entry[1];
+      const [sku, cases] = entry;
       if (typeof sku === 'string' && Number.isInteger(cases) && cases > 0) {
-        quote.set(sku, cases);
-        quantityBySku.set(sku, cases);
+        quote.set(sku, Math.min(cases, 999));
+        quantityBySku.set(sku, Math.min(cases, 999));
       }
     }
   } catch (error) {
@@ -161,8 +180,10 @@ function applyStaticTranslations(): void {
   });
 
   searchEl.placeholder = uiText(locale, 'searchPlaceholder');
+  searchEl.setAttribute('aria-label', uiText(locale, 'searchLabel'));
   byId<HTMLElement>('catalogue-title').textContent = sourceText(translations, locale, 'nav.slide1');
   byId<HTMLElement>('catalogue-eyebrow').textContent = uiText(locale, 'wholesale');
+  byId<HTMLButtonElement>('quote-close').setAttribute('aria-label', uiText(locale, 'close'));
 
   document.querySelectorAll<HTMLButtonElement>('[data-locale]').forEach((button) => {
     button.setAttribute('aria-pressed', String(button.dataset.locale === locale));
@@ -184,13 +205,27 @@ function updateSourceStatus(): void {
   labelEl.textContent = `${uiText(locale, key)} · ${verifiedDate}`;
 
   noticeEl.hidden = !sourceWarning;
-  noticeEl.textContent = sourceWarning ?? '';
+  noticeEl.textContent = sourceWarning ? `${uiText(locale, 'sourceNotice')} ${sourceWarning}` : '';
 }
 
 function renderMetrics(): void {
   const categories = new Set(catalogue.products.map((product) => product.categoryId));
   byId<HTMLElement>('metric-products').textContent = String(catalogue.products.length);
   byId<HTMLElement>('metric-categories').textContent = String(categories.size);
+}
+
+function renderDiscountLadder(): void {
+  ladderEl.innerHTML = sortedPolicy()
+    .map((tier) => {
+      const discount = Math.round(tier.discountRate * 100);
+      const label = interpolateUi(locale, 'fromCases', { cases: tier.minCases });
+      const value = discount === 0 ? uiText(locale, 'noDiscount') : `−${discount}%`;
+      return `<div class="ladder-tier" data-best="${String(discount === 25)}">
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(value)}</strong>
+      </div>`;
+    })
+    .join('');
 }
 
 function renderCategories(): void {
@@ -238,7 +273,7 @@ function productRow(product: Product): string {
     .filter(Boolean)
     .join(' · ');
 
-  return `<tr data-sku="${escapeHtml(product.sku)}">
+  return `<tr data-sku="${escapeHtml(product.sku)}" data-in-quote="${String(inQuote)}">
     <td data-label="${escapeHtml(uiText(locale, 'product'))}">
       <div class="product-cell">
         <span class="sku-badge">${escapeHtml(product.sku)}</span>
@@ -249,7 +284,7 @@ function productRow(product: Product): string {
       </div>
     </td>
     <td data-label="${escapeHtml(uiText(locale, 'size'))}">${escapeHtml(product.sizeLabel)}</td>
-    <td data-label="${escapeHtml(uiText(locale, 'casePack'))}">${product.unitsPerCase}</td>
+    <td data-label="${escapeHtml(uiText(locale, 'casePack'))}">${product.unitsPerCase} <small>${escapeHtml(uiText(locale, 'units'))}</small></td>
     <td data-label="${escapeHtml(uiText(locale, 'basePrice'))}" class="money base-price">
       ${escapeHtml(money(base.baseUnitPrice))}
       <small class="product-meta">${escapeHtml(money(base.baseCasePrice))} ${escapeHtml(uiText(locale, 'perCase'))}</small>
@@ -260,19 +295,21 @@ function productRow(product: Product): string {
     </td>
     <td data-label="${escapeHtml(uiText(locale, 'cases'))}">
       <div class="quantity-control">
-        <button type="button" data-qty-action="decrement" data-sku="${escapeHtml(product.sku)}" aria-label="Decrease cases">−</button>
-        <input type="number" min="1" step="1" inputmode="numeric" value="${cases}" data-qty-input="${escapeHtml(product.sku)}" aria-label="${escapeHtml(uiText(locale, 'cases'))}" />
-        <button type="button" data-qty-action="increment" data-sku="${escapeHtml(product.sku)}" aria-label="Increase cases">+</button>
+        <button type="button" data-qty-action="decrement" data-sku="${escapeHtml(product.sku)}" aria-label="${escapeHtml(uiText(locale, 'decreaseCases'))}">−</button>
+        <input type="number" min="1" max="999" step="1" inputmode="numeric" value="${cases}" data-qty-input="${escapeHtml(product.sku)}" aria-label="${escapeHtml(uiText(locale, 'cases'))}" />
+        <button type="button" data-qty-action="increment" data-sku="${escapeHtml(product.sku)}" aria-label="${escapeHtml(uiText(locale, 'increaseCases'))}">+</button>
       </div>
     </td>
     <td data-label="${escapeHtml(uiText(locale, 'yourPrice'))}">
       <div class="dynamic-price">
         <strong>${escapeHtml(money(current.unitPrice))}</strong>
         <small>${escapeHtml(money(current.casePrice))} ${escapeHtml(uiText(locale, 'perCase'))}</small>
+        <span class="tier-hint">${escapeHtml(tierHint(cases))}</span>
         ${current.discountPercent > 0 ? `<span class="discount-pill">−${current.discountPercent}% ${escapeHtml(uiText(locale, 'discountTier'))}</span>` : ''}
       </div>
     </td>
-    <td>
+    <td data-label="${escapeHtml(uiText(locale, 'subtotal'))}" class="row-action-cell">
+      <div class="row-subtotal">${escapeHtml(money(current.subtotal))}</div>
       <button class="add-button" type="button" data-add-quote="${escapeHtml(product.sku)}" data-in-quote="${String(inQuote)}">
         ${escapeHtml(uiText(locale, inQuote ? 'updateQuote' : 'addToQuote'))}
       </button>
@@ -290,8 +327,11 @@ function renderProducts(): void {
 
 function updateQuantity(sku: string, next: number): void {
   if (!Number.isInteger(next) || next < 1) return;
-  quantityBySku.set(sku, Math.min(next, 999));
+  const safe = Math.min(next, 999);
+  quantityBySku.set(sku, safe);
+  if (quote.has(sku)) quote.set(sku, safe);
   renderProducts();
+  if (quote.has(sku)) renderQuote();
 }
 
 function quoteText(): string {
@@ -300,7 +340,7 @@ function quoteText(): string {
       const product = productBySku(sku);
       if (!product) return undefined;
       const price = calculatePriceBreakdown(product, cases, catalogue.discountPolicy);
-      return `• SKU ${product.sku} — ${product.name} — ${cases} ${uiText(locale, 'cases').toLowerCase()} — ${product.unitsPerCase} units/case — ${money(price.unitPrice)}${uiText(locale, 'perUnit')} — ${money(price.subtotal)}`;
+      return `• SKU ${product.sku} — ${product.name} — ${cases} ${uiText(locale, 'cases').toLowerCase()} — ${product.unitsPerCase} ${uiText(locale, 'units')}/${uiText(locale, 'perCase').replace('/ ', '')} — ${money(price.unitPrice)}${uiText(locale, 'perUnit')} — ${money(price.subtotal)}`;
     })
     .filter((line): line is string => Boolean(line));
 
@@ -310,7 +350,7 @@ function quoteText(): string {
   }, 0);
 
   return [
-    'House of Tartufo — Wholesale Quote Request',
+    uiText(locale, 'quoteIntro'),
     '',
     ...lines,
     '',
@@ -343,10 +383,7 @@ function renderQuote(): void {
   const entries = [...quote.entries()];
   const countEl = byId<HTMLElement>('quote-count');
   countEl.textContent = String(entries.length);
-  byId<HTMLButtonElement>('quote-trigger').setAttribute(
-    'aria-label',
-    `${uiText(locale, 'quote')}: ${entries.length}`,
-  );
+  byId<HTMLButtonElement>('quote-trigger').setAttribute('aria-label', `${uiText(locale, 'openQuote')}: ${entries.length}`);
 
   if (entries.length === 0) {
     quoteLinesEl.innerHTML = `<p class="quote-empty">${escapeHtml(uiText(locale, 'quoteEmpty'))}</p>`;
@@ -368,7 +405,7 @@ function renderQuote(): void {
       return `<article class="quote-line">
         <div>
           <div class="quote-line-name">${escapeHtml(product.name)}</div>
-          <div class="quote-line-meta">SKU ${escapeHtml(product.sku)} · ${cases} ${escapeHtml(uiText(locale, 'cases').toLowerCase())} · ${product.unitsPerCase}/case · ${escapeHtml(money(price.unitPrice))}${escapeHtml(uiText(locale, 'perUnit'))}</div>
+          <div class="quote-line-meta">SKU ${escapeHtml(product.sku)} · ${cases} ${escapeHtml(uiText(locale, 'cases').toLowerCase())} · ${product.unitsPerCase} ${escapeHtml(uiText(locale, 'units'))}/${escapeHtml(uiText(locale, 'perCase').replace('/ ', ''))} · ${escapeHtml(money(price.unitPrice))}${escapeHtml(uiText(locale, 'perUnit'))}</div>
           <button type="button" class="remove-line" data-remove-quote="${escapeHtml(product.sku)}">${escapeHtml(uiText(locale, 'remove'))}</button>
         </div>
         <div class="quote-line-price">
@@ -383,7 +420,10 @@ function renderQuote(): void {
   byId<HTMLElement>('quote-saving').textContent = money(roundMoney(saving));
   quoteSummaryEl.hidden = false;
   quoteActionsEl.hidden = false;
-  byId<HTMLAnchorElement>('whatsapp-order').href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(quoteText())}`;
+
+  const message = quoteText();
+  byId<HTMLAnchorElement>('whatsapp-order').href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  byId<HTMLAnchorElement>('email-order').href = `mailto:${QUOTE_EMAIL}?subject=${encodeURIComponent(`House of Tartufo — ${uiText(locale, 'quoteTitle')}`)}&body=${encodeURIComponent(message)}`;
   persistQuote();
 }
 
@@ -391,6 +431,7 @@ function renderAll(): void {
   applyStaticTranslations();
   updateSourceStatus();
   renderMetrics();
+  renderDiscountLadder();
   renderCategories();
   renderProducts();
   renderQuote();
@@ -404,6 +445,15 @@ function resetFilters(): void {
   syncFiltersToUrl();
   renderCategories();
   renderProducts();
+}
+
+function focusDirectSku(): void {
+  const directSku = new URLSearchParams(window.location.search).get('sku')?.trim();
+  if (!directSku) return;
+  const row = rowsEl.querySelector<HTMLElement>(`tr[data-sku="${CSS.escape(directSku)}"]`);
+  if (!row) return;
+  row.classList.add('direct-hit');
+  window.setTimeout(() => row.scrollIntoView({ block: 'center', behavior: 'smooth' }), 0);
 }
 
 function bindEvents(): void {
@@ -448,7 +498,10 @@ function bindEvents(): void {
     const quantityButton = target.closest<HTMLButtonElement>('[data-qty-action]');
     if (quantityButton?.dataset.sku && quantityButton.dataset.qtyAction) {
       const current = quantityBySku.get(quantityButton.dataset.sku) ?? 1;
-      updateQuantity(quantityButton.dataset.sku, quantityButton.dataset.qtyAction === 'increment' ? current + 1 : Math.max(1, current - 1));
+      updateQuantity(
+        quantityButton.dataset.sku,
+        quantityButton.dataset.qtyAction === 'increment' ? current + 1 : Math.max(1, current - 1),
+      );
       return;
     }
 
@@ -539,6 +592,7 @@ async function initialise(): Promise<void> {
     readPersistedQuote();
     bindEvents();
     renderAll();
+    focusDirectSku();
   } catch (error) {
     console.error('[HOT Price List] Preview initialization failed.', error);
     rowsEl.innerHTML = `<tr class="loading-row"><td colspan="8">Catalogue unavailable. Please try again later.</td></tr>`;
