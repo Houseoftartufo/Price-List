@@ -36,6 +36,13 @@ export interface DiscountTier {
   discountRate: number;
 }
 
+export interface CatalogueSourceMeta {
+  spreadsheetId: string;
+  sheet: string;
+  sourceRowCount: number;
+  categoryCount: number;
+}
+
 export interface Catalogue {
   schemaVersion: 1;
   catalogueVersion: string;
@@ -46,6 +53,7 @@ export interface Catalogue {
   freshness: CatalogueFreshness;
   products: Product[];
   discountPolicy: DiscountTier[];
+  sourceMeta?: CatalogueSourceMeta;
 }
 
 export interface QuoteLine {
