@@ -15,8 +15,9 @@ Legend: `DONE` · `IN PROGRESS` · `NEXT` · `BLOCKED`
 | Record confirmed P0/P1 risks | DONE |
 | Add typed toolchain without replacing current UI | DONE |
 | Add automated quality workflow | DONE |
-| Create current SKU reconciliation dataset | NEXT |
-| Create visual regression baseline set | NEXT |
+| Identify exact live Google Sheet source | DONE |
+| Record source SKU/category baseline | DONE — 145 SKUs / 8 categories |
+| Create visual regression baseline set | IN PROGRESS |
 
 ## Sprint 1 — Data & Pricing Core
 
@@ -32,39 +33,81 @@ Legend: `DONE` · `IN PROGRESS` · `NEXT` · `BLOCKED`
 | Pricing unit tests | DONE |
 | Validation tests | DONE |
 | Price-source parser tests | DONE |
-| Inspect exact live Sheet schema | IN PROGRESS |
-| Reconcile all current HTML SKUs against source | NEXT |
-| Normalise `unitsPerCase` for every SKU | NEXT |
-| Build verified catalogue snapshot | NEXT |
-| Add freshness/fallback service | NEXT |
-| Connect current preview UI to new verified engine | NEXT |
-| Remove independent hardcoded `box-price` authority | NEXT |
+| Inspect exact live Sheet schema | DONE |
+| Parse source category separator rows | DONE |
+| Normalize `Qty/Box` for all source SKUs | DONE |
+| Reconcile source base case price across all SKUs | DONE — 0 issues |
+| Reconcile all five source discount columns | DONE — 0 issues |
+| Build-time verified catalogue snapshot generator | DONE |
+| Build-time verified translation snapshot generator | DONE |
+| Derive product/category count instead of hardcoding | DONE |
+| Add live freshness/stale/fallback catalogue service | IN PROGRESS |
+| Reconcile legacy HTML SKUs/prices against source | IN PROGRESS |
+| Connect new preview UI to verified engine | IN PROGRESS |
+| Remove independent hardcoded `box-price` authority from replacement UI | IN PROGRESS |
 
 ## Sprint 2 — i18n Rebuild
 
-Status: NEXT after Sprint 1 data reconciliation.
+| Item | Status |
+| --- | --- |
+| Audit source translation sheet | DONE |
+| Verify duplicate source keys | DONE — 0 duplicates |
+| Verify EN/IT/FR/NL coverage | DONE — 107/107 complete |
+| Override wrong hardcoded catalogue count | DONE in generated snapshot |
+| Build locale loader/state | IN PROGRESS |
+| Migrate UI to semantic translation usage | IN PROGRESS |
+| Remove legacy key collisions from replacement UI | IN PROGRESS |
+| Persist locale and update document language | NEXT |
 
-Priority fixes already identified:
+Known legacy issues being removed rather than preserved:
 
 - Natural Line group-key inversion;
 - duplicated `cat07.group4` semantics;
 - Pure Cream / Carpaccio / Minced group collisions;
-- category-count consistency;
-- semantic ID model for categories/groups/products.
+- hardcoded 9-category cover statement.
 
-## Sprint 3+ — Product Transformation
+## Sprint 3 — Catalogue Information Architecture
 
-Scheduled order:
+| Item | Status |
+| --- | --- |
+| Separate new preview from legacy `index.html` | IN PROGRESS |
+| Premium compact hero | IN PROGRESS |
+| Search by SKU/name/format | IN PROGRESS |
+| Persistent category navigation | IN PROGRESS |
+| Line/truffle filters | IN PROGRESS |
+| Desktop data table | IN PROGRESS |
+| Mobile product-card layout | IN PROGRESS |
+| Deep-link product/category state | NEXT |
 
-1. Catalogue information architecture
-2. Search + filters + deep links
-3. Dynamic wholesale pricing UI
-4. Quote basket and conversion engine
-5. Mobile + accessibility hardening
-6. Performance optimisation
-7. SEO/share/trust metadata
-8. Analytics funnel
-9. Full QA/CI/release hardening
+## Sprint 4 — Dynamic Wholesale Pricing UX
+
+| Item | Status |
+| --- | --- |
+| Quantity selector per product | IN PROGRESS |
+| Active tier indicator | IN PROGRESS |
+| Derived unit/case/subtotal/saving | IN PROGRESS |
+| Tier ladder 1/2/3/5/10/15 | NEXT |
+
+## Sprint 5 — Quote & Conversion
+
+| Item | Status |
+| --- | --- |
+| Add to Quote | IN PROGRESS |
+| Persistent quote basket | IN PROGRESS |
+| Quote recalculation from verified catalogue | IN PROGRESS |
+| WhatsApp request generation | IN PROGRESS |
+| Copy order | IN PROGRESS |
+| Email request | NEXT |
+| Printable/exportable quote | NEXT |
+
+## Sprint 6+ — Hardening order
+
+1. Mobile + accessibility QA
+2. Performance optimization
+3. SEO/share/trust metadata
+4. Analytics funnel
+5. Visual regression + E2E
+6. Release hardening and production approval
 
 ## Merge rule
 
