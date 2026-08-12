@@ -222,16 +222,25 @@ function parseTranslations(csv, productCount, categoryCount) {
 
   const bundle = { en: {}, it: {}, fr: {}, nl: {} };
   const seen = new Set();
+  const degraded = [];
+
   for (const row of rows.slice(headerRow + 1)) {
     const key = row[0]?.trim();
     if (!key || key.startsWith('────') || !key.includes('.')) continue;
     if (seen.has(key)) throw new Error(`TRANSLATIONS: duplicate key ${key}.`);
     seen.add(key);
 
-    const values = { en: row[1]?.trim(), it: row[2]?.trim(), fr: row[3]?.trim(), nl: row[4]?.trim() };
+    const english = row[1]?.trim() || key;
+    const values = {
+      en: english,
+      it: row[2]?.trim() || english,
+      fr: row[3]?.trim() || english,
+      nl: row[4]?.trim() || english,
+    };
+
     for (const [language, value] of Object.entries(values)) {
-      if (!value) throw new Error(`TRANSLATIONS: ${key} is missing ${language}.`);
       bundle[language][key] = value;
+      if (!row[{ en: 1, it: 2, fr: 3, nl: 4 }[language]]?.trim()) degraded.push(`${key}:${language}`);
     }
   }
 
@@ -239,7 +248,12 @@ function parseTranslations(csv, productCount, categoryCount) {
   bundle.it['cover.sub1'] = `${productCount} Prodotti · ${categoryCount} Categorie`;
   bundle.fr['cover.sub1'] = `${productCount} Produits · ${categoryCount} Catégories`;
   bundle.nl['cover.sub1'] = `${productCount} Producten · ${categoryCount} Categorieën`;
-  return bundle;
+
+  if (degraded.length) {
+    console.warn(`TRANSLATIONS: published CSV has ${degraded.length} missing cell(s); safe fallback applied. First: ${degraded.slice(0, 8).join(', ')}.`);
+  }
+
+  return { bundle, degradedCount: degraded.length };
 }
 
 async function fetchCsv(url, label) {
@@ -255,7 +269,7 @@ const [productCsv, translationCsv] = await Promise.all([
 
 const products = parseProducts(productCsv);
 const categoryCount = new Set(products.map((product) => product.categoryId)).size;
-const translations = parseTranslations(translationCsv, products.length, categoryCount);
+const { bundle: translations, degradedCount } = parseTranslations(translationCsv, products.length, categoryCount);
 const now = new Date().toISOString();
 const catalogue = {
   schemaVersion: 1,
@@ -281,4 +295,4 @@ await Promise.all([
   writeFile(new URL('translations.snapshot.json', OUTPUT_DIR), JSON.stringify(translations), 'utf8'),
 ]);
 
-console.log(`Verified catalogue snapshot: ${products.length} SKUs · ${categoryCount} categories · ${Object.keys(translations.en).length} translation keys.`);
+console.log(`Verified catalogue snapshot: ${products.length} SKUs · ${categoryCount} categories · ${Object.keys(translations.en).length} translation keys · ${degradedCount} published translation fallback(s).`);
