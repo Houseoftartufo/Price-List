@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "qa:preview": "node scripts/qa-preview.mjs",
-    "verify": "npm run typecheck && npm test && npm run build && npm run qa:preview"
+    "release:candidate": "node scripts/create-release-candidate.mjs",
+    "verify": "npm run typecheck && npm test && npm run build && npm run qa:preview && npm run release:candidate"
   },
   "devDependencies": {
     "typescript": "^7.0.2",
