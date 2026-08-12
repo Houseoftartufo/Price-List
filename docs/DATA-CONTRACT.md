@@ -1,18 +1,77 @@
 # Catalogue Data Contract
 
-Status: Sprint 1 / P0  
+Status: Sprint 1 / P0 — VERIFIED AGAINST LIVE SOURCE  
 Purpose: define the only model allowed to reach pricing, UI and quote flows.
+
+## Verified commercial source
+
+Google Sheet: `HOT_PriceList_DataSheet_2026`  
+Spreadsheet ID: `1qqOv6i2UrZZwtbW8awMzawBNs8f9UblGoL25QZf3u94`
+
+Tabs used by the catalogue:
+
+- `PRODUCTS` — commercial product and pricing source;
+- `TRANSLATIONS` — EN / IT / FR / NL catalogue copy;
+- `HOW TO USE` — operational documentation only.
+
+Verified source state on 2026-08-12:
+
+- 145 product SKUs;
+- 8 product categories;
+- 107 translation keys;
+- 100% translation coverage for EN / IT / FR / NL;
+- zero duplicate translation keys;
+- zero mathematical mismatches across base case price and all five discount check columns.
 
 ## Principles
 
 - Product code/SKU is the stable primary key.
-- Prices are numeric values in EUR, never preformatted strings.
-- `casePrice` is derived from `baseUnitPrice * unitsPerCase`; it is not an independent source field.
-- Tier prices are derived from the central discount policy; they are not copied into product rows.
-- Missing or malformed commercial fields must fail validation.
-- Unknown source columns must be ignored safely.
-- Source fields are mapped by header name/alias, never by fixed column number.
+- Prices are numeric values in EUR, never preformatted strings inside the application.
+- `baseUnitPrice` is the only authoritative monetary product input.
+- `unitsPerCase` is authoritative packaging data.
+- Case prices are derived from unit price × units per case.
+- Tier prices are derived from the central discount policy.
+- Existing source `€/box` and tier-price columns are treated as reconciliation/check columns, not independent authorities.
+- Missing or malformed commercial fields fail validation.
+- Source fields are mapped by normalized header names/aliases, never by fixed column number.
+- Category identity is derived from the source section separator preceding each product row.
+- Product groups are application taxonomy/enrichment and are not required source-sheet columns.
 - Every catalogue payload carries version/freshness metadata.
+- No invalid live payload may replace a previously verified catalogue.
+
+## Exact verified PRODUCTS source schema
+
+The current `PRODUCTS` sheet header is:
+
+```text
+Code
+Product Name
+Shelf Life
+Weight/Vol
+Qty/Box
+€/unit (base)
+€/box (base)
+−5%/unit
+−10%/unit
+−15%/unit
+−20%/unit
+−25%/unit (Best)
+```
+
+Category separator rows are currently:
+
+```text
+── SAUCES & CONDIMENTS
+── OILS
+── BUTTERS
+── PURE CREAMS & CARPACCIO
+── BRINE & WHOLE TRUFFLES
+── SALTS & HONEY
+── PASTA, RICE & MEALS
+── NATURAL LINE
+```
+
+A product row cannot be accepted until a recognized section separator has established its category.
 
 ## Canonical Product
 
@@ -36,6 +95,8 @@ export interface Product {
 }
 ```
 
+`groupId` is initially allowed to equal `categoryId` during migration. It will be enriched in the catalogue taxonomy sprint without changing SKU identity or pricing.
+
 ## Canonical Catalogue
 
 ```ts
@@ -49,12 +110,16 @@ export interface Catalogue {
   freshness: 'fresh' | 'stale' | 'fallback';
   products: Product[];
   discountPolicy: DiscountTier[];
+  sourceMeta?: {
+    spreadsheetId: string;
+    sheet: string;
+    sourceRowCount: number;
+    categoryCount: number;
+  };
 }
 ```
 
 ## Discount Policy
-
-Current commercial policy:
 
 ```ts
 export interface DiscountTier {
@@ -97,56 +162,54 @@ saving              = roundToCents(baseSubtotal − subtotal)
 
 The buyer-facing unit price is rounded to cents first. Case price and subtotal are then derived from that rounded unit price.
 
-This is intentional: every number visible in the UI must remain mathematically reproducible from the other visible numbers. A buyer must never see a displayed unit price whose multiplication produces a different displayed case total.
+This is intentional: every number visible in the UI must remain mathematically reproducible from the other visible numbers. A buyer must never see a displayed unit price whose multiplication produces a contradictory displayed case total.
 
-## Required source headers
+The Google Sheet's existing base-case and discount columns remain useful as source-integrity checks. A build fails if those source check values cease to match their deterministic formula.
 
-The adapter must resolve fields by normalised headers and aliases.
+## Packaging verification
 
-Minimum required source concepts:
+`Qty/Box` was verified across the complete source and is not assumed to be 12.
 
-| Canonical field | Accepted header examples |
-| --- | --- |
-| `sku` | `Code`, `SKU`, `Product Code` |
-| `name` | `Product`, `Product Name`, `Name` |
-| `baseUnitPrice` | `Unit Price`, `Price / Unit`, `€/unit`, `Standard Price` |
-| `unitsPerCase` | `Units / Box`, `Units per Case`, `Case Qty`, `Box Qty` |
-| `sizeLabel` | `Size`, `Format`, `Weight` |
-| `categoryId` | `Category`, `Category ID` |
-| `groupId` | `Group`, `Product Group`, `Group ID` |
-
-Optional aliases may be expanded only in the adapter. The rest of the application must never know spreadsheet column positions.
+Known examples include 1, 4, 6, 12 and 24 units per case. The UI and pricing engine must therefore always consume `unitsPerCase` per SKU rather than applying a global box quantity.
 
 ## Validation rules
 
 A product is invalid when any of the following is true:
 
-- SKU is empty;
+- SKU is empty or non-product content is presented as a SKU;
 - duplicate SKU exists;
+- product appears before a recognized source category section;
 - base unit price is non-numeric, zero or negative;
 - units per case is not a positive integer;
-- category/group is missing;
 - required name or size field is missing;
 - currency is not EUR for this catalogue version.
 
-Catalogue-level validation must additionally reject:
+Catalogue-level validation additionally rejects:
 
-- missing metadata;
+- missing required metadata;
 - duplicate discount tiers;
 - non-monotonic discount tiers;
 - discount rates below 0 or >= 1;
 - empty product collection.
 
+Source reconciliation additionally rejects:
+
+- source `€/box (base)` that differs from `baseUnitPrice × Qty/Box`;
+- any source discount-unit value that differs from the central discount policy after cent rounding.
+
 ## Freshness states
 
 ### `fresh`
-Live commercial source was fetched, parsed and validated successfully during the current freshness window.
+
+The live commercial source was fetched, parsed, reconciled and validated successfully during the current session.
 
 ### `stale`
-A previously validated live payload is being used beyond the normal freshness window but is still inside the allowed stale window.
+
+A previously verified client-side catalogue is being used because the live source could not be refreshed. The UI must show this state and the verification timestamp.
 
 ### `fallback`
-The live source failed and the application is serving the last committed/verified snapshot.
+
+The live source and acceptable cached source are unavailable, so the application serves the last build-time verified snapshot.
 
 The UI must never hide `stale` or `fallback` state.
 
@@ -161,31 +224,32 @@ catch (error) {}
 Required behaviour:
 
 1. preserve the last known verified catalogue;
-2. log a structured error;
-3. expose catalogue freshness state;
+2. emit a structured diagnostic error;
+3. expose catalogue freshness state to the UI;
 4. prevent invalid new values from replacing verified data;
-5. allow the buyer to continue only with clearly identified verified fallback data.
+5. continue only with clearly identified verified stale/fallback data.
 
-## i18n separation
+## Internationalisation separation
 
-Product commercial identity and translation strings are separate concerns.
+Commercial product identity and translation strings are separate concerns.
 
-Stable data:
+Stable data example:
 
 ```text
 categoryId: sauces-condiments
-groupId: black-truffle-sauces
 sku: 1
 ```
 
-Presentation translation:
+Presentation translation example:
 
 ```text
-category.sauces-condiments.title
+nav.slide2
 product.1.name
 ```
 
-No translation key may be reused to represent two different commercial entities.
+No translation key may represent two different UI/commercial concepts in the new UI. The source translation sheet is validated for duplicate keys and complete EN/IT/FR/NL coverage during the snapshot build.
+
+Product names remain the commercial source names during the initial migration; localized product-name enrichment may be introduced later without changing SKU identity.
 
 ## Quote line contract
 
@@ -196,10 +260,16 @@ export interface QuoteLine {
 }
 ```
 
-Price values are always recalculated from the current verified catalogue and pricing policy. The quote basket must not persist stale calculated prices as authoritative values.
+Price values are always recalculated from the currently verified catalogue and pricing policy. The quote basket must not persist calculated prices as authoritative values.
 
 ## Migration rule from current HTML
 
-During migration, current HTML prices are treated only as a bootstrap snapshot for reconciliation. After Sprint 1 migration is complete, HTML must not contain an independent authoritative price copy.
+The legacy `index.html` remains an untouched visual baseline on the development branch while the new preview is built separately.
 
-Before the new engine replaces current behaviour, every SKU must be reconciled against the existing catalogue and commercial source with a generated discrepancy report.
+Legacy HTML prices are comparison data only. They are not allowed to become an independent authority in the new catalogue.
+
+Before production replacement:
+
+- every legacy-visible SKU must be reconciled against the verified 145-SKU source;
+- legacy case-price discrepancies must be documented and eliminated in the new UI;
+- the new preview must use only the canonical catalogue pipeline.
