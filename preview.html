@@ -9,6 +9,8 @@
       content="House of Tartufo wholesale catalogue: verified B2B prices, volume discounts and quote requests."
     />
     <meta name="robots" content="noindex,nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <title>House of Tartufo — Wholesale Catalogue 10x Preview</title>
   </head>
   <body>
@@ -58,6 +60,15 @@
 
           <a class="primary-cta" href="#catalogue" data-ui="browse">Browse catalogue</a>
         </div>
+      </section>
+
+      <section class="pricing-band" aria-labelledby="volume-pricing-title">
+        <div class="pricing-band-copy">
+          <p class="eyebrow" data-ui="volumePricing">Volume pricing</p>
+          <h2 id="volume-pricing-title" data-ui="volumePricing">Volume pricing</h2>
+          <p data-ui="volumePricingBody">Discounts apply per product according to the number of cases ordered.</p>
+        </div>
+        <div class="discount-ladder" id="discount-ladder" aria-label="Volume discount tiers"></div>
       </section>
 
       <section class="catalogue-shell" id="catalogue" aria-labelledby="catalogue-title">
@@ -124,7 +135,7 @@
                 <th scope="col" data-ui="bestPrice">Best price</th>
                 <th scope="col" data-ui="cases">Cases</th>
                 <th scope="col" data-ui="yourPrice">Your price</th>
-                <th scope="col"><span class="sr-only">Action</span></th>
+                <th scope="col" data-ui="subtotal">Subtotal</th>
               </tr>
             </thead>
             <tbody id="product-rows">
@@ -174,6 +185,7 @@
           <a class="primary-button" id="whatsapp-order" href="#" target="_blank" rel="noopener" data-ui="whatsapp">
             Send on WhatsApp
           </a>
+          <a class="secondary-button" id="email-order" href="#" data-ui="email">Send by email</a>
           <button class="text-button" id="clear-quote" type="button" data-ui="clearQuote">Clear quote</button>
         </div>
       </div>
