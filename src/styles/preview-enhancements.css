@@ -253,7 +253,7 @@
 
 @media (max-width: 340px) {
   .brand-words {
-    display: none;
+    display: none !important;
   }
 
   .site-header {
