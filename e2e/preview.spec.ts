@@ -27,12 +27,12 @@ test('desktop buyer can find a SKU, price quantity and build a quote', async ({ 
   await expect(page.locator('#quote-lines')).toContainText('SKU 29');
   await expect(page.locator('#whatsapp-order')).toHaveAttribute('href', /wa\.me\/32480205715/);
   await expect(page.locator('#email-order')).toHaveAttribute('href', /^mailto:/);
+  await page.locator('#quote-close').click();
 
   await page.locator('[data-locale="it"]').click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'it');
-  await expect(page.locator('#quote-title')).toContainText('preventivo', { ignoreCase: true });
+  await expect(page.locator('#quote-trigger')).toContainText(/preventivo/i);
 
-  await page.locator('#quote-close').click();
   await page.screenshot({ path: 'qa-screenshots/desktop-buyer.png' });
 });
 
