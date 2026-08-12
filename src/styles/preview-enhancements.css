@@ -251,6 +251,20 @@
   }
 }
 
+@media (max-width: 340px) {
+  .brand-words {
+    display: none;
+  }
+
+  .site-header {
+    gap: 6px;
+  }
+
+  .header-actions {
+    gap: 5px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .catalogue-table tbody tr.direct-hit {
     animation: none;
