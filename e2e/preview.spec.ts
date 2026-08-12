@@ -3,6 +3,25 @@ import { expect, test } from '@playwright/test';
 
 mkdirSync('qa-screenshots', { recursive: true });
 
+test('production homepage serves the verified buyer catalogue', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/?sku=29');
+
+  await expect(page.locator('#metric-products')).toHaveText('145');
+  await expect(page.locator('#metric-categories')).toHaveText('8');
+  await expect(page.locator('tr[data-sku="29"]')).toBeVisible();
+  await expect(page.locator('#quote-trigger')).toBeVisible();
+
+  const robots = page.locator('meta[name="robots"]');
+  await expect(robots).toHaveAttribute('content', 'index,follow');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    'https://houseoftartufo-price-list.vercel.app/',
+  );
+
+  await page.screenshot({ path: 'qa-screenshots/production-homepage.png' });
+});
+
 test('desktop buyer can find a SKU, price quantity and build a quote', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/preview.html?sku=29');
