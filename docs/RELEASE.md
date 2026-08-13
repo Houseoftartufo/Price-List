@@ -105,3 +105,5 @@ Until Vercel Git preview deployments are enabled for non-production branches, Gi
 PR #1 was merged to `main` after explicit go-live approval and a fully green Quality Gate on release head `4a1f3859343a864f729fd6e942f661b98771d752`. Merge commit: `29edc44500f1d5f88b048ecff5ac03291f63eb13`.
 
 This documentation-only follow-up commit was made to retrigger the connected Vercel Git production webhook after the merge itself did not immediately register a new deployment. It does not alter application code, pricing, catalogue data, or buyer behaviour.
+
+Git integration was reconnected successfully on 2026-08-13. This documentation-only commit intentionally retriggers the Vercel production deployment from the current `main` without changing application behaviour.
