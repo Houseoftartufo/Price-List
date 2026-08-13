@@ -1,0 +1,84 @@
+name: Quality Gate
+
+on:
+  push:
+    branches:
+      - codex/price-list-10x
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Preview integrity
+        run: npm run qa:preview
+
+      - name: Build release candidate
+        run: npm run release:candidate
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser buyer QA
+        run: npm run test:e2e
+
+      - name: Upload QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: price-list-10x-qa-screenshots
+          path: qa-screenshots
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: price-list-10x-playwright-report
+          path: playwright-report
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload verified preview build
+        uses: actions/upload-artifact@v4
+        with:
+          name: price-list-10x-dist
+          path: dist
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload production candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: price-list-10x-release-candidate
+          path: release-candidate
+          if-no-files-found: error
+          retention-days: 7
