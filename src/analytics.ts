@@ -1,3 +1,5 @@
+import './product-details';
+
 type AnalyticsPayload = Record<string, string | number | boolean | undefined>;
 
 declare global {
@@ -42,6 +44,9 @@ function bind(): void {
 
     const category = target.closest<HTMLElement>('[data-category]')?.dataset.category;
     if (category) emit('catalogue_category', { category });
+
+    const detailRow = target.closest<HTMLElement>('.product-cell[data-product-details-ready="true"]')?.closest<HTMLTableRowElement>('tr[data-sku]');
+    if (detailRow?.dataset.sku) emit('product_detail_open', { sku: detailRow.dataset.sku });
 
     const quoteSku = target.closest<HTMLElement>('[data-add-quote]')?.dataset.addQuote;
     if (quoteSku) emit('quote_add_or_update', { sku: quoteSku });
