@@ -1,6 +1,6 @@
 # Price List 10x — Release & Rollback
 
-Last updated: 2026-08-12
+Last updated: 2026-08-13
 
 ## Release principle
 
@@ -99,3 +99,9 @@ Build-time catalogue generation reads the current shared Google Sheet directly, 
 The current Vercel project is connected to GitHub but its observed deployments are production deployments from `main`; no automatic branch preview is currently being generated for `codex/price-list-10x`.
 
 Until Vercel Git preview deployments are enabled for non-production branches, GitHub CI artifacts plus Playwright screenshots are the protected preview mechanism. Enabling that project setting is safe to do later, but it is intentionally not simulated by deploying over production.
+
+## 2026-08-13 production release
+
+PR #1 was merged to `main` after explicit go-live approval and a fully green Quality Gate on release head `4a1f3859343a864f729fd6e942f661b98771d752`. Merge commit: `29edc44500f1d5f88b048ecff5ac03291f63eb13`.
+
+This documentation-only follow-up commit was made to retrigger the connected Vercel Git production webhook after the merge itself did not immediately register a new deployment. It does not alter application code, pricing, catalogue data, or buyer behaviour.
