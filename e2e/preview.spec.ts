@@ -55,6 +55,48 @@ test('desktop buyer can find a SKU, price quantity and build a quote', async ({ 
   await page.screenshot({ path: 'qa-screenshots/desktop-buyer.png' });
 });
 
+test('clicking a product only opens the descriptive card with official site content', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/preview.html?sku=87');
+
+  const row = page.locator('tr[data-sku="87"]');
+  await expect(row).toBeVisible();
+  await expect(row.locator('.product-name')).toContainText(/Summer Truffle Carpaccio/i);
+
+  await row.locator('.product-cell').click();
+  const dialog = page.locator('#product-detail-dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('#product-detail-title')).toContainText(/Summer Truffle Carpaccio/i);
+  await expect(dialog).toContainText('87');
+  await expect(dialog.locator('[data-product-detail-main-image]')).toBeVisible();
+  await expect(dialog.locator('.product-detail-source')).toHaveAttribute('href', /houseoftartufo\.com\/products\/summer-truffle-carpaccio/);
+  await expect(dialog).toContainText(/Ingredients/i, { timeout: 12_000 });
+
+  await page.screenshot({ path: 'qa-screenshots/product-detail-desktop.png' });
+  await dialog.locator('[data-product-detail-close]').click();
+  await expect(dialog).not.toBeVisible();
+  await expect(row).toBeVisible();
+  await expect(page.locator('#quote-count')).toHaveText('0');
+});
+
+test('product detail card stays contained on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/preview.html?sku=87');
+
+  const row = page.locator('tr[data-sku="87"]');
+  await row.locator('.product-cell').click();
+  const dialog = page.locator('#product-detail-dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('[data-product-detail-main-image]')).toBeVisible();
+
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
+  const dialogBox = await dialog.boundingBox();
+  expect(dialogBox?.width ?? 9999).toBeLessThanOrEqual(390);
+
+  await page.screenshot({ path: 'qa-screenshots/product-detail-mobile-390.png' });
+});
+
 for (const width of [320, 360, 390, 430]) {
   test(`${width}px mobile keeps languages, buyer controls and horizontal layout safe`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
