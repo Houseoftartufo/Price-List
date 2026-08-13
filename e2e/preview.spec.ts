@@ -1,9 +1,9 @@
 import { mkdirSync } from 'node:fs';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
 
 mkdirSync('qa-screenshots', { recursive: true });
 
-async function expectLoadedProductImage(image: ReturnType<Parameters<typeof test>[1]> extends never ? never : any): Promise<void> {
+async function expectLoadedProductImage(image: Locator): Promise<void> {
   await expect(image).toBeVisible();
   await expect.poll(async () => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0)).toBe(true);
 }
