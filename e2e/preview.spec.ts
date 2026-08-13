@@ -3,6 +3,11 @@ import { expect, test } from '@playwright/test';
 
 mkdirSync('qa-screenshots', { recursive: true });
 
+async function expectLoadedProductImage(image: ReturnType<Parameters<typeof test>[1]> extends never ? never : any): Promise<void> {
+  await expect(image).toBeVisible();
+  await expect.poll(async () => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0)).toBe(true);
+}
+
 test('production homepage serves the verified buyer catalogue', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/?sku=29');
@@ -68,9 +73,9 @@ test('clicking a product only opens the descriptive card with official site cont
   await expect(dialog).toBeVisible();
   await expect(dialog.locator('#product-detail-title')).toContainText(/Summer Truffle Carpaccio/i);
   await expect(dialog).toContainText('87');
-  await expect(dialog.locator('[data-product-detail-main-image]')).toBeVisible();
   await expect(dialog.locator('.product-detail-source')).toHaveAttribute('href', /houseoftartufo\.com\/products\/summer-truffle-carpaccio/);
   await expect(dialog).toContainText(/Ingredients/i, { timeout: 12_000 });
+  await expectLoadedProductImage(dialog.locator('[data-product-detail-main-image]'));
 
   await page.screenshot({ path: 'qa-screenshots/product-detail-desktop.png' });
   await dialog.locator('[data-product-detail-close]').click();
@@ -87,7 +92,8 @@ test('product detail card stays contained on mobile', async ({ page }) => {
   await row.locator('.product-cell').click();
   const dialog = page.locator('#product-detail-dialog');
   await expect(dialog).toBeVisible();
-  await expect(dialog.locator('[data-product-detail-main-image]')).toBeVisible();
+  await expect(dialog).toContainText(/Ingredients/i, { timeout: 12_000 });
+  await expectLoadedProductImage(dialog.locator('[data-product-detail-main-image]'));
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
