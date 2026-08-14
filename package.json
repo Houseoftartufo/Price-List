@@ -8,7 +8,8 @@
   },
   "scripts": {
     "sync:catalog": "node scripts/sync-catalog.mjs",
-    "audit:shopify": "npm run sync:catalog && node scripts/audit-shopify-catalog.mjs",
+    "audit:shopify": "CI_SHOPIFY_LIVE=1 vitest run tests/official-shopify-live.spec.ts",
+    "audit:shopify-legacy": "npm run sync:catalog && node scripts/audit-shopify-catalog.mjs",
     "verify:product-map": "node scripts/verify-product-detail-map.mjs",
     "dev": "npm run sync:catalog && vite",
     "build": "npm run sync:catalog && vite build",
@@ -19,7 +20,7 @@
     "test:e2e": "playwright test",
     "qa:preview": "node scripts/qa-preview.mjs",
     "release:candidate": "node scripts/create-release-candidate.mjs",
-    "verify": "npm run typecheck && npm test && npm run build && npm run qa:preview && npm run release:candidate"
+    "verify": "npm run typecheck && npm test && npm run build && npm run audit:shopify && npm run qa:preview && npm run release:candidate"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
