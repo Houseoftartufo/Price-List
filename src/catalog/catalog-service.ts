@@ -1,4 +1,4 @@
-import { remasterCatalogueProducts } from '../official-product-remaster';
+import { buildStrictOfficialCatalogue } from '../official-catalogue-filter';
 import { parseCatalogueSourceCsv, reconcileSourceProduct, sourceRowToProduct } from './price-source';
 import { DEFAULT_DISCOUNT_POLICY } from './pricing';
 import type { Catalogue } from './types';
@@ -32,14 +32,20 @@ function emitCatalogueError(stage: string, error: unknown): void {
 }
 
 function applyOfficialExcelMaster(catalogue: Catalogue): Catalogue {
-  const audit = remasterCatalogueProducts(catalogue.products);
+  const audit = buildStrictOfficialCatalogue(catalogue.products);
   if (!audit.products.length) throw new Error('Official Excel master produced an empty priced catalogue.');
 
-  if (audit.missingOfficialVariants.length || audit.missingPackVariants.length || audit.duplicatePriceRows.length) {
+  if (
+    audit.missingPriceVariants.length
+    || audit.missingPackVariants.length
+    || audit.duplicatePriceRows.length
+    || audit.excludedForMissingPack.length
+  ) {
     console.warn('[HOT Price List] Official Excel master reconciliation', {
-      officialVariantsWithPrice: audit.products.length,
-      missingOfficialPriceRows: audit.missingOfficialVariants.map((entry) => `${entry.product} · ${entry.size}`),
+      officialOrderableVariants: audit.products.length,
+      missingOfficialPriceRows: audit.missingPriceVariants.map((entry) => `${entry.product} · ${entry.size}`),
       officialVariantsMissingPack: audit.missingPackVariants.map((entry) => `${entry.product} · ${entry.size}`),
+      excludedForMissingPack: audit.excludedForMissingPack.map((entry) => `${entry.product} · ${entry.size}`),
       discardedDuplicatePriceRows: audit.duplicatePriceRows,
     });
   }
