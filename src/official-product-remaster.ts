@@ -53,7 +53,7 @@ const PACK_OVERRIDES: Readonly<Record<string, number | null>> = {
   'acacia honey with truffle|450g': null,
   'acacia honey with truffle|220g': 12,
   'acacia honey with truffle|110g': 12,
-  'aceto balsamico di modena|100ml': null,
+  'aceto balsamico di modena|100ml': 12,
   'white truffle extra virgin olive oil|60ml': 12,
   'white truffle extra virgin olive oil|100ml': 12,
   'white truffle extra virgin olive oil|250ml': 12,
@@ -105,6 +105,7 @@ const EXTRA_ALIASES: Readonly<Record<string, readonly string[]>> = {
   'black truffle sauce 5%': ['truffled sauce summer truffle 5%', 'black truffle sauce 5%'],
   'black truffle sauce 10%': ['truffled sauce summer truffle 10%', 'black truffle sauce 10%'],
   'porcini mushrooms creams with summer truffles': ['porcini mushroom cream with summer truffle'],
+  'aceto balsamico di modena': ['white truffle balsamic cream of modena', 'aceto balsamico di modena'],
 };
 
 function compact(value: string | null | undefined): string {
