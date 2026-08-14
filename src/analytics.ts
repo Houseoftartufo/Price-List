@@ -1,5 +1,5 @@
 import './product-details';
-import './product-details-sku-guard';
+import './product-details-sku-guard-v2';
 
 type AnalyticsPayload = Record<string, string | number | boolean | undefined>;
 
