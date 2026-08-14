@@ -2,8 +2,15 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const SHOP_ORIGIN = 'https://houseoftartufo.com';
 const SHOPIFY_PRODUCTS_URL = `${SHOP_ORIGIN}/products.json?limit=250`;
+const SHOPIFY_SITEMAP_URL = `${SHOP_ORIGIN}/sitemap.xml`;
 const CATALOGUE_PATH = new URL('../public/data/catalog.snapshot.json', import.meta.url);
 const OUTPUT_DIR = new URL('../qa-shopify-audit/', import.meta.url);
+
+const EXPLICIT_HANDLE_ALIASES = new Map([
+  ['white truffled sauce bianchetto truffle 2%', 'white-truffle-sauce'],
+  ['truffled sauce summer truffle 5%', 'black-truffle-sauce'],
+  ['truffled sauce summer truffle 10%', 'black-truffle-sauce'],
+]);
 
 function compact(value) {
   return String(value ?? '').replace(/\s+/g, ' ').trim();
@@ -43,13 +50,14 @@ function tokenScore(a, b) {
 
 function measureKey(value) {
   const text = compact(value).toLowerCase().replace(',', '.');
-  const match = text.match(/(\d+(?:\.\d+)?)\s*(kg|g|ml|l)\b/);
+  const match = text.match(/(\d+(?:\.\d+)?)\s*(kg|g|gr|ml|l)\b/);
   if (!match?.[1] || !match[2]) return undefined;
   const amount = Number.parseFloat(match[1]);
   if (!Number.isFinite(amount)) return undefined;
-  if (match[2] === 'kg') return `${Math.round(amount * 1000)}g`;
-  if (match[2] === 'l') return `${Math.round(amount * 1000)}ml`;
-  return `${Number.isInteger(amount) ? amount : amount.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}${match[2]}`;
+  const unit = match[2] === 'gr' ? 'g' : match[2];
+  if (unit === 'kg') return `${Math.round(amount * 1000)}g`;
+  if (unit === 'l') return `${Math.round(amount * 1000)}ml`;
+  return `${Number.isInteger(amount) ? amount : amount.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}${unit}`;
 }
 
 function percentKey(value) {
@@ -75,9 +83,12 @@ function exactVariantMatches(product, catalogueProduct) {
   return (product.variants ?? []).filter((variant) => {
     const text = variantText(variant);
     if (measureKey(text) !== wantedMeasure) return false;
-    const variantPercent = percentKey(text);
+    const variantPercent = percentKey(`${product.title ?? ''} ${text}`);
     if (wantedPercent && variantPercent && variantPercent !== wantedPercent) return false;
-    if (wantedPercent && !variantPercent && /(?:sauce|butter|cream|carpaccio|dressing)/i.test(catalogueProduct.name)) return false;
+    if (wantedPercent && !variantPercent && /(?:sauce|butter|cream|carpaccio|dressing)/i.test(catalogueProduct.name)) {
+      const explicit = EXPLICIT_HANDLE_ALIASES.get(normalise(catalogueProduct.name));
+      if (!explicit || explicit !== product.handle) return false;
+    }
     return true;
   });
 }
@@ -86,6 +97,8 @@ function candidateScore(catalogueProduct, shopProduct) {
   if (isNatural(catalogueProduct.name) !== isNatural(shopProduct.title)) return 0;
   const c = normalise(catalogueProduct.name);
   const s = normalise(shopProduct.title);
+  const explicit = EXPLICIT_HANDLE_ALIASES.get(c);
+  if (explicit) return explicit === shopProduct.handle ? 1 : 0;
   if (c === s) return 1;
   if (c.replace(/^pure /, '') === s || s.replace(/^pure /, '') === c) return 0.98;
   let score = tokenScore(c, s);
@@ -166,6 +179,15 @@ function classify(catalogueProduct, shopProducts) {
   };
 }
 
+async function fetchText(url, label) {
+  const response = await fetch(url, {
+    headers: { Accept: 'text/html,application/xml,text/xml,*/*' },
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!response.ok) throw new Error(`${label}: HTTP ${response.status}`);
+  return response.text();
+}
+
 async function fetchJson(url, label) {
   const response = await fetch(url, {
     headers: { Accept: 'application/json' },
@@ -175,10 +197,62 @@ async function fetchJson(url, label) {
   return response.json();
 }
 
+function sitemapLocs(xml) {
+  return [...xml.matchAll(/<loc>([^<]+)<\/loc>/gi)].map((match) => match[1]?.replaceAll('&amp;', '&')).filter(Boolean);
+}
+
+async function discoverShopifyProducts() {
+  const discovered = new Map();
+  try {
+    const indexXml = await fetchText(SHOPIFY_SITEMAP_URL, 'Shopify sitemap index');
+    const productSitemaps = sitemapLocs(indexXml).filter((url) => /sitemap_products/i.test(url));
+    const productUrls = new Set();
+    for (const sitemapUrl of productSitemaps) {
+      const xml = await fetchText(sitemapUrl, 'Shopify product sitemap');
+      for (const loc of sitemapLocs(xml)) {
+        if (/\/products\//i.test(loc)) productUrls.add(loc);
+      }
+    }
+
+    const handles = [...productUrls]
+      .map((url) => {
+        try {
+          const pathname = new URL(url).pathname;
+          const index = pathname.indexOf('/products/');
+          return index >= 0 ? pathname.slice(index + '/products/'.length).split('/')[0] : '';
+        } catch {
+          return '';
+        }
+      })
+      .filter(Boolean);
+
+    for (let index = 0; index < handles.length; index += 8) {
+      const batch = handles.slice(index, index + 8);
+      const products = await Promise.all(batch.map(async (handle) => {
+        try {
+          return await fetchJson(`${SHOP_ORIGIN}/products/${handle}.js`, `Shopify product ${handle}`);
+        } catch (error) {
+          console.warn(`SITEMAP PRODUCT SKIP ${handle}: ${error instanceof Error ? error.message : String(error)}`);
+          return undefined;
+        }
+      }));
+      products.filter(Boolean).forEach((product) => discovered.set(product.handle, product));
+    }
+  } catch (error) {
+    console.warn(`SITEMAP DISCOVERY FAILED: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  const feed = await fetchJson(SHOPIFY_PRODUCTS_URL, 'Shopify public products feed');
+  for (const product of Array.isArray(feed.products) ? feed.products : []) {
+    discovered.set(product.handle, product);
+  }
+
+  return [...discovered.values()];
+}
+
 const catalogue = JSON.parse(await readFile(CATALOGUE_PATH, 'utf8'));
-const shop = await fetchJson(SHOPIFY_PRODUCTS_URL, 'Shopify public products');
-const shopProducts = Array.isArray(shop.products) ? shop.products : [];
-if (!shopProducts.length) throw new Error('Shopify public products endpoint returned no products.');
+const shopProducts = await discoverShopifyProducts();
+if (!shopProducts.length) throw new Error('Shopify discovery returned no public products.');
 
 const rows = catalogue.products.map((product) => ({
   catalogueCode: product.sku,
@@ -236,7 +310,7 @@ const csv = [
   .join('\n');
 await writeFile(new URL('catalogue-shopify-audit.csv', OUTPUT_DIR), csv, 'utf8');
 
-console.log(`Shopify catalogue audit: ${catalogue.products.length} catalogue rows · ${shopProducts.length} public Shopify products.`);
+console.log(`Shopify catalogue audit: ${catalogue.products.length} catalogue rows · ${shopProducts.length} public Shopify products discovered.`);
 console.log(`Audit counts: ${Object.entries(counts).map(([key, value]) => `${key}=${value}`).join(' · ')}`);
 for (const row of rows.filter((item) => item.status !== 'verified')) {
   const candidateText = (row.candidates ?? row.suggestions ?? []).map((candidate) => `${candidate.title} [${candidate.handle}]`).join(' | ');
