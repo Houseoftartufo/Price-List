@@ -1,11 +1,21 @@
 import { mkdirSync } from 'node:fs';
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 mkdirSync('qa-screenshots', { recursive: true });
 
 async function expectLoadedProductImage(image: Locator): Promise<void> {
   await expect(image).toBeVisible();
   await expect.poll(async () => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0)).toBe(true);
+}
+
+async function openProductDetails(page: Page, catalogueCode: string): Promise<Locator> {
+  await page.goto(`/preview.html?sku=${catalogueCode}`);
+  const row = page.locator(`tr[data-sku="${catalogueCode}"]`);
+  await expect(row).toBeVisible();
+  await row.locator('.product-cell').click();
+  const dialog = page.locator('#product-detail-dialog');
+  await expect(dialog).toBeVisible();
+  return dialog;
 }
 
 test('production homepage serves the verified buyer catalogue', async ({ page }) => {
@@ -60,19 +70,14 @@ test('desktop buyer can find a SKU, price quantity and build a quote', async ({ 
   await page.screenshot({ path: 'qa-screenshots/desktop-buyer.png' });
 });
 
-test('clicking a product only opens the descriptive card with official site content', async ({ page }) => {
+test('clicking a product only opens the descriptive card with exact official site variant', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto('/preview.html?sku=87');
+  const dialog = await openProductDetails(page, '87');
 
-  const row = page.locator('tr[data-sku="87"]');
-  await expect(row).toBeVisible();
-  await expect(row.locator('.product-name')).toContainText(/Summer Truffle Carpaccio/i);
-
-  await row.locator('.product-cell').click();
-  const dialog = page.locator('#product-detail-dialog');
-  await expect(dialog).toBeVisible();
   await expect(dialog.locator('#product-detail-title')).toContainText(/Summer Truffle Carpaccio/i);
-  await expect(dialog).toContainText('87');
+  await expect(dialog).toHaveAttribute('data-shopify-match', 'verified', { timeout: 12_000 });
+  await expect(dialog).toContainText(/Catalogue code/i);
+  await expect(dialog.locator('[data-site-sku]')).toHaveText('Product86');
   await expect(dialog.locator('.product-detail-source')).toHaveAttribute('href', /houseoftartufo\.com\/products\/summer-truffle-carpaccio/);
   await expect(dialog).toContainText(/Ingredients/i, { timeout: 12_000 });
   await expectLoadedProductImage(dialog.locator('[data-product-detail-main-image]'));
@@ -80,18 +85,43 @@ test('clicking a product only opens the descriptive card with official site cont
   await page.screenshot({ path: 'qa-screenshots/product-detail-desktop.png' });
   await dialog.locator('[data-product-detail-close]').click();
   await expect(dialog).not.toBeVisible();
-  await expect(row).toBeVisible();
+  await expect(page.locator('tr[data-sku="87"]')).toBeVisible();
   await expect(page.locator('#quote-count')).toHaveText('0');
+});
+
+test('Shopify SKU verification matches sauce variants by exact size and percentage', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+
+  let dialog = await openProductDetails(page, '18');
+  await expect(dialog).toHaveAttribute('data-shopify-match', 'verified', { timeout: 12_000 });
+  await expect(dialog.locator('[data-site-sku]')).toHaveText('5430004174103');
+  await dialog.locator('[data-product-detail-close]').click();
+
+  dialog = await openProductDetails(page, '27');
+  await expect(dialog).toHaveAttribute('data-shopify-match', 'verified', { timeout: 12_000 });
+  await expect(dialog.locator('[data-site-sku]')).toHaveText('5430004174325');
+});
+
+test('ambiguous or distinct products never inherit a Shopify SKU or product sheet', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+
+  for (const catalogueCode of ['15', '49', '151']) {
+    const dialog = await openProductDetails(page, catalogueCode);
+    await expect(dialog).toHaveAttribute('data-shopify-match', 'none', { timeout: 12_000 });
+    await page.waitForTimeout(700);
+    await expect(dialog.locator('[data-site-sku]')).toHaveCount(0);
+    await expect(dialog.locator('.product-detail-source')).toHaveCount(0);
+    await expect(dialog.locator('[data-product-detail-main-image]')).toHaveCount(0);
+    await expect(dialog.locator('.product-detail-note')).toBeVisible();
+    await dialog.locator('[data-product-detail-close]').click();
+  }
 });
 
 test('product detail card stays contained on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/preview.html?sku=87');
-
-  const row = page.locator('tr[data-sku="87"]');
-  await row.locator('.product-cell').click();
-  const dialog = page.locator('#product-detail-dialog');
-  await expect(dialog).toBeVisible();
+  const dialog = await openProductDetails(page, '87');
+  await expect(dialog).toHaveAttribute('data-shopify-match', 'verified', { timeout: 12_000 });
+  await expect(dialog.locator('[data-site-sku]')).toHaveText('Product86');
   await expect(dialog).toContainText(/Ingredients/i, { timeout: 12_000 });
   await expectLoadedProductImage(dialog.locator('[data-product-detail-main-image]'));
 
