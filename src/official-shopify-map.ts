@@ -79,11 +79,6 @@ export const OFFICIAL_SHOPIFY_MAP: Readonly<Record<string, OfficialShopifyMappin
     image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/01.1_Black_Truffle_Carpaccio_453cca1d-897e-46b5-8aab-ad7a819d3a47.webp?v=1736778960',
   },
 
-  'white truffle extra virgin olive oil|60ml': {
-    handle: 'parfumed-white-truffle-extra-virgin-olive-oil',
-    siteSku: 'Product56',
-    image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/08.1_White_Truffle_Olive_Oil.webp?v=1736517835',
-  },
   'white truffle extra virgin olive oil|100ml': {
     handle: 'parfumed-white-truffle-extra-virgin-olive-oil',
     siteSku: '5430004174493',
@@ -105,11 +100,6 @@ export const OFFICIAL_SHOPIFY_MAP: Readonly<Record<string, OfficialShopifyMappin
     image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/08.1_White_Truffle_Olive_Oil.webp?v=1736517835',
   },
 
-  'black truffle extra virgin olive oil|60ml': {
-    handle: 'black-truffle-extra-virgin-olive-oil',
-    siteSku: 'Product62',
-    image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/07.1_Black_Truffle_Olive_Oil.webp?v=1736517835',
-  },
   'black truffle extra virgin olive oil|100ml': {
     handle: 'black-truffle-extra-virgin-olive-oil',
     siteSku: '5430004174530',
