@@ -9,6 +9,8 @@ export interface RemasteredOfficialVariant extends OfficialProductVariant {
   skuSource?: 'excel' | 'shopify-verified';
 }
 
+// Source: incrocio_shopify_unita_per_box.xlsx. Shopify is used only to
+// disambiguate variant ordering/identity; it never adds products to the master.
 const PACK_OVERRIDES: Readonly<Record<string, number | null>> = {
   'black truffle sauce 10%|80g': 12,
   'black truffle sauce 10%|170g': 12,
@@ -48,10 +50,10 @@ const PACK_OVERRIDES: Readonly<Record<string, number | null>> = {
   'risotto with summer truffle|300g': 24,
   'risotto with summer truffle|170g': 24,
   'white truffle genovese pesto|80g': 12,
-  'acacia honey with truffle|450g': 6,
+  'acacia honey with truffle|450g': null,
   'acacia honey with truffle|220g': 12,
   'acacia honey with truffle|110g': 12,
-  'aceto balsamico di modena|100ml': null,
+  'aceto balsamico di modena|100ml': 12,
   'white truffle extra virgin olive oil|60ml': 12,
   'white truffle extra virgin olive oil|100ml': 12,
   'white truffle extra virgin olive oil|250ml': 12,
@@ -63,6 +65,9 @@ const PACK_OVERRIDES: Readonly<Record<string, number | null>> = {
   'black truffle extra virgin olive oil|5000ml': 4,
 };
 
+// SKU values are exposed only when they are exact for an official Excel variant.
+// Candidate rows marked UNMATCHED in the cross-check workbook are deliberately
+// not promoted unless the live Shopify gate verifies the exact variant.
 const SKU_OVERRIDES: Readonly<Record<string, { sku: string; source: 'excel' | 'shopify-verified' }>> = {
   'black truffle sauce 5%|80g': { sku: '5430004174103', source: 'excel' },
   'black truffle sauce 5%|170g': { sku: '5430004174110', source: 'excel' },
@@ -100,6 +105,7 @@ const EXTRA_ALIASES: Readonly<Record<string, readonly string[]>> = {
   'black truffle sauce 5%': ['truffled sauce summer truffle 5%', 'black truffle sauce 5%'],
   'black truffle sauce 10%': ['truffled sauce summer truffle 10%', 'black truffle sauce 10%'],
   'porcini mushrooms creams with summer truffles': ['porcini mushroom cream with summer truffle'],
+  'aceto balsamico di modena': ['white truffle balsamic cream of modena', 'aceto balsamico di modena'],
 };
 
 function compact(value: string | null | undefined): string {
@@ -140,7 +146,10 @@ export function officialVariantKey(entry: Pick<OfficialProductVariant, 'product'
 }
 
 function aliases(entry: OfficialProductVariant): readonly string[] {
-  return [entry.product, ...entry.aliases, ...(EXTRA_ALIASES[normalise(entry.product)] ?? [])];
+  const sourceAliases = 'aliases' in entry && Array.isArray((entry as OfficialProductVariant & { aliases?: readonly string[] }).aliases)
+    ? ((entry as OfficialProductVariant & { aliases?: readonly string[] }).aliases ?? [])
+    : [];
+  return [entry.product, ...sourceAliases, ...(EXTRA_ALIASES[normalise(entry.product)] ?? [])];
 }
 
 export function findRemasteredOfficialVariant(name: string, size: string): RemasteredOfficialVariant | undefined {
@@ -190,10 +199,11 @@ export function remasterCatalogueProducts(sourceProducts: readonly Product[]): O
       duplicates.push(`${official.officialKey}:${product.sku}`);
       continue;
     }
+    if (official.packStatus !== 'resolved' || !official.unitsPerCase) continue;
 
     chosen.set(official.officialKey, {
       ...product,
-      unitsPerCase: official.unitsPerCase ?? product.unitsPerCase,
+      unitsPerCase: official.unitsPerCase,
     });
   }
 
