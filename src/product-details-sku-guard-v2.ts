@@ -242,8 +242,6 @@ function applyOfficialMaster(): void {
 }
 
 function schedule(): void {
-  const dialog = document.getElementById('product-detail-dialog') as HTMLDialogElement | null;
-  if (dialog?.open) dialog.dataset.shopifyMatch = 'pending';
   if (scheduled) return;
   scheduled = true;
   queueMicrotask(() => {
