@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   quality:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
@@ -39,6 +39,9 @@ jobs:
 
       - name: Full Shopify catalogue audit
         run: npm run audit:shopify
+
+      - name: Exact product map coverage
+        run: npm run verify:product-map
 
       - name: Preview integrity
         run: npm run qa:preview
