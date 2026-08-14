@@ -40,20 +40,19 @@ describe('official Excel catalogue filter', () => {
     const standby = audit.products.filter((product) => product.orderStatus === 'standby');
     const orderable = audit.products.filter((product) => product.orderStatus === 'orderable');
 
+    expect(standby.map((product) => `${product.name}|${product.sizeLabel}|${product.standbyReasons?.join('+')}`).sort()).toEqual([
+      'Acacia Honey With Truffle|450g|price+case-pack',
+      'Black Truffle Extra Virgin Olive Oil|60ml|case-pack',
+      'Salt With Summer Truffle|120g|case-pack',
+      'Salt With Summer Truffle|30g|case-pack',
+      'Truffle Almonds|80g|price',
+      'Truffle Cashew|80g|price',
+      'Truffle Walnuts|80g|price',
+    ].sort());
     expect(orderable).toHaveLength(44);
     expect(standby).toHaveLength(7);
     expect(audit.missingPriceVariants).toHaveLength(4);
     expect(audit.missingPackVariants).toHaveLength(4);
-
-    expect(standby.map((product) => product.name).sort()).toEqual([
-      'Acacia Honey With Truffle',
-      'Black Truffle Extra Virgin Olive Oil',
-      'Salt With Summer Truffle',
-      'Salt With Summer Truffle',
-      'Truffle Almonds',
-      'Truffle Cashew',
-      'Truffle Walnuts',
-    ].sort());
   });
 
   it('never admits variants that are not in the Excel master', () => {
