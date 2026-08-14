@@ -1,45 +1,47 @@
 import './styles/product-details-guard.css';
-import { VERIFIED_PRODUCT_DETAIL_MAP, type VerifiedProductDetailMapping } from './product-detail-map';
+import { findOfficialProductVariant, type OfficialProductVariant } from './official-product-master';
 
 type Locale = 'en' | 'it' | 'fr' | 'nl';
 
-interface ShopifyVariant {
-  sku?: string | null;
-}
-
-interface ShopifyProduct {
-  variants?: ShopifyVariant[];
-}
-
 const SHOP_ORIGIN = 'https://houseoftartufo.com';
-const productCache = new Map<string, Promise<ShopifyProduct | undefined>>();
-let auditTimer: number | undefined;
-let auditGeneration = 0;
+let scheduled = false;
 
-const labels = {
+const copy = {
   en: {
     catalogueCode: 'Catalogue code',
-    siteSku: 'Site SKU',
+    sku: 'SKU',
+    casePack: 'Case pack',
+    ingredients: 'Ingredients',
     website: 'View product on houseoftartufo.com ↗',
-    noExactMatch: 'No exact public Shopify variant matches this wholesale format. To avoid showing the wrong SKU, photo or ingredients, only the verified catalogue specifications are displayed.',
+    pendingPack: 'Case pack pending final verification.',
+    notOfficial: 'This catalogue row is not matched to the official product master. No Shopify data is shown.',
   },
   it: {
     catalogueCode: 'Codice catalogo',
-    siteSku: 'SKU sito',
+    sku: 'SKU',
+    casePack: 'Pezzi / scatola',
+    ingredients: 'Ingredienti',
     website: 'Vedi prodotto su houseoftartufo.com ↗',
-    noExactMatch: 'Nessuna variante Shopify pubblica corrisponde esattamente a questo formato wholesale. Per evitare SKU, foto o ingredienti sbagliati, mostriamo solo le specifiche verificate del listino.',
+    pendingPack: 'Pezzi per scatola in attesa di verifica finale.',
+    notOfficial: 'Questa riga non corrisponde al master prodotti ufficiale. Non mostriamo dati Shopify.',
   },
   fr: {
     catalogueCode: 'Code catalogue',
-    siteSku: 'SKU du site',
+    sku: 'SKU',
+    casePack: 'Pièces / carton',
+    ingredients: 'Ingrédients',
     website: 'Voir le produit sur houseoftartufo.com ↗',
-    noExactMatch: 'Aucune variante Shopify publique ne correspond exactement à ce format wholesale. Afin d’éviter un SKU, une photo ou des ingrédients incorrects, seules les spécifications vérifiées du catalogue sont affichées.',
+    pendingPack: 'Pièces par carton en attente de vérification finale.',
+    notOfficial: 'Cette ligne ne correspond pas au master produit officiel. Aucune donnée Shopify n’est affichée.',
   },
   nl: {
     catalogueCode: 'Cataloguscode',
-    siteSku: 'Website-SKU',
+    sku: 'SKU',
+    casePack: 'Stuks / doos',
+    ingredients: 'Ingrediënten',
     website: 'Bekijk product op houseoftartufo.com ↗',
-    noExactMatch: 'Geen openbare Shopify-variant komt exact overeen met dit groothandelsformaat. Om een verkeerd SKU, foto of ingrediënten te vermijden, worden alleen de geverifieerde catalogusspecificaties getoond.',
+    pendingPack: 'Stuks per doos wachten op definitieve verificatie.',
+    notOfficial: 'Deze rij komt niet overeen met de officiële productmaster. Er worden geen Shopify-gegevens getoond.',
   },
 } as const;
 
@@ -55,236 +57,201 @@ function compact(value: string | null | undefined): string {
   return String(value ?? '').replace(/\s+/g, ' ').trim();
 }
 
-function localePrefix(current: Locale): string {
-  return current === 'en' ? '' : `/${current}`;
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }
 
-function productUrl(handle: string, current: Locale): string {
-  return `${SHOP_ORIGIN}${localePrefix(current)}/products/${handle}`;
+interface RowInfo {
+  catalogueCode: string;
+  name: string;
+  size: string;
 }
 
-async function fetchProduct(handle: string, current: Locale): Promise<ShopifyProduct | undefined> {
-  const key = `${current}:${handle}`;
-  const cached = productCache.get(key);
-  if (cached) return cached;
-
-  const request = (async () => {
-    const urls = [
-      `${productUrl(handle, current)}.js`,
-      ...(current === 'en' ? [] : [`${SHOP_ORIGIN}/products/${handle}.js`]),
-    ];
-    for (const url of urls) {
-      try {
-        const response = await fetch(url, { cache: 'no-store', headers: { Accept: 'application/json' } });
-        if (response.ok) return (await response.json()) as ShopifyProduct;
-      } catch (error) {
-        console.warn('[HOT Price List] Exact Shopify SKU source unavailable.', { url, error });
-      }
-    }
-    return undefined;
-  })();
-
-  productCache.set(key, request);
-  return request;
+function rowInfo(dialog: HTMLDialogElement): RowInfo | undefined {
+  const catalogueCode = dialog.dataset.sku?.trim();
+  if (!catalogueCode) return undefined;
+  const row = document.querySelector<HTMLTableRowElement>(
+    `#product-rows tr[data-sku="${CSS.escape(catalogueCode)}"]`,
+  );
+  if (!row) return undefined;
+  const cells = row.querySelectorAll('td');
+  const name = compact(row.querySelector('.product-name')?.textContent);
+  const size = compact(cells[1]?.textContent);
+  if (!name || !size) return undefined;
+  return { catalogueCode, name, size };
 }
 
-function currentDialog(): HTMLDialogElement | null {
-  return document.getElementById('product-detail-dialog') as HTMLDialogElement | null;
+function specs(dialog: HTMLDialogElement): HTMLElement[] {
+  return [...dialog.querySelectorAll<HTMLElement>('.product-detail-specs .product-detail-spec')];
 }
 
-function currentCode(dialog: HTMLDialogElement): string | undefined {
-  return dialog.dataset.sku?.trim() || undefined;
+function setCatalogueCode(dialog: HTMLDialogElement, code: string): void {
+  const first = specs(dialog)[0];
+  if (!first) return;
+  const label = first.querySelector<HTMLElement>('span:not([data-official-sku-label])');
+  const value = first.querySelector<HTMLElement>('strong:not([data-official-sku])');
+  if (label) label.textContent = copy[locale()].catalogueCode;
+  if (value) value.textContent = code;
 }
 
-function firstSpec(dialog: HTMLDialogElement): HTMLElement | null {
-  return dialog.querySelector<HTMLElement>('.product-detail-specs .product-detail-spec');
+function setOfficialSku(dialog: HTMLDialogElement, sku: string | undefined): void {
+  const first = specs(dialog)[0];
+  if (!first) return;
+  first.querySelector('[data-site-sku-label]')?.remove();
+  first.querySelector('[data-site-sku]')?.remove();
+  first.querySelector('[data-official-sku-label]')?.remove();
+  first.querySelector('[data-official-sku]')?.remove();
+  if (!sku) return;
+
+  const label = document.createElement('span');
+  label.dataset.officialSkuLabel = 'true';
+  label.style.marginTop = '8px';
+  label.textContent = copy[locale()].sku;
+
+  const value = document.createElement('strong');
+  value.dataset.officialSku = 'true';
+  value.textContent = sku;
+  first.append(label, value);
 }
 
-function ensureCatalogueCode(dialog: HTMLDialogElement, code: string): void {
-  const spec = firstSpec(dialog);
-  if (!spec) return;
-  const label = spec.querySelector<HTMLElement>('span:not([data-site-sku-label])');
-  const value = spec.querySelector<HTMLElement>('strong:not([data-site-sku])');
-  const expected = labels[locale()].catalogueCode;
-  if (label && label.textContent !== expected) label.textContent = expected;
-  if (value && value.textContent !== code) value.textContent = code;
+function setCasePack(dialog: HTMLDialogElement, entry: OfficialProductVariant | undefined): void {
+  const pack = specs(dialog)[2];
+  if (!pack) return;
+  const label = pack.querySelector<HTMLElement>('span');
+  const value = pack.querySelector<HTMLElement>('strong');
+  if (label) label.textContent = copy[locale()].casePack;
+  if (!value) return;
+  value.textContent = entry?.packStatus === 'resolved' && entry.unitsPerCase
+    ? String(entry.unitsPerCase)
+    : '—';
 }
 
-function ensureSiteSku(dialog: HTMLDialogElement, sku: string): void {
-  const spec = firstSpec(dialog);
-  if (!spec) return;
-  const existingLabel = spec.querySelector<HTMLElement>('[data-site-sku-label]');
-  const existingValue = spec.querySelector<HTMLElement>('[data-site-sku]');
-  const expectedLabel = labels[locale()].siteSku;
-
-  if (existingLabel && existingValue) {
-    if (existingLabel.textContent !== expectedLabel) existingLabel.textContent = expectedLabel;
-    if (existingValue.textContent !== sku) existingValue.textContent = sku;
+function setImage(dialog: HTMLDialogElement, entry: OfficialProductVariant | undefined): void {
+  const media = dialog.querySelector<HTMLElement>('.product-detail-media');
+  if (!media) return;
+  const imageUrl = entry?.shopifyImage;
+  if (!imageUrl) {
+    media.innerHTML = '<div class="product-detail-image-stage" data-empty="true"></div>';
     return;
   }
-
-  existingLabel?.remove();
-  existingValue?.remove();
-  const label = document.createElement('span');
-  label.dataset.siteSkuLabel = 'true';
-  label.style.marginTop = '8px';
-  label.textContent = expectedLabel;
-  const value = document.createElement('strong');
-  value.dataset.siteSku = 'true';
-  value.textContent = sku;
-  spec.append(label, value);
+  const alt = compact(dialog.querySelector('#product-detail-title')?.textContent) || entry.product;
+  media.innerHTML = `<div class="product-detail-image-stage">
+    <img data-product-detail-main-image src="${escapeHtml(imageUrl)}" alt="${escapeHtml(alt)}" loading="eager" />
+  </div>`;
 }
 
-function removeSiteSku(dialog: HTMLDialogElement): void {
-  dialog.querySelector('[data-site-sku-label]')?.remove();
-  dialog.querySelector('[data-site-sku]')?.remove();
-}
-
-function ensureSourceLink(dialog: HTMLDialogElement, mapping: VerifiedProductDetailMapping): void {
+function setSourceLink(dialog: HTMLDialogElement, entry: OfficialProductVariant | undefined): void {
+  dialog.querySelector('.product-detail-source')?.remove();
+  if (!entry?.shopifyHandle) return;
   const content = dialog.querySelector<HTMLElement>('.product-detail-content');
   if (!content) return;
-  const expectedHref = productUrl(mapping.handle, locale());
-  const expectedText = labels[locale()].website;
-  const existing = dialog.querySelector<HTMLAnchorElement>('.product-detail-source');
-
-  if (existing) {
-    if (existing.href !== expectedHref) existing.href = expectedHref;
-    if (existing.textContent !== expectedText) existing.textContent = expectedText;
-    if (existing.target !== '_blank') existing.target = '_blank';
-    existing.rel = 'noopener';
-    return;
-  }
 
   const link = document.createElement('a');
   link.className = 'product-detail-source';
-  link.href = expectedHref;
+  link.href = `${SHOP_ORIGIN}/products/${entry.shopifyHandle}`;
   link.target = '_blank';
   link.rel = 'noopener';
-  link.textContent = expectedText;
+  link.textContent = copy[locale()].website;
   content.append(link);
 }
 
-function ensureVerifiedImage(dialog: HTMLDialogElement, mapping: VerifiedProductDetailMapping): void {
-  if (dialog.querySelector('[data-product-detail-main-image]')) return;
-  const media = dialog.querySelector<HTMLElement>('.product-detail-media');
-  if (!media) return;
+function ensureSections(dialog: HTMLDialogElement): HTMLElement | undefined {
+  let sections = dialog.querySelector<HTMLElement>('.product-detail-sections');
+  if (sections) return sections;
 
-  let stage = media.querySelector<HTMLElement>('.product-detail-image-stage');
-  if (!stage) {
-    stage = document.createElement('div');
-    stage.className = 'product-detail-image-stage';
-    media.prepend(stage);
-  }
-  stage.removeAttribute('data-empty');
-
-  const image = document.createElement('img');
-  image.setAttribute('data-product-detail-main-image', 'true');
-  image.src = mapping.image;
-  image.alt = compact(dialog.querySelector('#product-detail-title')?.textContent) || 'House of Tartufo product';
-  image.loading = 'eager';
-  stage.append(image);
-}
-
-function isScrubbed(dialog: HTMLDialogElement, code: string): boolean {
-  const sections = dialog.querySelector<HTMLElement>('.product-detail-sections');
-  return dialog.dataset.shopifyMatch === 'none'
-    && !dialog.querySelector('[data-site-sku]')
-    && !dialog.querySelector('.product-detail-source')
-    && !dialog.querySelector('[data-product-detail-main-image]')
-    && sections?.dataset.skuGuardKey === code
-    && sections.dataset.skuGuard === 'unmatched';
-}
-
-function scrubRemoteContent(dialog: HTMLDialogElement, code: string): void {
-  ensureCatalogueCode(dialog, code);
-  removeSiteSku(dialog);
-  const text = labels[locale()].noExactMatch;
-
+  sections = document.createElement('div');
+  sections.className = 'product-detail-sections';
   const loading = dialog.querySelector<HTMLElement>('.product-detail-loading');
   if (loading) {
-    loading.className = 'product-detail-note';
-    if (loading.textContent !== text) loading.textContent = text;
+    loading.replaceWith(sections);
+    return sections;
   }
+  const content = dialog.querySelector<HTMLElement>('.product-detail-content');
+  if (!content) return undefined;
+  const source = dialog.querySelector('.product-detail-source');
+  if (source) content.insertBefore(sections, source);
+  else content.append(sections);
+  return sections;
+}
 
-  let sections = dialog.querySelector<HTMLElement>('.product-detail-sections');
-  if (!sections) {
-    const content = dialog.querySelector<HTMLElement>('.product-detail-content');
-    if (content) {
-      sections = document.createElement('div');
-      sections.className = 'product-detail-sections';
-      const source = dialog.querySelector('.product-detail-source');
-      if (source) content.insertBefore(sections, source);
-      else content.append(sections);
-    }
+function renderOfficial(dialog: HTMLDialogElement, info: RowInfo, entry: OfficialProductVariant): void {
+  setCatalogueCode(dialog, info.catalogueCode);
+  setOfficialSku(dialog, entry.sku);
+  setCasePack(dialog, entry);
+  setImage(dialog, entry);
+
+  const sections = ensureSections(dialog);
+  if (sections) {
+    const t = copy[locale()];
+    const pending = entry.packStatus === 'resolved'
+      ? ''
+      : `<p class="product-detail-note">${escapeHtml(t.pendingPack)}</p>`;
+    sections.innerHTML = `
+      <section class="product-detail-section">
+        <h3>${escapeHtml(t.ingredients)}</h3>
+        <p>${escapeHtml(entry.ingredients)}</p>
+      </section>
+      ${pending}
+    `;
+    sections.dataset.officialMasterKey = `${entry.product}:${entry.size}`;
   }
+  setSourceLink(dialog, entry);
+  dialog.dataset.shopifyMatch = 'official';
+  dialog.dataset.officialMaster = 'matched';
+}
 
-  if (sections && (sections.dataset.skuGuardKey !== code || sections.dataset.skuGuard !== 'unmatched')) {
-    sections.dataset.skuGuard = 'unmatched';
-    sections.dataset.skuGuardKey = code;
-    sections.innerHTML = '';
-    const note = document.createElement('p');
-    note.className = 'product-detail-note';
-    note.textContent = text;
-    sections.append(note);
-  }
-
+function renderNotOfficial(dialog: HTMLDialogElement, info: RowInfo): void {
+  setCatalogueCode(dialog, info.catalogueCode);
+  setOfficialSku(dialog, undefined);
+  setCasePack(dialog, undefined);
+  setImage(dialog, undefined);
   dialog.querySelector('.product-detail-source')?.remove();
-  const media = dialog.querySelector<HTMLElement>('.product-detail-media');
-  if (media && (media.querySelector('img') || !media.querySelector('.product-detail-image-stage[data-empty="true"]'))) {
-    media.innerHTML = '<div class="product-detail-image-stage" data-empty="true"></div>';
+
+  const sections = ensureSections(dialog);
+  if (sections) {
+    sections.innerHTML = `<p class="product-detail-note">${escapeHtml(copy[locale()].notOfficial)}</p>`;
+    delete sections.dataset.officialMasterKey;
   }
   dialog.dataset.shopifyMatch = 'none';
+  dialog.dataset.officialMaster = 'none';
 }
 
-async function auditDialog(dialog: HTMLDialogElement): Promise<void> {
-  if (!dialog.open) return;
-  const code = currentCode(dialog);
-  if (!code) return;
-  ensureCatalogueCode(dialog, code);
-
-  const mapping = VERIFIED_PRODUCT_DETAIL_MAP[code];
-  if (!mapping) {
-    if (!isScrubbed(dialog, code)) scrubRemoteContent(dialog, code);
+function applyOfficialMaster(): void {
+  const dialog = document.getElementById('product-detail-dialog') as HTMLDialogElement | null;
+  if (!dialog?.open) return;
+  const info = rowInfo(dialog);
+  if (!info) return;
+  const entry = findOfficialProductVariant(info.name, info.size);
+  const key = entry ? `${entry.product}:${entry.size}` : undefined;
+  if (
+    dialog.dataset.officialMaster === (entry ? 'matched' : 'none')
+    && dialog.querySelector<HTMLElement>('.product-detail-sections')?.dataset.officialMasterKey === key
+  ) {
     return;
   }
-
-  const existingSku = compact(dialog.querySelector<HTMLElement>('[data-site-sku]')?.textContent);
-  if (dialog.dataset.shopifyMatch === 'verified' && existingSku === mapping.siteSku) {
-    ensureSourceLink(dialog, mapping);
-    ensureVerifiedImage(dialog, mapping);
-    return;
-  }
-
-  const generation = ++auditGeneration;
-  dialog.dataset.shopifyMatch = 'pending';
-  const product = await fetchProduct(mapping.handle, locale());
-  if (generation !== auditGeneration || !dialog.open || currentCode(dialog) !== code) return;
-
-  const matches = (product?.variants ?? []).filter((variant) => compact(variant.sku) === mapping.siteSku);
-  if (matches.length !== 1) {
-    scrubRemoteContent(dialog, code);
-    dialog.dataset.shopifyMatch = 'variant-mismatch';
-    return;
-  }
-
-  ensureCatalogueCode(dialog, code);
-  ensureSiteSku(dialog, mapping.siteSku);
-  ensureSourceLink(dialog, mapping);
-  ensureVerifiedImage(dialog, mapping);
-  dialog.dataset.shopifyMatch = 'verified';
+  if (entry) renderOfficial(dialog, info, entry);
+  else renderNotOfficial(dialog, info);
 }
 
-function scheduleAudit(): void {
-  window.clearTimeout(auditTimer);
-  auditTimer = window.setTimeout(() => {
-    const dialog = currentDialog();
-    if (dialog?.open) void auditDialog(dialog);
-  }, 0);
+function schedule(): void {
+  const dialog = document.getElementById('product-detail-dialog') as HTMLDialogElement | null;
+  if (dialog?.open) dialog.dataset.shopifyMatch = 'pending';
+  if (scheduled) return;
+  scheduled = true;
+  queueMicrotask(() => {
+    scheduled = false;
+    applyOfficialMaster();
+  });
 }
 
-const observer = new MutationObserver(() => scheduleAudit());
-observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-document.addEventListener('click', scheduleAudit);
-document.addEventListener('keydown', scheduleAudit);
+const observer = new MutationObserver(schedule);
+observer.observe(document.body, { childList: true, subtree: true });
+document.addEventListener('click', schedule);
+document.addEventListener('keydown', schedule);
 
 export {};
