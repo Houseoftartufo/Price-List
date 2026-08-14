@@ -179,6 +179,8 @@ function classify(catalogueProduct, shopProducts) {
   };
 }
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function fetchText(url, label) {
   const response = await fetch(url, {
     headers: { Accept: 'text/html,application/xml,text/xml,*/*' },
@@ -188,13 +190,20 @@ async function fetchText(url, label) {
   return response.text();
 }
 
-async function fetchJson(url, label) {
-  const response = await fetch(url, {
-    headers: { Accept: 'application/json' },
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!response.ok) throw new Error(`${label}: HTTP ${response.status}`);
-  return response.json();
+async function fetchJson(url, label, retries = 0) {
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const response = await fetch(url, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (response.ok) return response.json();
+    if (response.status === 429 && attempt < retries) {
+      await sleep(1500 * (attempt + 1));
+      continue;
+    }
+    throw new Error(`${label}: HTTP ${response.status}`);
+  }
+  throw new Error(`${label}: exhausted retries`);
 }
 
 function sitemapLocs(xml) {
@@ -203,9 +212,15 @@ function sitemapLocs(xml) {
 
 async function discoverShopifyProducts() {
   const discovered = new Map();
+
+  const feed = await fetchJson(SHOPIFY_PRODUCTS_URL, 'Shopify public products feed', 2);
+  for (const product of Array.isArray(feed.products) ? feed.products : []) {
+    discovered.set(product.handle, product);
+  }
+
   try {
     const indexXml = await fetchText(SHOPIFY_SITEMAP_URL, 'Shopify sitemap index');
-    const productSitemaps = sitemapLocs(indexXml).filter((url) => /sitemap_products/i.test(url));
+    const productSitemaps = [...new Set(sitemapLocs(indexXml).filter((url) => /sitemap_products/i.test(url)))];
     const productUrls = new Set();
     for (const sitemapUrl of productSitemaps) {
       const xml = await fetchText(sitemapUrl, 'Shopify product sitemap');
@@ -214,7 +229,7 @@ async function discoverShopifyProducts() {
       }
     }
 
-    const handles = [...productUrls]
+    const handles = [...new Set([...productUrls]
       .map((url) => {
         try {
           const pathname = new URL(url).pathname;
@@ -224,27 +239,22 @@ async function discoverShopifyProducts() {
           return '';
         }
       })
-      .filter(Boolean);
+      .filter(Boolean))];
 
-    for (let index = 0; index < handles.length; index += 8) {
-      const batch = handles.slice(index, index + 8);
-      const products = await Promise.all(batch.map(async (handle) => {
-        try {
-          return await fetchJson(`${SHOP_ORIGIN}/products/${handle}.js`, `Shopify product ${handle}`);
-        } catch (error) {
-          console.warn(`SITEMAP PRODUCT SKIP ${handle}: ${error instanceof Error ? error.message : String(error)}`);
-          return undefined;
-        }
-      }));
-      products.filter(Boolean).forEach((product) => discovered.set(product.handle, product));
+    const extraHandles = handles.filter((handle) => !discovered.has(handle));
+    console.log(`Shopify sitemap discovery: ${handles.length} unique public handles · ${extraHandles.length} beyond products.json.`);
+
+    for (const handle of extraHandles) {
+      try {
+        const product = await fetchJson(`${SHOP_ORIGIN}/products/${handle}.js`, `Shopify product ${handle}`, 3);
+        if (product?.handle) discovered.set(product.handle, product);
+      } catch (error) {
+        console.warn(`SITEMAP PRODUCT SKIP ${handle}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      await sleep(350);
     }
   } catch (error) {
     console.warn(`SITEMAP DISCOVERY FAILED: ${error instanceof Error ? error.message : String(error)}`);
-  }
-
-  const feed = await fetchJson(SHOPIFY_PRODUCTS_URL, 'Shopify public products feed');
-  for (const product of Array.isArray(feed.products) ? feed.products : []) {
-    discovered.set(product.handle, product);
   }
 
   return [...discovered.values()];
