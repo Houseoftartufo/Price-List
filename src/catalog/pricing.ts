@@ -48,26 +48,35 @@ export function calculatePriceBreakdown(
   cases: number,
   policy: readonly DiscountTier[] = DEFAULT_DISCOUNT_POLICY,
 ): PriceBreakdown {
-  if (!Number.isFinite(product.baseUnitPrice) || product.baseUnitPrice <= 0) {
+  const standby = product.orderStatus === 'standby';
+  const pricePending = standby && product.standbyReasons?.includes('price');
+  const packPending = standby && product.standbyReasons?.includes('case-pack');
+
+  if (!standby && (!Number.isFinite(product.baseUnitPrice) || product.baseUnitPrice <= 0)) {
     throw new Error(`Invalid base unit price for SKU ${product.sku}.`);
   }
-
-  if (!Number.isInteger(product.unitsPerCase) || product.unitsPerCase < 1) {
+  if (!standby && (!Number.isInteger(product.unitsPerCase) || product.unitsPerCase < 1)) {
     throw new Error(`Invalid units per case for SKU ${product.sku}.`);
+  }
+  if (standby && (!Number.isFinite(product.baseUnitPrice) || product.baseUnitPrice < 0)) {
+    throw new Error(`Invalid standby base unit price for SKU ${product.sku}.`);
+  }
+  if (standby && (!Number.isInteger(product.unitsPerCase) || product.unitsPerCase < 0)) {
+    throw new Error(`Invalid standby units per case for SKU ${product.sku}.`);
   }
 
   const tier = getActiveDiscountTier(cases, policy);
+  const baseUnitPrice = pricePending ? 0 : roundMoney(product.baseUnitPrice);
+  const unitPrice = pricePending ? 0 : roundMoney(baseUnitPrice * (1 - tier.discountRate));
 
-  // The buyer-facing unit price is rounded to cents first. Every dependent
-  // commercial value is then derived from that displayed unit price so the
-  // UI can never show mathematically contradictory unit/case/subtotal values.
-  const baseUnitPrice = roundMoney(product.baseUnitPrice);
-  const unitPrice = roundMoney(baseUnitPrice * (1 - tier.discountRate));
-  const baseCasePrice = roundMoney(baseUnitPrice * product.unitsPerCase);
-  const casePrice = roundMoney(unitPrice * product.unitsPerCase);
-  const baseSubtotal = roundMoney(baseCasePrice * cases);
-  const subtotal = roundMoney(casePrice * cases);
-  const saving = roundMoney(baseSubtotal - subtotal);
+  // A standby row with an unknown pack remains visible but can never fabricate
+  // a case price/subtotal. Known unit prices may still be shown informationally.
+  const usablePack = packPending ? 0 : product.unitsPerCase;
+  const baseCasePrice = usablePack > 0 ? roundMoney(baseUnitPrice * usablePack) : 0;
+  const casePrice = usablePack > 0 ? roundMoney(unitPrice * usablePack) : 0;
+  const baseSubtotal = usablePack > 0 ? roundMoney(baseCasePrice * cases) : 0;
+  const subtotal = usablePack > 0 ? roundMoney(casePrice * cases) : 0;
+  const saving = usablePack > 0 ? roundMoney(baseSubtotal - subtotal) : 0;
 
   return {
     sku: product.sku,
