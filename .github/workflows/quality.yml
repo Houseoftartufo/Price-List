@@ -37,6 +37,9 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Full Shopify catalogue audit
+        run: npm run audit:shopify
+
       - name: Preview integrity
         run: npm run qa:preview
 
@@ -48,6 +51,15 @@ jobs:
 
       - name: Browser buyer QA
         run: npm run test:e2e
+
+      - name: Upload Shopify catalogue audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: price-list-shopify-catalogue-audit
+          path: qa-shopify-audit
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Upload QA screenshots
         if: always()
