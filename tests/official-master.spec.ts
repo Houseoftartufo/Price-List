@@ -32,8 +32,8 @@ describe('official Excel product master', () => {
     expect(findRemasteredOfficialVariant('White Truffled Sauce – Bianchetto Truffle 2%', '500g')?.unitsPerCase).toBe(6);
     expect(findRemasteredOfficialVariant('White Truffle Extra Virgin Olive Oil', '1L')?.unitsPerCase).toBe(6);
     expect(findRemasteredOfficialVariant('White Truffle Extra Virgin Olive Oil', '5L')?.unitsPerCase).toBe(4);
-    expect(findRemasteredOfficialVariant('Acacia Honey with Truffle', '450g')?.unitsPerCase).toBe(6);
-    expect(findRemasteredOfficialVariant('Truffle Cashews', '80g')?.unitsPerCase).toBe(16);
+    expect(findRemasteredOfficialVariant('Aceto Balsamico di Modena', '100ml')?.unitsPerCase).toBe(12);
+    expect(findRemasteredOfficialVariant('Truffle Cashew', '80g')?.unitsPerCase).toBe(16);
     expect(findRemasteredOfficialVariant('Truffle Almonds', '80g')?.unitsPerCase).toBe(16);
     expect(findRemasteredOfficialVariant('Truffle Walnuts', '80g')?.unitsPerCase).toBe(16);
   });
@@ -46,11 +46,14 @@ describe('official Excel product master', () => {
       .sort();
 
     expect(pending).toEqual([
-      'ACETO BALSAMICO DI MODENA|100 ml',
+      'ACACIA HONEY WITH TRUFFLE|450 g',
       'BLACK TRUFFLE EXTRA-VIRGIN OLIVE OIL|60 ml',
       'SALT WITH SUMMER TRUFFLE|120 g',
       'SALT WITH SUMMER TRUFFLE|30 g',
     ].sort());
+
+    expect(findRemasteredOfficialVariant('Acacia Honey with Truffle', '450g')?.unitsPerCase).toBeUndefined();
+    expect(findRemasteredOfficialVariant('Black Truffle Extra Virgin Olive Oil', '60ml')?.unitsPerCase).toBeUndefined();
   });
 
   it('does not promote SKU candidates that are unsafe or failed the live Shopify cross-check', () => {
