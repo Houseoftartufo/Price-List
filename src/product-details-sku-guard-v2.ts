@@ -1,5 +1,5 @@
 import './styles/product-details-guard.css';
-import { findOfficialProductVariant, type OfficialProductVariant } from './official-product-master';
+import { findRemasteredOfficialVariant, type RemasteredOfficialVariant } from './official-product-remaster';
 
 type Locale = 'en' | 'it' | 'fr' | 'nl';
 
@@ -14,7 +14,7 @@ const copy = {
     ingredients: 'Ingredients',
     website: 'View product on houseoftartufo.com ↗',
     pendingPack: 'Case pack pending final verification.',
-    notOfficial: 'This catalogue row is not matched to the official product master. No Shopify data is shown.',
+    notOfficial: 'This row is not present in the official Excel product master and is therefore not an active House of Tartufo Price List product.',
   },
   it: {
     catalogueCode: 'Codice catalogo',
@@ -23,7 +23,7 @@ const copy = {
     ingredients: 'Ingredienti',
     website: 'Vedi prodotto su houseoftartufo.com ↗',
     pendingPack: 'Pezzi per scatola in attesa di verifica finale.',
-    notOfficial: 'Questa riga non corrisponde al master prodotti ufficiale. Non mostriamo dati Shopify.',
+    notOfficial: 'Questa riga non è presente nel master prodotti ufficiale Excel e quindi non è un prodotto attivo del Price List House of Tartufo.',
   },
   fr: {
     catalogueCode: 'Code catalogue',
@@ -32,7 +32,7 @@ const copy = {
     ingredients: 'Ingrédients',
     website: 'Voir le produit sur houseoftartufo.com ↗',
     pendingPack: 'Pièces par carton en attente de vérification finale.',
-    notOfficial: 'Cette ligne ne correspond pas au master produit officiel. Aucune donnée Shopify n’est affichée.',
+    notOfficial: 'Cette ligne n’est pas présente dans le master produit Excel officiel et n’est donc pas un produit actif du Price List House of Tartufo.',
   },
   nl: {
     catalogueCode: 'Cataloguscode',
@@ -41,7 +41,7 @@ const copy = {
     ingredients: 'Ingrediënten',
     website: 'Bekijk product op houseoftartufo.com ↗',
     pendingPack: 'Stuks per doos wachten op definitieve verificatie.',
-    notOfficial: 'Deze rij komt niet overeen met de officiële productmaster. Er worden geen Shopify-gegevens getoond.',
+    notOfficial: 'Deze rij staat niet in de officiële Excel-productmaster en is daarom geen actief product in de House of Tartufo Price List.',
   },
 } as const;
 
@@ -119,7 +119,7 @@ function setOfficialSku(dialog: HTMLDialogElement, sku: string | undefined): voi
   first.append(label, value);
 }
 
-function setCasePack(dialog: HTMLDialogElement, entry: OfficialProductVariant | undefined): void {
+function setCasePack(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant | undefined): void {
   const pack = specs(dialog)[2];
   if (!pack) return;
   const label = pack.querySelector<HTMLElement>('span');
@@ -131,7 +131,7 @@ function setCasePack(dialog: HTMLDialogElement, entry: OfficialProductVariant | 
     : '—';
 }
 
-function setImage(dialog: HTMLDialogElement, entry: OfficialProductVariant | undefined): void {
+function setImage(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant | undefined): void {
   const media = dialog.querySelector<HTMLElement>('.product-detail-media');
   if (!media) return;
   const imageUrl = entry?.shopifyImage;
@@ -145,7 +145,7 @@ function setImage(dialog: HTMLDialogElement, entry: OfficialProductVariant | und
   </div>`;
 }
 
-function setSourceLink(dialog: HTMLDialogElement, entry: OfficialProductVariant | undefined): void {
+function setSourceLink(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant | undefined): void {
   dialog.querySelector('.product-detail-source')?.remove();
   if (!entry?.shopifyHandle) return;
   const content = dialog.querySelector<HTMLElement>('.product-detail-content');
@@ -179,7 +179,7 @@ function ensureSections(dialog: HTMLDialogElement): HTMLElement | undefined {
   return sections;
 }
 
-function renderOfficial(dialog: HTMLDialogElement, info: RowInfo, entry: OfficialProductVariant): void {
+function renderOfficial(dialog: HTMLDialogElement, info: RowInfo, entry: RemasteredOfficialVariant): void {
   setCatalogueCode(dialog, info.catalogueCode);
   setOfficialSku(dialog, entry.sku);
   setCasePack(dialog, entry);
@@ -198,7 +198,7 @@ function renderOfficial(dialog: HTMLDialogElement, info: RowInfo, entry: Officia
       </section>
       ${pending}
     `;
-    sections.dataset.officialMasterKey = `${entry.product}:${entry.size}`;
+    sections.dataset.officialMasterKey = entry.officialKey;
   }
   setSourceLink(dialog, entry);
   dialog.dataset.shopifyMatch = 'official';
@@ -226,8 +226,8 @@ function applyOfficialMaster(): void {
   if (!dialog?.open) return;
   const info = rowInfo(dialog);
   if (!info) return;
-  const entry = findOfficialProductVariant(info.name, info.size);
-  const key = entry ? `${entry.product}:${entry.size}` : undefined;
+  const entry = findRemasteredOfficialVariant(info.name, info.size);
+  const key = entry?.officialKey;
   if (
     dialog.dataset.officialMaster === (entry ? 'matched' : 'none')
     && dialog.querySelector<HTMLElement>('.product-detail-sections')?.dataset.officialMasterKey === key
