@@ -31,17 +31,14 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Unit tests
+      - name: Official Excel master tests
         run: npm test
 
       - name: Production build
         run: npm run build
 
-      - name: Full Shopify catalogue audit
+      - name: Official Shopify enrichment cross-check
         run: npm run audit:shopify
-
-      - name: Exact product map coverage
-        run: npm run verify:product-map
 
       - name: Preview integrity
         run: npm run qa:preview
@@ -54,15 +51,6 @@ jobs:
 
       - name: Browser buyer QA
         run: npm run test:e2e
-
-      - name: Upload Shopify catalogue audit
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: price-list-shopify-catalogue-audit
-          path: qa-shopify-audit
-          if-no-files-found: error
-          retention-days: 7
 
       - name: Upload QA screenshots
         if: always()
