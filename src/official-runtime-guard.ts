@@ -46,7 +46,6 @@ function removeStandbyFromQuote(sku: string): void {
     return;
   }
 
-  // Defensive cleanup for a stale persisted quote before the quote DOM exists.
   try {
     const raw = window.localStorage.getItem(QUOTE_KEY);
     if (!raw) return;
@@ -58,27 +57,32 @@ function removeStandbyFromQuote(sku: string): void {
     });
     if (cleaned.length !== parsed.length) window.localStorage.setItem(QUOTE_KEY, JSON.stringify(cleaned));
   } catch {
-    // Storage is best-effort only; the capture guards below still prevent new standby orders.
+    // Storage is best-effort only; capture guards still prevent new standby orders.
   }
 }
 
 function decorateRow(row: HTMLTableRowElement): void {
+  if (row.dataset.runtimeGuardApplied === 'true') return;
+
   const info = rowInfo(row);
   if (!info) return;
   const official = findRemasteredOfficialVariant(info.name, info.size);
   if (!official) {
     row.dataset.officialMaster = 'none';
+    row.dataset.runtimeGuardApplied = 'true';
     return;
   }
-
-  row.dataset.officialMaster = 'matched';
-  row.dataset.officialKey = official.officialKey;
 
   const cells = row.querySelectorAll<HTMLElement>('td');
   const basePrice = parseVisibleMoney(cells[3]?.textContent ?? '');
   const pricePending = basePrice === 0 || basePrice === undefined;
   const packPending = official.packStatus !== 'resolved' || !official.unitsPerCase;
   const standby = pricePending || packPending;
+
+  // Mark before touching descendants so our own DOM mutations cannot re-enter.
+  row.dataset.runtimeGuardApplied = 'true';
+  row.dataset.officialMaster = 'matched';
+  row.dataset.officialKey = official.officialKey;
   row.dataset.orderStatus = standby ? 'standby' : 'orderable';
   row.dataset.priceStatus = pricePending ? 'pending' : 'ready';
   row.dataset.packStatus = packPending ? 'pending' : 'ready';
@@ -128,7 +132,6 @@ function schedule(): void {
   });
 }
 
-// Capture-phase protection: the existing buyer handlers never receive a standby order action.
 document.addEventListener('click', (event) => {
   const target = event.target as HTMLElement;
   const row = target.closest<HTMLTableRowElement>('#product-rows tr[data-order-status="standby"]');
