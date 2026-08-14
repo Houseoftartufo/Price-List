@@ -42,6 +42,7 @@ describe('official Excel catalogue filter', () => {
 
     expect(standby.map((product) => `${product.name}|${product.sizeLabel}|${product.standbyReasons?.join('+')}`).sort()).toEqual([
       'Acacia Honey With Truffle|450g|price+case-pack',
+      'Aceto Balsamico Di Modena|100ml|case-pack',
       'Black Truffle Extra Virgin Olive Oil|60ml|case-pack',
       'Salt With Summer Truffle|120g|case-pack',
       'Salt With Summer Truffle|30g|case-pack',
@@ -49,10 +50,10 @@ describe('official Excel catalogue filter', () => {
       'Truffle Cashew|80g|price',
       'Truffle Walnuts|80g|price',
     ].sort());
-    expect(orderable).toHaveLength(44);
-    expect(standby).toHaveLength(7);
+    expect(orderable).toHaveLength(43);
+    expect(standby).toHaveLength(8);
     expect(audit.missingPriceVariants).toHaveLength(4);
-    expect(audit.missingPackVariants).toHaveLength(4);
+    expect(audit.missingPackVariants).toHaveLength(5);
   });
 
   it('never admits variants that are not in the Excel master', () => {
@@ -61,15 +62,16 @@ describe('official Excel catalogue filter', () => {
     expect(audit.products.some((product) => /tarallini/i.test(product.name))).toBe(false);
   });
 
-  it('overrides donor case-pack values with the official Excel cross-check', () => {
+  it('overrides donor case-pack values only when the exact official Excel cross-check resolves them', () => {
     const sauce500 = audit.products.find((product) => product.officialKey === 'black truffle sauce 5%|500g');
     expect(sauce500?.baseUnitPrice).toBe(16.17);
     expect(sauce500?.unitsPerCase).toBe(6);
     expect(sauce500?.orderStatus).toBe('orderable');
 
     const aceto = audit.products.find((product) => product.officialKey === 'aceto balsamico di modena|100ml');
-    expect(aceto?.unitsPerCase).toBe(12);
-    expect(aceto?.orderStatus).toBe('orderable');
+    expect(aceto?.unitsPerCase).toBe(0);
+    expect(aceto?.orderStatus).toBe('standby');
+    expect(aceto?.standbyReasons).toContain('case-pack');
 
     const honey450 = audit.products.find((product) => product.officialKey === 'acacia honey with truffle|450g');
     expect(honey450?.baseUnitPrice).toBe(0);
