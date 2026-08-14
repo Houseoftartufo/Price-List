@@ -42,6 +42,7 @@ describe('official Excel catalogue filter', () => {
 
     expect(standby.map((product) => `${product.name}|${product.sizeLabel}|${product.standbyReasons?.join('+')}`).sort()).toEqual([
       'Acacia Honey With Truffle|450g|price+case-pack',
+      'Aceto Balsamico Di Modena|100ml|case-pack',
       'Black Truffle Extra Virgin Olive Oil|60ml|case-pack',
       'Salt With Summer Truffle|120g|case-pack',
       'Salt With Summer Truffle|30g|case-pack',
@@ -49,10 +50,10 @@ describe('official Excel catalogue filter', () => {
       'Truffle Cashew|80g|price',
       'Truffle Walnuts|80g|price',
     ].sort());
-    expect(orderable).toHaveLength(44);
-    expect(standby).toHaveLength(7);
+    expect(orderable).toHaveLength(43);
+    expect(standby).toHaveLength(8);
     expect(audit.missingPriceVariants).toHaveLength(4);
-    expect(audit.missingPackVariants).toHaveLength(4);
+    expect(audit.missingPackVariants).toHaveLength(5);
   });
 
   it('never admits variants that are not in the Excel master', () => {
