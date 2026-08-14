@@ -199,8 +199,8 @@ async function fetchProduct(handle: string, current: Locale): Promise<ShopifyPro
 function relabelCatalogueCode(dialog: HTMLDialogElement, info: RowInfo): void {
   const firstSpec = dialog.querySelector<HTMLElement>('.product-detail-specs .product-detail-spec');
   if (!firstSpec) return;
-  const label = firstSpec.querySelector<HTMLElement>('span');
-  const value = firstSpec.querySelector<HTMLElement>('strong');
+  const label = firstSpec.querySelector<HTMLElement>('span:not([data-site-sku-label])');
+  const value = firstSpec.querySelector<HTMLElement>('strong:not([data-site-sku])');
   const text = copy[locale()];
   if (label && label.textContent !== text.catalogueCode) label.textContent = text.catalogueCode;
   if (value && value.textContent !== info.catalogueCode) value.textContent = info.catalogueCode;
@@ -209,13 +209,27 @@ function relabelCatalogueCode(dialog: HTMLDialogElement, info: RowInfo): void {
 function setSiteSku(dialog: HTMLDialogElement, sku: string | undefined): void {
   const firstSpec = dialog.querySelector<HTMLElement>('.product-detail-specs .product-detail-spec');
   if (!firstSpec) return;
-  firstSpec.querySelector('[data-site-sku-label]')?.remove();
-  firstSpec.querySelector('[data-site-sku]')?.remove();
-  if (!sku) return;
+  const existingLabel = firstSpec.querySelector<HTMLElement>('[data-site-sku-label]');
+  const existingValue = firstSpec.querySelector<HTMLElement>('[data-site-sku]');
 
+  if (!sku) {
+    existingLabel?.remove();
+    existingValue?.remove();
+    return;
+  }
+
+  const expectedLabel = copy[locale()].siteSku;
+  if (existingLabel && existingValue) {
+    if (existingLabel.textContent !== expectedLabel) existingLabel.textContent = expectedLabel;
+    if (existingValue.textContent !== sku) existingValue.textContent = sku;
+    return;
+  }
+
+  existingLabel?.remove();
+  existingValue?.remove();
   const label = document.createElement('span');
   label.dataset.siteSkuLabel = 'true';
-  label.textContent = copy[locale()].siteSku;
+  label.textContent = expectedLabel;
   label.style.marginTop = '8px';
   const value = document.createElement('strong');
   value.dataset.siteSku = 'true';
@@ -253,7 +267,7 @@ function scrubUnverifiedRemoteContent(dialog: HTMLDialogElement): void {
 
 function expectedSourcePresent(dialog: HTMLDialogElement, handle: string): boolean {
   const source = dialog.querySelector<HTMLAnchorElement>('.product-detail-source');
-  if (!source) return true; // The official detail renderer may still be loading.
+  if (!source) return true;
   try {
     return new URL(source.href).pathname.includes(`/products/${handle}`);
   } catch {
@@ -305,7 +319,7 @@ function scheduleAudit(): void {
 }
 
 const observer = new MutationObserver(scheduleAudit);
-observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+observer.observe(document.body, { childList: true, subtree: true });
 document.addEventListener('click', scheduleAudit);
 document.addEventListener('keydown', scheduleAudit);
 
