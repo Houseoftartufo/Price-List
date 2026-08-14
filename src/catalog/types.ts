@@ -12,14 +12,19 @@ export type TruffleType =
   | 'none';
 
 export type ProductLine = 'standard' | 'natural';
+export type ProductOrderStatus = 'orderable' | 'standby';
+export type ProductStandbyReason = 'price' | 'case-pack';
 
 export interface Product {
+  /** Stable catalogue row identifier. This is not automatically the supplier/site SKU. */
   sku: string;
   categoryId: string;
   groupId: string;
   name: string;
   sizeLabel: string;
+  /** Zero is allowed only for an official standby row whose price is still pending. */
   baseUnitPrice: number;
+  /** Zero is allowed only for an official standby row whose case pack is still pending. */
   unitsPerCase: number;
   currency: Currency;
 
@@ -29,6 +34,14 @@ export interface Product {
   percentageLabel?: string;
   flavour?: string;
   active?: boolean;
+
+  /** Official Excel-master metadata. */
+  orderStatus?: ProductOrderStatus;
+  standbyReasons?: ProductStandbyReason[];
+  officialKey?: string;
+  officialIngredients?: string;
+  officialSku?: string;
+  syntheticCatalogueCode?: boolean;
 }
 
 export interface DiscountTier {
