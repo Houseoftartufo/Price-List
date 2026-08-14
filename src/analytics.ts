@@ -1,6 +1,6 @@
 import './product-details';
 import './product-details-sku-guard-v2';
-import './official-standby-ui';
+import './official-runtime-guard';
 
 type AnalyticsPayload = Record<string, string | number | boolean | undefined>;
 
