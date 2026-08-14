@@ -53,13 +53,15 @@ describe('official Excel product master', () => {
     ].sort());
   });
 
-  it('does not promote SKU candidates explicitly marked unsafe in the cross-check workbook', () => {
+  it('does not promote SKU candidates that are unsafe or failed the live Shopify cross-check', () => {
     expect(findRemasteredOfficialVariant('Black Truffle Mayonnaise', '120g')?.sku).toBeUndefined();
     expect(findRemasteredOfficialVariant('White Truffle Genovese Pesto', '80g')?.sku).toBeUndefined();
+    expect(findRemasteredOfficialVariant('White Truffle Extra Virgin Olive Oil', '60ml')?.sku).toBeUndefined();
+    expect(findRemasteredOfficialVariant('Black Truffle Extra Virgin Olive Oil', '60ml')?.sku).toBeUndefined();
   });
 
-  it('only exposes Shopify enrichment for official variants', () => {
-    expect(Object.keys(OFFICIAL_SHOPIFY_MAP)).toHaveLength(23);
+  it('only exposes live-verified Shopify enrichment for official variants', () => {
+    expect(Object.keys(OFFICIAL_SHOPIFY_MAP)).toHaveLength(21);
     for (const [key, mapping] of Object.entries(OFFICIAL_SHOPIFY_MAP)) {
       expect(mapping.handle).toBeTruthy();
       expect(mapping.siteSku).toBeTruthy();
