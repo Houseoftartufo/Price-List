@@ -53,19 +53,39 @@ liveDescribe('official Shopify enrichment live gate', () => {
     }
 
     expect(byHandle.size).toBe(6);
+    const failures: string[] = [];
 
     for (const [handle, expected] of byHandle) {
-      const product = await fetchProduct(handle);
-      expect(product.handle, handle).toBe(handle);
+      let product: ShopifyProduct;
+      try {
+        product = await fetchProduct(handle);
+      } catch (error) {
+        failures.push(`${handle}: ${error instanceof Error ? error.message : String(error)}`);
+        continue;
+      }
+
+      if (product.handle !== handle) {
+        failures.push(`${handle}: returned handle ${String(product.handle ?? 'missing')}`);
+        continue;
+      }
+
       const variants = product.variants ?? [];
-      expect(variants.length, `${handle}: variants`).toBeGreaterThan(0);
+      if (!variants.length) {
+        failures.push(`${handle}: no variants returned`);
+        continue;
+      }
 
       for (const [officialKey, expectedSku] of expected) {
         const matches = variants.filter((variant) => String(variant.sku ?? '').trim() === expectedSku);
-        expect(matches, `${officialKey} -> ${handle} -> ${expectedSku}`).toHaveLength(1);
+        if (matches.length !== 1) {
+          const available = variants.map((variant) => String(variant.sku ?? '').trim()).filter(Boolean).join(', ');
+          failures.push(`${officialKey} -> ${handle} -> ${expectedSku}: matches=${matches.length}; available=[${available}]`);
+        }
       }
 
       await sleep(350);
     }
+
+    expect(failures, failures.join('\n')).toEqual([]);
   }, 60_000);
 });
