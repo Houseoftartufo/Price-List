@@ -144,7 +144,7 @@ export function officialVariantKey(entry: Pick<OfficialProductVariant, 'product'
 }
 
 function aliases(entry: OfficialProductVariant): readonly string[] {
-  return [...entry.aliases, ...(EXTRA_ALIASES[normalise(entry.product)] ?? [])];
+  return [entry.product, ...entry.aliases, ...(EXTRA_ALIASES[normalise(entry.product)] ?? [])];
 }
 
 export function findRemasteredOfficialVariant(name: string, size: string): RemasteredOfficialVariant | undefined {
