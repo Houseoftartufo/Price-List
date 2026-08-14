@@ -81,10 +81,12 @@ const SKU_OVERRIDES: Readonly<Record<string, { sku: string; source: 'excel' | 's
   'summer truffle carpaccio|80g': { sku: 'Product87', source: 'shopify-verified' },
   'summer truffle carpaccio|170g': { sku: 'Product88', source: 'shopify-verified' },
   'summer truffle carpaccio|500g': { sku: 'Product89', source: 'shopify-verified' },
+  'white truffle extra virgin olive oil|60ml': { sku: 'Product56', source: 'shopify-verified' },
   'white truffle extra virgin olive oil|100ml': { sku: '5430004174493', source: 'shopify-verified' },
   'white truffle extra virgin olive oil|250ml': { sku: '5430004174547', source: 'shopify-verified' },
   'white truffle extra virgin olive oil|1000ml': { sku: '5430004174448', source: 'shopify-verified' },
   'white truffle extra virgin olive oil|5000ml': { sku: '5430004174035', source: 'shopify-verified' },
+  'black truffle extra virgin olive oil|60ml': { sku: 'Product62', source: 'shopify-verified' },
   'black truffle extra virgin olive oil|100ml': { sku: '5430004174530', source: 'shopify-verified' },
   'black truffle extra virgin olive oil|250ml': { sku: '5430004174455', source: 'shopify-verified' },
   'black truffle extra virgin olive oil|5000ml': { sku: '5430004174028', source: 'shopify-verified' },
@@ -117,7 +119,8 @@ function normalise(value: string): string {
     .replace(/\bextra[- ]virgin\b/g, ' extra virgin ')
     .replace(/[^a-z0-9%]+/g, ' ')
     .trim()
-    .replace(/\s+/g, ' ');
+    .replace(/\s+/g, ' ')
+    .replace(/\s+%/g, '%');
 }
 
 function measureKey(value: string): string | undefined {
