@@ -164,6 +164,27 @@ function ensureSourceLink(dialog: HTMLDialogElement, mapping: VerifiedProductDet
   content.append(link);
 }
 
+function ensureVerifiedImage(dialog: HTMLDialogElement, mapping: VerifiedProductDetailMapping): void {
+  if (dialog.querySelector('[data-product-detail-main-image]')) return;
+  const media = dialog.querySelector<HTMLElement>('.product-detail-media');
+  if (!media) return;
+
+  let stage = media.querySelector<HTMLElement>('.product-detail-image-stage');
+  if (!stage) {
+    stage = document.createElement('div');
+    stage.className = 'product-detail-image-stage';
+    media.prepend(stage);
+  }
+  stage.removeAttribute('data-empty');
+
+  const image = document.createElement('img');
+  image.setAttribute('data-product-detail-main-image', 'true');
+  image.src = mapping.image;
+  image.alt = compact(dialog.querySelector('#product-detail-title')?.textContent) || 'House of Tartufo product';
+  image.loading = 'eager';
+  stage.append(image);
+}
+
 function isScrubbed(dialog: HTMLDialogElement, code: string): boolean {
   const sections = dialog.querySelector<HTMLElement>('.product-detail-sections');
   return dialog.dataset.shopifyMatch === 'none'
@@ -230,6 +251,7 @@ async function auditDialog(dialog: HTMLDialogElement): Promise<void> {
   const existingSku = compact(dialog.querySelector<HTMLElement>('[data-site-sku]')?.textContent);
   if (dialog.dataset.shopifyMatch === 'verified' && existingSku === mapping.siteSku) {
     ensureSourceLink(dialog, mapping);
+    ensureVerifiedImage(dialog, mapping);
     return;
   }
 
@@ -248,6 +270,7 @@ async function auditDialog(dialog: HTMLDialogElement): Promise<void> {
   ensureCatalogueCode(dialog, code);
   ensureSiteSku(dialog, mapping.siteSku);
   ensureSourceLink(dialog, mapping);
+  ensureVerifiedImage(dialog, mapping);
   dialog.dataset.shopifyMatch = 'verified';
 }
 
