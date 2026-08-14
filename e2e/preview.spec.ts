@@ -70,7 +70,7 @@ test('desktop buyer can find a SKU, price quantity and build a quote', async ({ 
   await page.screenshot({ path: 'qa-screenshots/desktop-buyer.png' });
 });
 
-test('clicking a product only opens the descriptive card with exact official site variant', async ({ page }) => {
+test('clicking a product opens the descriptive card only after exact official site variant verification', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   const dialog = await openProductDetails(page, '87');
 
@@ -89,26 +89,32 @@ test('clicking a product only opens the descriptive card with exact official sit
   await expect(page.locator('#quote-count')).toHaveText('0');
 });
 
-test('Shopify SKU verification matches sauce variants by exact size and percentage', async ({ page }) => {
+test('exact Shopify map covers sauce and butter variants with the real site SKU', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
 
-  let dialog = await openProductDetails(page, '18');
-  await expect(dialog).toHaveAttribute('data-shopify-match', 'verified', { timeout: 12_000 });
-  await expect(dialog.locator('[data-site-sku]')).toHaveText('5430004174103');
-  await dialog.locator('[data-product-detail-close]').click();
+  const checks = [
+    ['18', '5430004174103'],
+    ['27', '5430004174325'],
+    ['49', '5430004174486'],
+  ] as const;
 
-  dialog = await openProductDetails(page, '27');
-  await expect(dialog).toHaveAttribute('data-shopify-match', 'verified', { timeout: 12_000 });
-  await expect(dialog.locator('[data-site-sku]')).toHaveText('5430004174325');
+  for (const [catalogueCode, expectedSiteSku] of checks) {
+    const dialog = await openProductDetails(page, catalogueCode);
+    await expect(dialog).toHaveAttribute('data-shopify-match', 'verified', { timeout: 12_000 });
+    await expect(dialog.locator('[data-site-sku]')).toHaveText(expectedSiteSku);
+    await expect(dialog.locator('.product-detail-source')).toHaveCount(1);
+    await expectLoadedProductImage(dialog.locator('[data-product-detail-main-image]'));
+    await dialog.locator('[data-product-detail-close]').click();
+  }
 });
 
-test('ambiguous or distinct products never inherit a Shopify SKU or product sheet', async ({ page }) => {
+test('rows without an exact public Shopify variant never inherit a site SKU, photo or product sheet', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
 
-  for (const catalogueCode of ['15', '49', '151']) {
+  for (const catalogueCode of ['15', '22', '57', '151']) {
     const dialog = await openProductDetails(page, catalogueCode);
     await expect(dialog).toHaveAttribute('data-shopify-match', 'none', { timeout: 12_000 });
-    await page.waitForTimeout(700);
+    await page.waitForTimeout(350);
     await expect(dialog.locator('[data-site-sku]')).toHaveCount(0);
     await expect(dialog.locator('.product-detail-source')).toHaveCount(0);
     await expect(dialog.locator('[data-product-detail-main-image]')).toHaveCount(0);
