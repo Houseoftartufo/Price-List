@@ -40,6 +40,9 @@ jobs:
       - name: Official Shopify enrichment cross-check
         run: npm run audit:shopify
 
+      - name: Official Shopify candidate discovery
+        run: CI_SHOPIFY_DISCOVERY=1 npx vitest run tests/official-shopify-discovery.spec.ts
+
       - name: Preview integrity
         run: npm run qa:preview
 
