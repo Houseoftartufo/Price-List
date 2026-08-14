@@ -5,7 +5,7 @@ mkdirSync('qa-screenshots', { recursive: true });
 
 const OFFICIAL_PRODUCTS = '51';
 const OFFICIAL_ACTIVE_CATEGORIES = '6';
-const EXPECTED_STANDBY_ROWS = 8;
+const EXPECTED_STANDBY_ROWS = 7;
 
 async function expectLoadedProductImage(image: Locator): Promise<void> {
   await expect(image).toBeVisible();
@@ -133,8 +133,10 @@ test('official variants without a safe Shopify match still show only Excel ingre
 
 test('products outside the two official Excel files never appear in the buyer catalogue', async ({ page }) => {
   await page.goto('/preview.html');
+  const officialRows = page.locator('#product-rows tr[data-official-key]');
+  await expect(officialRows).toHaveCount(51);
 
-  const rendered = await page.locator('#product-rows tr[data-official-key]').evaluateAll((rows) =>
+  const rendered = await officialRows.evaluateAll((rows) =>
     rows.map((row) => ({
       key: (row as HTMLElement).dataset.officialKey,
       name: row.querySelector('.product-name')?.textContent?.trim(),
@@ -159,7 +161,15 @@ test('all incomplete official variants stay visible and clickable but cannot ent
   const standbyKeys = await standbyRows.evaluateAll((rows) =>
     rows.map((row) => (row as HTMLElement).dataset.officialKey).filter(Boolean).sort(),
   );
-  console.log(`OFFICIAL_STANDBY_KEYS=${JSON.stringify(standbyKeys)}`);
+  expect(standbyKeys).toEqual([
+    'acacia honey with truffle|450g',
+    'black truffle extra virgin olive oil|60ml',
+    'salt with summer truffle|120g',
+    'salt with summer truffle|30g',
+    'truffle almonds|80g',
+    'truffle cashew|80g',
+    'truffle walnuts|80g',
+  ].sort());
 
   const salt120 = await officialRow(page, 'salt with summer truffle|120g');
   await expect(salt120).toHaveAttribute('data-order-status', 'standby');
