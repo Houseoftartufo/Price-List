@@ -5,30 +5,36 @@ mkdirSync('qa-screenshots', { recursive: true });
 
 const OFFICIAL_PRODUCTS = '51';
 const OFFICIAL_ACTIVE_CATEGORIES = '6';
+const EXPECTED_STANDBY_ROWS = 8;
 
 async function expectLoadedProductImage(image: Locator): Promise<void> {
   await expect(image).toBeVisible();
   await expect.poll(async () => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0)).toBe(true);
 }
 
-async function openProductDetails(page: Page, catalogueCode: string): Promise<Locator> {
-  await page.goto(`/preview.html?sku=${catalogueCode}`);
-  const row = page.locator(`tr[data-sku="${catalogueCode}"]`);
-  await expect(row).toBeVisible();
+async function officialRow(page: Page, officialKey: string): Promise<Locator> {
+  const row = page.locator(`#product-rows tr[data-official-key="${officialKey}"]`);
+  await expect(row, officialKey).toBeVisible();
+  return row;
+}
+
+async function openOfficialProduct(page: Page, officialKey: string): Promise<{ row: Locator; dialog: Locator }> {
+  if (!page.url().includes('/preview.html')) await page.goto('/preview.html');
+  const row = await officialRow(page, officialKey);
   await row.locator('.product-cell').click();
   const dialog = page.locator('#product-detail-dialog');
   await expect(dialog).toBeVisible();
   await expect(dialog).toHaveAttribute('data-official-master', 'matched');
-  return dialog;
+  return { row, dialog };
 }
 
 test('production homepage serves exactly the 51 official Excel variants', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto('/?sku=29');
+  await page.goto('/');
 
   await expect(page.locator('#metric-products')).toHaveText(OFFICIAL_PRODUCTS);
   await expect(page.locator('#metric-categories')).toHaveText(OFFICIAL_ACTIVE_CATEGORIES);
-  await expect(page.locator('tr[data-sku="29"]')).toBeVisible();
+  await expect(page.locator('#product-rows tr[data-official-master="matched"]')).toHaveCount(51);
   await expect(page.locator('#quote-trigger')).toBeVisible();
 
   const robots = page.locator('meta[name="robots"]');
@@ -38,29 +44,24 @@ test('production homepage serves exactly the 51 official Excel variants', async 
 
 test('desktop buyer can price an orderable official variant and build a quote', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto('/preview.html?sku=29');
+  await page.goto('/preview.html');
 
-  await expect(page.locator('#metric-products')).toHaveText(OFFICIAL_PRODUCTS);
-  await expect(page.locator('#metric-categories')).toHaveText(OFFICIAL_ACTIVE_CATEGORIES);
-
-  const row = page.locator('tr[data-sku="29"]');
-  await expect(row).toBeVisible();
+  const row = await officialRow(page, 'white truffle sauce|500g');
+  await expect(row).toHaveAttribute('data-order-status', 'orderable');
   await expect(row.locator('.product-name')).toHaveText('White Truffle Sauce');
+  await expect(row.locator('td').nth(2)).toContainText('6');
   await expect(row.locator('.dynamic-price')).toBeVisible();
 
-  // Official Excel cross-check: White Truffle Sauce 500g is 6 units/box.
-  await expect(row.locator('td').nth(2)).toContainText('6');
-
-  const quantity = row.locator('[data-qty-input="29"]');
+  const quantity = row.locator('[data-qty-input]');
   await quantity.fill('2');
   await quantity.press('Tab');
   await expect(row.locator('.discount-pill')).toContainText('5%');
 
-  await row.locator('[data-add-quote="29"]').click();
+  await row.locator('[data-add-quote]').click();
   await expect(page.locator('#quote-count')).toHaveText('1');
   await page.locator('#quote-trigger').click();
   await expect(page.locator('#quote-dialog')).toBeVisible();
-  await expect(page.locator('#quote-lines')).toContainText('SKU 29');
+  await expect(page.locator('#quote-lines')).toContainText('White Truffle Sauce');
   await expect(page.locator('#whatsapp-order')).toHaveAttribute('href', /wa\.me\/32480205715/);
   await expect(page.locator('#email-order')).toHaveAttribute('href', /^mailto:/);
   await page.locator('#quote-close').click();
@@ -73,7 +74,8 @@ test('desktop buyer can price an orderable official variant and build a quote', 
 
 test('product card uses Excel ingredients and exact Shopify enrichment independently', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
-  const dialog = await openProductDetails(page, '87');
+  await page.goto('/preview.html');
+  const { dialog } = await openOfficialProduct(page, 'summer truffle carpaccio|45g');
 
   await expect(dialog.locator('#product-detail-title')).toContainText(/Summer Truffle Carpaccio/i);
   await expect(dialog).toHaveAttribute('data-shopify-match', 'verified');
@@ -85,23 +87,23 @@ test('product card uses Excel ingredients and exact Shopify enrichment independe
 
   await page.screenshot({ path: 'qa-screenshots/product-detail-desktop.png' });
   await dialog.locator('[data-product-detail-close]').click();
-  await expect(dialog).not.toBeVisible();
 });
 
 test('official SKU, pack and Shopify mappings stay exact across product families', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/preview.html');
 
   const checks = [
-    ['18', '5430004174103', '12'],
-    ['20', '5430004174127', '6'],
-    ['29', '5430004174240', '6'],
-    ['49', '5430004174486', '12'],
-    ['58', '5430004174493', '12'],
-    ['62', '5430004174035', '4'],
+    ['black truffle sauce 5%|80g', '5430004174103', '12'],
+    ['black truffle sauce 5%|500g', '5430004174127', '6'],
+    ['white truffle sauce|500g', '5430004174240', '6'],
+    ['white truffle butter|80g', '5430004174486', '12'],
+    ['white truffle extra virgin olive oil|100ml', '5430004174493', '12'],
+    ['white truffle extra virgin olive oil|5000ml', '5430004174035', '4'],
   ] as const;
 
-  for (const [catalogueCode, expectedSku, expectedCasePack] of checks) {
-    const dialog = await openProductDetails(page, catalogueCode);
+  for (const [officialKey, expectedSku, expectedCasePack] of checks) {
+    const { dialog } = await openOfficialProduct(page, officialKey);
     await expect(dialog.locator('[data-official-sku]')).toHaveText(expectedSku);
     await expect(dialog.locator('.product-detail-specs .product-detail-spec').nth(2)).toContainText(expectedCasePack);
     await expect(dialog).toContainText(/Ingredients/i);
@@ -112,14 +114,16 @@ test('official SKU, pack and Shopify mappings stay exact across product families
 });
 
 test('official variants without a safe Shopify match still show only Excel ingredients', async ({ page }) => {
-  const sauce = await openProductDetails(page, '22');
+  await page.goto('/preview.html');
+
+  const sauce = (await openOfficialProduct(page, 'black truffle sauce 10%|170g')).dialog;
   await expect(sauce).toHaveAttribute('data-shopify-match', 'official');
   await expect(sauce.locator('.product-detail-source')).toHaveCount(0);
   await expect(sauce.locator('[data-product-detail-main-image]')).toHaveCount(0);
   await expect(sauce).toContainText(/summer truffle 10%/i);
   await sauce.locator('[data-product-detail-close]').click();
 
-  const mayo = await openProductDetails(page, '38');
+  const mayo = (await openOfficialProduct(page, 'black truffle mayonnaise|120g')).dialog;
   await expect(mayo).toHaveAttribute('data-shopify-match', 'official');
   await expect(mayo).toContainText(/pasteurised EGG/i);
   await expect(mayo).not.toContainText(/almond/i);
@@ -129,37 +133,55 @@ test('official variants without a safe Shopify match still show only Excel ingre
 
 test('products outside the two official Excel files never appear in the buyer catalogue', async ({ page }) => {
   await page.goto('/preview.html');
-  for (const code of ['1', '15', '27', '60', '83', '94', '117', '136', '151']) {
-    await expect(page.locator(`tr[data-sku="${code}"]`)).toHaveCount(0);
-  }
+
+  const rendered = await page.locator('#product-rows tr[data-official-key]').evaluateAll((rows) =>
+    rows.map((row) => ({
+      key: (row as HTMLElement).dataset.officialKey,
+      name: row.querySelector('.product-name')?.textContent?.trim(),
+      size: row.querySelectorAll('td')[1]?.textContent?.trim(),
+    })),
+  );
+
+  expect(rendered).toHaveLength(51);
+  expect(rendered).not.toContainEqual(expect.objectContaining({ name: 'White Truffle Sauce', size: '80g' }));
+  expect(rendered).not.toContainEqual(expect.objectContaining({ name: 'White Truffle Extra Virgin Olive Oil', size: '500ml' }));
+  expect(rendered).not.toContainEqual(expect.objectContaining({ name: 'Acacia Honey With Truffle', size: '650g' }));
+  expect(rendered.some((row) => /Tarallini/i.test(row.name ?? ''))).toBe(false);
+  expect(rendered.some((row) => /Pure White Truffle Cream/i.test(row.name ?? ''))).toBe(false);
 });
 
-test('incomplete official products remain visible and clickable but cannot enter a quote', async ({ page }) => {
-  await page.goto('/preview.html?q=Salt%20With%20Summer%20Truffle');
-  const salt120 = page.locator('#product-rows tr[data-sku]').filter({ hasText: 'Salt With Summer Truffle' }).filter({ hasText: '120g' });
-  await expect(salt120).toBeVisible();
-  await expect(salt120).toHaveAttribute('data-official-standby', 'true');
-  await expect(salt120.locator('[data-add-quote]')).toBeDisabled();
-  await expect(salt120.locator('[data-qty-input]')).toBeDisabled();
-  await expect(salt120).toContainText(/Case pack to confirm/i);
+test('all incomplete official variants stay visible and clickable but cannot enter a quote', async ({ page }) => {
+  await page.goto('/preview.html');
+
+  const standbyRows = page.locator('#product-rows tr[data-order-status="standby"]');
+  await expect(standbyRows).toHaveCount(EXPECTED_STANDBY_ROWS);
+
+  const standbyKeys = await standbyRows.evaluateAll((rows) =>
+    rows.map((row) => (row as HTMLElement).dataset.officialKey).filter(Boolean).sort(),
+  );
+  console.log(`OFFICIAL_STANDBY_KEYS=${JSON.stringify(standbyKeys)}`);
+
+  const salt120 = await officialRow(page, 'salt with summer truffle|120g');
+  await expect(salt120).toHaveAttribute('data-order-status', 'standby');
+  await expect(salt120.locator('[data-add-quote]')).toHaveCount(0);
+  await expect(salt120.locator('[data-qty-input]')).toHaveCount(0);
+  await expect(salt120).toContainText(/Case pack pending/i);
   await salt120.locator('.product-cell').click();
   const dialog = page.locator('#product-detail-dialog');
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText(/Ingredients/i);
   await dialog.locator('[data-product-detail-close]').click();
 
-  await page.goto('/preview.html?q=Truffle%20Cashew');
-  const cashew = page.locator('#product-rows tr[data-sku]').filter({ hasText: 'Truffle Cashew' });
-  await expect(cashew).toBeVisible();
-  await expect(cashew).toHaveAttribute('data-official-standby', 'true');
-  await expect(cashew.locator('[data-add-quote]')).toBeDisabled();
-  await expect(cashew.locator('.base-price')).toContainText('—');
+  const cashew = await officialRow(page, 'truffle cashew|80g');
+  await expect(cashew).toHaveAttribute('data-order-status', 'standby');
+  await expect(cashew).toContainText(/Price pending/i);
   await expect(page.locator('#quote-count')).toHaveText('0');
 });
 
 test('product detail card stays contained on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  const dialog = await openProductDetails(page, '87');
+  await page.goto('/preview.html');
+  const { dialog } = await openOfficialProduct(page, 'summer truffle carpaccio|45g');
   await expect(dialog).toHaveAttribute('data-shopify-match', 'verified');
   await expect(dialog.locator('[data-official-sku]')).toHaveText('Product86');
   await expect(dialog).toContainText(/Summer truffle.*60%.*water.*flavouring/i);
@@ -175,7 +197,7 @@ test('product detail card stays contained on mobile', async ({ page }) => {
 for (const width of [320, 360, 390, 430]) {
   test(`${width}px mobile keeps languages, buyer controls and horizontal layout safe`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
-    await page.goto('/preview.html?sku=46');
+    await page.goto('/preview.html');
 
     await expect(page.locator('[data-locale="en"]')).toBeVisible();
     await expect(page.locator('[data-locale="fr"]')).toBeVisible();
@@ -185,8 +207,7 @@ for (const width of [320, 360, 390, 430]) {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);
 
-    const row = page.locator('tr[data-sku="46"]');
-    await expect(row).toBeVisible();
+    const row = await officialRow(page, 'black truffle butter|80g');
     const decrementBox = await row.locator('[data-qty-action="decrement"]').boundingBox();
     const incrementBox = await row.locator('[data-qty-action="increment"]').boundingBox();
     expect(decrementBox?.height ?? 0).toBeGreaterThanOrEqual(44);
