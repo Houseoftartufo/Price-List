@@ -1,3 +1,4 @@
+import { remasterCatalogueProducts } from '../official-product-remaster';
 import { parseCatalogueSourceCsv, reconcileSourceProduct, sourceRowToProduct } from './price-source';
 import { DEFAULT_DISCOUNT_POLICY } from './pricing';
 import type { Catalogue } from './types';
@@ -8,7 +9,7 @@ export const LIVE_PRODUCTS_URL =
 
 const SPREADSHEET_ID = '1qqOv6i2UrZZwtbW8awMzawBNs8f9UblGoL25QZf3u94';
 const SNAPSHOT_URL = '/data/catalog.snapshot.json';
-const CACHE_KEY = 'hot-price-list:catalogue:v1';
+const CACHE_KEY = 'hot-price-list:catalogue:v2:official-excel-master';
 const STALE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const LIVE_TIMEOUT_MS = 8_000;
 
@@ -27,6 +28,32 @@ function emitCatalogueError(stage: string, error: unknown): void {
     stage,
     message: error instanceof Error ? error.message : String(error),
     timestamp: new Date().toISOString(),
+  });
+}
+
+function applyOfficialExcelMaster(catalogue: Catalogue): Catalogue {
+  const audit = remasterCatalogueProducts(catalogue.products);
+  if (!audit.products.length) throw new Error('Official Excel master produced an empty priced catalogue.');
+
+  if (audit.missingOfficialVariants.length || audit.missingPackVariants.length || audit.duplicatePriceRows.length) {
+    console.warn('[HOT Price List] Official Excel master reconciliation', {
+      officialVariantsWithPrice: audit.products.length,
+      missingOfficialPriceRows: audit.missingOfficialVariants.map((entry) => `${entry.product} · ${entry.size}`),
+      officialVariantsMissingPack: audit.missingPackVariants.map((entry) => `${entry.product} · ${entry.size}`),
+      discardedDuplicatePriceRows: audit.duplicatePriceRows,
+    });
+  }
+
+  return assertValidCatalogue({
+    ...catalogue,
+    products: audit.products,
+    sourceMeta: catalogue.sourceMeta
+      ? {
+          ...catalogue.sourceMeta,
+          sourceRowCount: audit.products.length,
+          categoryCount: new Set(audit.products.map((product) => product.categoryId)).size,
+        }
+      : catalogue.sourceMeta,
   });
 }
 
@@ -77,10 +104,10 @@ function readStaleCatalogue(baseline?: Catalogue): Catalogue | undefined {
       return undefined;
     }
 
-    const stale = assertValidCatalogue({
+    const stale = applyOfficialExcelMaster(assertValidCatalogue({
       ...parsed,
       freshness: 'stale',
-    });
+    }));
     if (baseline) assertContainsBaseline(stale, baseline);
     return stale;
   } catch (error) {
@@ -122,7 +149,7 @@ async function loadLiveCatalogue(baseline?: Catalogue): Promise<Catalogue> {
 
   const now = new Date();
   const products = rows.map(sourceRowToProduct);
-  const catalogue = assertValidCatalogue({
+  const catalogue = applyOfficialExcelMaster(assertValidCatalogue({
     schemaVersion: 1,
     catalogueVersion: versionFromDate(now),
     currency: 'EUR',
@@ -138,7 +165,7 @@ async function loadLiveCatalogue(baseline?: Catalogue): Promise<Catalogue> {
       sourceRowCount: products.length,
       categoryCount: new Set(products.map((product) => product.categoryId)).size,
     },
-  });
+  }));
 
   if (baseline) assertContainsBaseline(catalogue, baseline);
   return catalogue;
@@ -149,11 +176,11 @@ async function loadBuildSnapshot(): Promise<Catalogue> {
   if (!response.ok) throw new Error(`Catalogue fallback snapshot returned HTTP ${response.status}.`);
 
   const parsed = (await response.json()) as Catalogue;
-  return assertValidCatalogue({
+  return applyOfficialExcelMaster(assertValidCatalogue({
     ...parsed,
     source: 'snapshot',
     freshness: 'fallback',
-  });
+  }));
 }
 
 export async function loadCatalogue(): Promise<CatalogueLoadResult> {
