@@ -1,5 +1,6 @@
 import './styles/product-details-guard.css';
 import { findRemasteredOfficialVariant, type RemasteredOfficialVariant } from './official-product-remaster';
+import { OFFICIAL_SHOPIFY_MAP } from './official-shopify-map';
 
 type Locale = 'en' | 'it' | 'fr' | 'nl';
 
@@ -131,29 +132,30 @@ function setCasePack(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant
     : '—';
 }
 
-function setImage(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant | undefined): void {
+function setImage(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant): void {
   const media = dialog.querySelector<HTMLElement>('.product-detail-media');
   if (!media) return;
-  const imageUrl = entry?.shopifyImage;
-  if (!imageUrl) {
+  const mapping = OFFICIAL_SHOPIFY_MAP[entry.officialKey];
+  if (!mapping?.image) {
     media.innerHTML = '<div class="product-detail-image-stage" data-empty="true"></div>';
     return;
   }
   const alt = compact(dialog.querySelector('#product-detail-title')?.textContent) || entry.product;
   media.innerHTML = `<div class="product-detail-image-stage">
-    <img data-product-detail-main-image src="${escapeHtml(imageUrl)}" alt="${escapeHtml(alt)}" loading="eager" />
+    <img data-product-detail-main-image src="${escapeHtml(mapping.image)}" alt="${escapeHtml(alt)}" loading="eager" />
   </div>`;
 }
 
-function setSourceLink(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant | undefined): void {
+function setSourceLink(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant): void {
   dialog.querySelector('.product-detail-source')?.remove();
-  if (!entry?.shopifyHandle) return;
+  const mapping = OFFICIAL_SHOPIFY_MAP[entry.officialKey];
+  if (!mapping) return;
   const content = dialog.querySelector<HTMLElement>('.product-detail-content');
   if (!content) return;
 
   const link = document.createElement('a');
   link.className = 'product-detail-source';
-  link.href = `${SHOP_ORIGIN}/products/${entry.shopifyHandle}`;
+  link.href = `${SHOP_ORIGIN}/products/${mapping.handle}`;
   link.target = '_blank';
   link.rel = 'noopener';
   link.textContent = copy[locale()].website;
@@ -201,7 +203,7 @@ function renderOfficial(dialog: HTMLDialogElement, info: RowInfo, entry: Remaste
     sections.dataset.officialMasterKey = entry.officialKey;
   }
   setSourceLink(dialog, entry);
-  dialog.dataset.shopifyMatch = 'official';
+  dialog.dataset.shopifyMatch = OFFICIAL_SHOPIFY_MAP[entry.officialKey] ? 'verified' : 'official';
   dialog.dataset.officialMaster = 'matched';
 }
 
@@ -209,7 +211,8 @@ function renderNotOfficial(dialog: HTMLDialogElement, info: RowInfo): void {
   setCatalogueCode(dialog, info.catalogueCode);
   setOfficialSku(dialog, undefined);
   setCasePack(dialog, undefined);
-  setImage(dialog, undefined);
+  const media = dialog.querySelector<HTMLElement>('.product-detail-media');
+  if (media) media.innerHTML = '<div class="product-detail-image-stage" data-empty="true"></div>';
   dialog.querySelector('.product-detail-source')?.remove();
 
   const sections = ensureSections(dialog);
