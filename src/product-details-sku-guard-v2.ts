@@ -20,21 +20,25 @@ const labels = {
   en: {
     catalogueCode: 'Catalogue code',
     siteSku: 'Site SKU',
+    website: 'View product on houseoftartufo.com ↗',
     noExactMatch: 'No exact public Shopify variant matches this wholesale format. To avoid showing the wrong SKU, photo or ingredients, only the verified catalogue specifications are displayed.',
   },
   it: {
     catalogueCode: 'Codice catalogo',
     siteSku: 'SKU sito',
+    website: 'Vedi prodotto su houseoftartufo.com ↗',
     noExactMatch: 'Nessuna variante Shopify pubblica corrisponde esattamente a questo formato wholesale. Per evitare SKU, foto o ingredienti sbagliati, mostriamo solo le specifiche verificate del listino.',
   },
   fr: {
     catalogueCode: 'Code catalogue',
     siteSku: 'SKU du site',
+    website: 'Voir le produit sur houseoftartufo.com ↗',
     noExactMatch: 'Aucune variante Shopify publique ne correspond exactement à ce format wholesale. Afin d’éviter un SKU, une photo ou des ingrédients incorrects, seules les spécifications vérifiées du catalogue sont affichées.',
   },
   nl: {
     catalogueCode: 'Cataloguscode',
     siteSku: 'Website-SKU',
+    website: 'Bekijk product op houseoftartufo.com ↗',
     noExactMatch: 'Geen openbare Shopify-variant komt exact overeen met dit groothandelsformaat. Om een verkeerd SKU, foto of ingrediënten te vermijden, worden alleen de geverifieerde catalogusspecificaties getoond.',
   },
 } as const;
@@ -136,6 +140,30 @@ function removeSiteSku(dialog: HTMLDialogElement): void {
   dialog.querySelector('[data-site-sku]')?.remove();
 }
 
+function ensureSourceLink(dialog: HTMLDialogElement, mapping: VerifiedProductDetailMapping): void {
+  const content = dialog.querySelector<HTMLElement>('.product-detail-content');
+  if (!content) return;
+  const expectedHref = productUrl(mapping.handle, locale());
+  const expectedText = labels[locale()].website;
+  const existing = dialog.querySelector<HTMLAnchorElement>('.product-detail-source');
+
+  if (existing) {
+    if (existing.href !== expectedHref) existing.href = expectedHref;
+    if (existing.textContent !== expectedText) existing.textContent = expectedText;
+    if (existing.target !== '_blank') existing.target = '_blank';
+    existing.rel = 'noopener';
+    return;
+  }
+
+  const link = document.createElement('a');
+  link.className = 'product-detail-source';
+  link.href = expectedHref;
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.textContent = expectedText;
+  content.append(link);
+}
+
 function isScrubbed(dialog: HTMLDialogElement, code: string): boolean {
   const sections = dialog.querySelector<HTMLElement>('.product-detail-sections');
   return dialog.dataset.shopifyMatch === 'none'
@@ -187,16 +215,6 @@ function scrubRemoteContent(dialog: HTMLDialogElement, code: string): void {
   dialog.dataset.shopifyMatch = 'none';
 }
 
-function sourceMatches(dialog: HTMLDialogElement, mapping: VerifiedProductDetailMapping): boolean {
-  const source = dialog.querySelector<HTMLAnchorElement>('.product-detail-source');
-  if (!source) return true;
-  try {
-    return new URL(source.href).pathname.includes(`/products/${mapping.handle}`);
-  } catch {
-    return false;
-  }
-}
-
 async function auditDialog(dialog: HTMLDialogElement): Promise<void> {
   if (!dialog.open) return;
   const code = currentCode(dialog);
@@ -210,7 +228,8 @@ async function auditDialog(dialog: HTMLDialogElement): Promise<void> {
   }
 
   const existingSku = compact(dialog.querySelector<HTMLElement>('[data-site-sku]')?.textContent);
-  if (dialog.dataset.shopifyMatch === 'verified' && existingSku === mapping.siteSku && sourceMatches(dialog, mapping)) {
+  if (dialog.dataset.shopifyMatch === 'verified' && existingSku === mapping.siteSku) {
+    ensureSourceLink(dialog, mapping);
     return;
   }
 
@@ -220,14 +239,15 @@ async function auditDialog(dialog: HTMLDialogElement): Promise<void> {
   if (generation !== auditGeneration || !dialog.open || currentCode(dialog) !== code) return;
 
   const matches = (product?.variants ?? []).filter((variant) => compact(variant.sku) === mapping.siteSku);
-  if (matches.length !== 1 || !sourceMatches(dialog, mapping)) {
+  if (matches.length !== 1) {
     scrubRemoteContent(dialog, code);
-    dialog.dataset.shopifyMatch = matches.length === 1 ? 'source-mismatch' : 'variant-mismatch';
+    dialog.dataset.shopifyMatch = 'variant-mismatch';
     return;
   }
 
   ensureCatalogueCode(dialog, code);
   ensureSiteSku(dialog, mapping.siteSku);
+  ensureSourceLink(dialog, mapping);
   dialog.dataset.shopifyMatch = 'verified';
 }
 
