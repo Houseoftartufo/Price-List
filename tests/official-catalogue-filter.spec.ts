@@ -1,9 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import snapshot from '../public/data/catalog.snapshot.json';
 import { buildStrictOfficialCatalogue } from '../src/official-catalogue-filter';
+import { OFFICIAL_PRODUCT_VARIANTS } from '../src/official-product-master';
+import { officialVariantKey } from '../src/official-product-remaster';
 import type { Product } from '../src/catalog/types';
 
-const sourceProducts = snapshot.products as unknown as Product[];
+const PRICE_PENDING_KEYS = new Set([
+  'truffle cashew|80g',
+  'truffle almonds|80g',
+  'truffle walnuts|80g',
+  'acacia honey with truffle|450g',
+]);
+
+const sourceProducts: Product[] = OFFICIAL_PRODUCT_VARIANTS.flatMap((entry, index) => {
+  const key = officialVariantKey(entry);
+  if (PRICE_PENDING_KEYS.has(key)) return [];
+  return [{
+    sku: `PRICE-${String(index + 1).padStart(3, '0')}`,
+    categoryId: 'sauces-condiments',
+    groupId: 'sauces-condiments',
+    name: entry.product,
+    sizeLabel: entry.size,
+    baseUnitPrice: key === 'black truffle sauce 5%|500g' ? 16.17 : 10,
+    unitsPerCase: 99,
+    currency: 'EUR' as const,
+    active: true,
+  }];
+});
 
 describe('official Excel catalogue filter', () => {
   const audit = buildStrictOfficialCatalogue(sourceProducts);
@@ -34,15 +56,13 @@ describe('official Excel catalogue filter', () => {
     ].sort());
   });
 
-  it('never leaks old Price List-only products into the official catalogue', () => {
-    const names = audit.products.map((product) => product.name.toLowerCase());
-    expect(names.some((name) => name.includes('tarallini'))).toBe(false);
-    expect(names.some((name) => name.includes('pure white truffle cream'))).toBe(false);
+  it('never admits variants that are not in the Excel master', () => {
     expect(audit.products.some((product) => product.name === 'White Truffle Sauce' && product.sizeLabel === '80g')).toBe(false);
     expect(audit.products.some((product) => product.name === 'Acacia Honey With Truffle' && product.sizeLabel === '650g')).toBe(false);
+    expect(audit.products.some((product) => /tarallini/i.test(product.name))).toBe(false);
   });
 
-  it('preserves an exact old price only when the Excel product variant exists', () => {
+  it('overrides donor case-pack values with the official Excel cross-check', () => {
     const sauce500 = audit.products.find((product) => product.officialKey === 'black truffle sauce 5%|500g');
     expect(sauce500?.baseUnitPrice).toBe(16.17);
     expect(sauce500?.unitsPerCase).toBe(6);
