@@ -8,6 +8,7 @@
   },
   "scripts": {
     "sync:catalog": "node scripts/sync-catalog.mjs",
+    "audit:shopify": "npm run sync:catalog && node scripts/audit-shopify-catalog.mjs",
     "dev": "npm run sync:catalog && vite",
     "build": "npm run sync:catalog && vite build",
     "preview": "vite preview",
