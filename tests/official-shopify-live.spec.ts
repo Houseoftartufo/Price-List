@@ -12,8 +12,14 @@ interface ShopifyProduct {
   variants?: ShopifyVariant[];
 }
 
+interface NodeLikeGlobal {
+  process?: {
+    env?: Record<string, string | undefined>;
+  };
+}
+
 const SHOP_ORIGIN = 'https://houseoftartufo.com';
-const runLive = process.env.CI_SHOPIFY_LIVE === '1';
+const runLive = (globalThis as NodeLikeGlobal).process?.env?.CI_SHOPIFY_LIVE === '1';
 const liveDescribe = runLive ? describe : describe.skip;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
