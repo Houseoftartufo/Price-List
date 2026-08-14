@@ -1,14 +1,12 @@
+import './styles/product-details-guard.css';
+import { VERIFIED_PRODUCT_DETAIL_MAP, type VerifiedProductDetailMapping } from './product-detail-map';
+
 type Locale = 'en' | 'it' | 'fr' | 'nl';
 
 interface RowInfo {
   catalogueCode: string;
   name: string;
   size: string;
-}
-
-interface SiteMapping {
-  handle: string;
-  requirePercent?: boolean;
 }
 
 interface ShopifyVariant {
@@ -21,8 +19,31 @@ interface ShopifyVariant {
   options?: string[];
 }
 
+interface ShopifyImageObject {
+  src?: string;
+}
+
 interface ShopifyProduct {
+  title?: string;
+  description?: string;
+  body_html?: string;
+  images?: Array<string | ShopifyImageObject>;
+  featured_image?: string | null;
   variants?: ShopifyVariant[];
+}
+
+interface ProductFact {
+  label: string;
+  value: string;
+}
+
+interface ParsedDetails {
+  description?: string;
+  ingredients?: string;
+  storage?: string;
+  usage?: string;
+  features: string[];
+  facts: ProductFact[];
 }
 
 const SHOP_ORIGIN = 'https://houseoftartufo.com';
@@ -34,22 +55,50 @@ const copy = {
   en: {
     catalogueCode: 'Catalogue code',
     siteSku: 'Site SKU',
-    noExactMatch: 'No exact Shopify variant match was found for this wholesale format. To avoid showing the wrong SKU, photo or ingredients, only the verified catalogue specifications are displayed.',
+    description: 'Description',
+    ingredients: 'Ingredients',
+    storage: 'Storage',
+    usage: 'How to use',
+    features: 'Key features',
+    facts: 'Product information',
+    website: 'View product on houseoftartufo.com ↗',
+    noExactMatch: 'No exact public Shopify variant matches this wholesale format. To avoid showing the wrong SKU, photo or ingredients, only the verified catalogue specifications are displayed.',
   },
   it: {
     catalogueCode: 'Codice catalogo',
     siteSku: 'SKU sito',
-    noExactMatch: 'Non è stata trovata una variante Shopify esattamente corrispondente a questo formato wholesale. Per evitare SKU, foto o ingredienti sbagliati, mostriamo solo le specifiche verificate del listino.',
+    description: 'Descrizione',
+    ingredients: 'Ingredienti',
+    storage: 'Conservazione',
+    usage: 'Utilizzo',
+    features: 'Caratteristiche',
+    facts: 'Informazioni prodotto',
+    website: 'Vedi prodotto su houseoftartufo.com ↗',
+    noExactMatch: 'Nessuna variante Shopify pubblica corrisponde esattamente a questo formato wholesale. Per evitare SKU, foto o ingredienti sbagliati, mostriamo solo le specifiche verificate del listino.',
   },
   fr: {
     catalogueCode: 'Code catalogue',
     siteSku: 'SKU du site',
-    noExactMatch: 'Aucune variante Shopify correspondant exactement à ce format wholesale n’a été trouvée. Afin d’éviter un SKU, une photo ou des ingrédients incorrects, seules les spécifications vérifiées du catalogue sont affichées.',
+    description: 'Description',
+    ingredients: 'Ingrédients',
+    storage: 'Conservation',
+    usage: 'Utilisation',
+    features: 'Caractéristiques',
+    facts: 'Informations produit',
+    website: 'Voir le produit sur houseoftartufo.com ↗',
+    noExactMatch: 'Aucune variante Shopify publique ne correspond exactement à ce format wholesale. Afin d’éviter un SKU, une photo ou des ingrédients incorrects, seules les spécifications vérifiées du catalogue sont affichées.',
   },
   nl: {
     catalogueCode: 'Cataloguscode',
     siteSku: 'Website-SKU',
-    noExactMatch: 'Er is geen Shopify-variant gevonden die exact overeenkomt met dit groothandelsformaat. Om een verkeerde SKU, foto of ingrediënten te vermijden, worden alleen de geverifieerde catalogusspecificaties getoond.',
+    description: 'Beschrijving',
+    ingredients: 'Ingrediënten',
+    storage: 'Bewaring',
+    usage: 'Gebruik',
+    features: 'Kenmerken',
+    facts: 'Productinformatie',
+    website: 'Bekijk product op houseoftartufo.com ↗',
+    noExactMatch: 'Geen openbare Shopify-variant komt exact overeen met dit groothandelsformaat. Om een verkeerd SKU, foto of ingrediënten te vermijden, worden alleen de geverifieerde catalogusspecificaties getoond.',
   },
 } as const;
 
@@ -65,48 +114,19 @@ function compact(value: string | null | undefined): string {
   return String(value ?? '').replace(/\s+/g, ' ').trim();
 }
 
-function normalise(value: string): string {
+function escapeHtml(value: string): string {
   return value
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9%]+/g, ' ')
-    .trim()
-    .replace(/\s+/g, ' ');
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }
 
-function safeMapping(info: RowInfo): SiteMapping | undefined {
-  const name = normalise(info.name);
-
-  // Natural Line products are commercially distinct from the standard Shopify products.
-  if (name.includes('natural line')) return undefined;
-
-  if (name === 'summer truffle carpaccio' || name === 'summer truffle carpaccio with aroma') {
-    return { handle: 'summer-truffle-carpaccio' };
-  }
-
-  if (name.includes('white truffled sauce') && name.includes('bianchetto truffle 2%')) {
-    return { handle: 'white-truffle-sauce' };
-  }
-
-  if (name.includes('truffled sauce') && name.includes('summer truffle 5%')) {
-    return { handle: 'black-truffle-sauce', requirePercent: true };
-  }
-
-  if (name.includes('truffled sauce') && name.includes('summer truffle 10%')) {
-    return { handle: 'black-truffle-sauce', requirePercent: true };
-  }
-
-  if (name === 'white truffle extra virgin olive oil') {
-    return { handle: 'parfumed-white-truffle-extra-virgin-olive-oil' };
-  }
-
-  if (name === 'black truffle extra virgin olive oil') {
-    return { handle: 'black-truffle-extra-virgin-olive-oil' };
-  }
-
-  return undefined;
+function clip(value: string | undefined, max = 720): string | undefined {
+  const clean = compact(value);
+  if (!clean) return undefined;
+  return clean.length > max ? `${clean.slice(0, max - 1).trimEnd()}…` : clean;
 }
 
 function rowInfo(dialog: HTMLDialogElement): RowInfo | undefined {
@@ -121,53 +141,12 @@ function rowInfo(dialog: HTMLDialogElement): RowInfo | undefined {
   return { catalogueCode, name, size };
 }
 
-function measureKey(value: string): string | undefined {
-  const text = value.toLowerCase().replace(',', '.');
-  const match = text.match(/(\d+(?:\.\d+)?)\s*(kg|g|ml|l)\b/);
-  if (!match?.[1] || !match[2]) return undefined;
-  const amount = Number.parseFloat(match[1]);
-  if (!Number.isFinite(amount)) return undefined;
-  const unit = match[2];
-  if (unit === 'kg') return `${Math.round(amount * 1000)}g`;
-  if (unit === 'l') return `${Math.round(amount * 1000)}ml`;
-  return `${Number.isInteger(amount) ? amount : amount.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}${unit}`;
-}
-
-function percentKey(value: string): string | undefined {
-  const match = value.replace(',', '.').match(/(\d+(?:\.\d+)?)\s*%/);
-  return match?.[1] ? `${Number.parseFloat(match[1])}%` : undefined;
-}
-
-function variantText(variant: ShopifyVariant): string {
-  return [
-    variant.title,
-    variant.public_title,
-    variant.option1,
-    variant.option2,
-    variant.option3,
-    ...(variant.options ?? []),
-  ]
-    .filter((value): value is string => Boolean(value))
-    .join(' · ');
-}
-
-function exactVariant(product: ShopifyProduct, info: RowInfo, mapping: SiteMapping): ShopifyVariant | undefined {
-  const wantedMeasure = measureKey(info.size);
-  if (!wantedMeasure) return undefined;
-  const wantedPercent = mapping.requirePercent ? percentKey(info.name) : undefined;
-
-  const matches = (product.variants ?? []).filter((variant) => {
-    const text = variantText(variant);
-    if (measureKey(text) !== wantedMeasure) return false;
-    if (wantedPercent && percentKey(text) !== wantedPercent) return false;
-    return true;
-  });
-
-  return matches.length === 1 ? matches[0] : undefined;
-}
-
 function localePrefix(current: Locale): string {
   return current === 'en' ? '' : `/${current}`;
+}
+
+function productUrl(handle: string, current: Locale): string {
+  return `${SHOP_ORIGIN}${localePrefix(current)}/products/${handle}`;
 }
 
 async function fetchProduct(handle: string, current: Locale): Promise<ShopifyProduct | undefined> {
@@ -177,16 +156,15 @@ async function fetchProduct(handle: string, current: Locale): Promise<ShopifyPro
 
   const request = (async () => {
     const urls = [
-      `${SHOP_ORIGIN}${localePrefix(current)}/products/${handle}.js`,
+      `${productUrl(handle, current)}.js`,
       ...(current === 'en' ? [] : [`${SHOP_ORIGIN}/products/${handle}.js`]),
     ];
-
     for (const url of urls) {
       try {
         const response = await fetch(url, { cache: 'no-store', headers: { Accept: 'application/json' } });
         if (response.ok) return (await response.json()) as ShopifyProduct;
       } catch (error) {
-        console.warn('[HOT Price List] Shopify SKU verification source unavailable.', { url, error });
+        console.warn('[HOT Price List] Exact Shopify product source unavailable.', { url, error });
       }
     }
     return undefined;
@@ -196,40 +174,143 @@ async function fetchProduct(handle: string, current: Locale): Promise<ShopifyPro
   return request;
 }
 
+function exactVariant(product: ShopifyProduct, mapping: VerifiedProductDetailMapping): ShopifyVariant | undefined {
+  const matches = (product.variants ?? []).filter((variant) => compact(variant.sku) === mapping.siteSku);
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+function elementText(element: Element | null | undefined): string {
+  return compact(element?.textContent);
+}
+
+function headingMatches(text: string, patterns: RegExp[]): boolean {
+  return patterns.some((pattern) => pattern.test(text));
+}
+
+function firstParagraph(doc: Document): string | undefined {
+  const lead = elementText(doc.querySelector('.hot-lead'));
+  if (lead) return clip(lead);
+  const rejected = /shipping|spedizione|livraison|verzending|order|ordinare|communit|whatsapp|category:|categoria:|catégorie:|categorie:/i;
+  for (const paragraph of doc.querySelectorAll('p')) {
+    const text = elementText(paragraph);
+    if (text.length >= 55 && !rejected.test(text)) return clip(text);
+  }
+  return undefined;
+}
+
+function sectionText(doc: Document, patterns: RegExp[]): string | undefined {
+  for (const heading of doc.querySelectorAll('h2, h3, h4, summary')) {
+    const title = elementText(heading);
+    if (!headingMatches(title, patterns)) continue;
+    if (heading.tagName.toLowerCase() === 'summary') {
+      const value = elementText(heading.parentElement?.querySelector('p'));
+      if (value) return clip(value);
+    }
+    let sibling = heading.nextElementSibling;
+    while (sibling && !/^H[234]$/.test(sibling.tagName)) {
+      const value = elementText(sibling);
+      if (value) return clip(value);
+      sibling = sibling.nextElementSibling;
+    }
+  }
+  return undefined;
+}
+
+function questionAnswer(doc: Document, patterns: RegExp[]): string | undefined {
+  for (const strong of doc.querySelectorAll('strong')) {
+    if (!headingMatches(elementText(strong), patterns)) continue;
+    const parent = strong.parentElement;
+    if (!parent) continue;
+    const clone = parent.cloneNode(true) as HTMLElement;
+    clone.querySelector('strong')?.remove();
+    const answer = elementText(clone);
+    if (answer) return clip(answer, 520);
+  }
+  return undefined;
+}
+
+function inferredIngredients(doc: Document): string | undefined {
+  const cue = /made with|crafted with|base of|prodotto con|realizzato con|composto da|élaboré avec|préparé avec|gemaakt met|bereid met/i;
+  for (const paragraph of doc.querySelectorAll('p')) {
+    const text = elementText(paragraph);
+    if (text.length >= 70 && text.length <= 520 && cue.test(text) && !/shipping|spedizione|livraison|verzending/i.test(text)) {
+      return clip(text, 520);
+    }
+  }
+  return undefined;
+}
+
+function featureList(doc: Document): string[] {
+  const patterns = [/key features/i, /caratteristiche principali/i, /caractéristiques/i, /belangrijkste kenmerken/i, /^kenmerken$/i];
+  for (const heading of doc.querySelectorAll('h2, h3, h4')) {
+    if (!headingMatches(elementText(heading), patterns)) continue;
+    let sibling = heading.nextElementSibling;
+    while (sibling && !/^H[234]$/.test(sibling.tagName)) {
+      if (sibling.tagName.toLowerCase() === 'ul') {
+        return [...sibling.querySelectorAll('li')]
+          .map((item) => clip(elementText(item), 180))
+          .filter((item): item is string => Boolean(item))
+          .slice(0, 6);
+      }
+      sibling = sibling.nextElementSibling;
+    }
+  }
+  return [];
+}
+
+function productFacts(doc: Document): ProductFact[] {
+  const facts: ProductFact[] = [];
+  for (const item of doc.querySelectorAll('.hot-facts > div')) {
+    const label = elementText(item.querySelector('span'));
+    const value = elementText(item.querySelector('strong'));
+    if (label && value) facts.push({ label, value });
+  }
+  return facts.slice(0, 6);
+}
+
+function parseDetails(html: string | undefined): ParsedDetails {
+  if (!html) return { features: [], facts: [] };
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const ingredientPatterns = [/ingredients?/i, /what.?s in it/i, /cosa contiene/i, /ingredienti/i, /ingr[eé]dients?/i, /que contient/i, /ingrediënten/i, /wat zit/i];
+  return {
+    description: firstParagraph(doc),
+    ingredients: questionAnswer(doc, ingredientPatterns) ?? sectionText(doc, ingredientPatterns) ?? inferredIngredients(doc),
+    storage: sectionText(doc, [/^storage/i, /conservazione/i, /conservation/i, /bewaring/i, /opslag/i]),
+    usage: sectionText(doc, [/how to use/i, /^usage/i, /modalit[aà].?d.?uso/i, /^utilizzo/i, /^utilisation/i, /^gebruik/i]),
+    features: featureList(doc),
+    facts: productFacts(doc),
+  };
+}
+
+function imageUrls(product: ShopifyProduct, mapping: VerifiedProductDetailMapping): string[] {
+  const images = (product.images ?? [])
+    .map((image) => (typeof image === 'string' ? image : image.src))
+    .filter((image): image is string => Boolean(image))
+    .map((image) => (image.startsWith('//') ? `https:${image}` : image));
+  if (product.featured_image) images.unshift(product.featured_image.startsWith('//') ? `https:${product.featured_image}` : product.featured_image);
+  images.push(mapping.image);
+  return [...new Set(images)].slice(0, 6);
+}
+
 function relabelCatalogueCode(dialog: HTMLDialogElement, info: RowInfo): void {
   const firstSpec = dialog.querySelector<HTMLElement>('.product-detail-specs .product-detail-spec');
   if (!firstSpec) return;
   const label = firstSpec.querySelector<HTMLElement>('span:not([data-site-sku-label])');
   const value = firstSpec.querySelector<HTMLElement>('strong:not([data-site-sku])');
   const text = copy[locale()];
-  if (label && label.textContent !== text.catalogueCode) label.textContent = text.catalogueCode;
-  if (value && value.textContent !== info.catalogueCode) value.textContent = info.catalogueCode;
+  if (label) label.textContent = text.catalogueCode;
+  if (value) value.textContent = info.catalogueCode;
 }
 
 function setSiteSku(dialog: HTMLDialogElement, sku: string | undefined): void {
   const firstSpec = dialog.querySelector<HTMLElement>('.product-detail-specs .product-detail-spec');
   if (!firstSpec) return;
-  const existingLabel = firstSpec.querySelector<HTMLElement>('[data-site-sku-label]');
-  const existingValue = firstSpec.querySelector<HTMLElement>('[data-site-sku]');
-
-  if (!sku) {
-    existingLabel?.remove();
-    existingValue?.remove();
-    return;
-  }
-
-  const expectedLabel = copy[locale()].siteSku;
-  if (existingLabel && existingValue) {
-    if (existingLabel.textContent !== expectedLabel) existingLabel.textContent = expectedLabel;
-    if (existingValue.textContent !== sku) existingValue.textContent = sku;
-    return;
-  }
-
-  existingLabel?.remove();
-  existingValue?.remove();
+  firstSpec.querySelector('[data-site-sku-label]')?.remove();
+  firstSpec.querySelector('[data-site-sku]')?.remove();
+  if (!sku) return;
   const label = document.createElement('span');
   label.dataset.siteSkuLabel = 'true';
-  label.textContent = expectedLabel;
+  label.textContent = copy[locale()].siteSku;
   label.style.marginTop = '8px';
   const value = document.createElement('strong');
   value.dataset.siteSku = 'true';
@@ -237,75 +318,133 @@ function setSiteSku(dialog: HTMLDialogElement, sku: string | undefined): void {
   firstSpec.append(label, value);
 }
 
-function scrubUnverifiedRemoteContent(dialog: HTMLDialogElement): void {
-  setSiteSku(dialog, undefined);
-  const text = copy[locale()].noExactMatch;
+function renderSection(title: string, content: string | undefined): string {
+  if (!content) return '';
+  return `<section class="product-detail-section"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(content)}</p></section>`;
+}
 
+function renderMedia(images: string[], name: string): string {
+  if (!images.length) return '<div class="product-detail-image-stage" data-empty="true"></div>';
+  const thumbs = images.length > 1
+    ? `<div class="product-detail-thumbs" aria-label="${escapeHtml(name)}">${images.map((image, index) => `<button class="product-detail-thumb" type="button" data-product-detail-image="${escapeHtml(image)}" aria-current="${String(index === 0)}" aria-label="${escapeHtml(name)} ${index + 1}"><img src="${escapeHtml(image)}" alt="" loading="lazy" /></button>`).join('')}</div>`
+    : '';
+  return `<div class="product-detail-image-stage"><img data-product-detail-main-image src="${escapeHtml(images[0] ?? '')}" alt="${escapeHtml(name)}" loading="eager" /></div>${thumbs}`;
+}
+
+function ensureSourceLink(dialog: HTMLDialogElement, mapping: VerifiedProductDetailMapping): void {
+  dialog.querySelector('.product-detail-source')?.remove();
+  const content = dialog.querySelector<HTMLElement>('.product-detail-content');
+  if (!content) return;
+  const link = document.createElement('a');
+  link.className = 'product-detail-source';
+  link.href = productUrl(mapping.handle, locale());
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.textContent = copy[locale()].website;
+  content.append(link);
+}
+
+function renderVerified(dialog: HTMLDialogElement, info: RowInfo, mapping: VerifiedProductDetailMapping, product: ShopifyProduct): void {
+  relabelCatalogueCode(dialog, info);
+  setSiteSku(dialog, mapping.siteSku);
+  const media = dialog.querySelector<HTMLElement>('.product-detail-media');
+  if (media) media.innerHTML = renderMedia(imageUrls(product, mapping), info.name);
+
+  const parsed = parseDetails(product.description ?? product.body_html);
+  const text = copy[locale()];
+  const featureHtml = parsed.features.length
+    ? `<section class="product-detail-section"><h3>${escapeHtml(text.features)}</h3><ul>${parsed.features.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></section>`
+    : '';
+  const factsHtml = parsed.facts.length
+    ? `<section class="product-detail-section"><h3>${escapeHtml(text.facts)}</h3><div class="product-detail-facts">${parsed.facts.map((fact) => `<div class="product-detail-fact"><span>${escapeHtml(fact.label)}</span><strong>${escapeHtml(fact.value)}</strong></div>`).join('')}</div></section>`
+    : '';
+
+  let sections = dialog.querySelector<HTMLElement>('.product-detail-sections');
+  if (!sections) {
+    const content = dialog.querySelector<HTMLElement>('.product-detail-content');
+    const loading = dialog.querySelector<HTMLElement>('.product-detail-loading');
+    sections = document.createElement('div');
+    sections.className = 'product-detail-sections';
+    loading?.replaceWith(sections);
+    if (!sections.isConnected) content?.append(sections);
+  }
+  sections.dataset.skuGuard = 'verified';
+  sections.dataset.skuGuardKey = `${info.catalogueCode}:${mapping.siteSku}`;
+  sections.innerHTML = [
+    renderSection(text.description, parsed.description),
+    renderSection(text.ingredients, parsed.ingredients),
+    factsHtml,
+    renderSection(text.usage, parsed.usage),
+    renderSection(text.storage, parsed.storage),
+    featureHtml,
+  ].join('');
+  ensureSourceLink(dialog, mapping);
+  dialog.dataset.shopifyMatch = 'verified';
+}
+
+function scrubUnverified(dialog: HTMLDialogElement, info: RowInfo, status = 'none'): void {
+  relabelCatalogueCode(dialog, info);
+  setSiteSku(dialog, undefined);
+  dialog.querySelector('.product-detail-source')?.remove();
+  const media = dialog.querySelector<HTMLElement>('.product-detail-media');
+  if (media) media.innerHTML = '<div class="product-detail-image-stage" data-empty="true"></div>';
+
+  const text = copy[locale()].noExactMatch;
+  let sections = dialog.querySelector<HTMLElement>('.product-detail-sections');
   const loading = dialog.querySelector<HTMLElement>('.product-detail-loading');
-  if (loading) {
+  if (!sections) {
+    sections = document.createElement('div');
+    sections.className = 'product-detail-sections';
+    loading?.replaceWith(sections);
+  }
+  if (sections) {
+    sections.dataset.skuGuard = 'unmatched';
+    sections.dataset.skuGuardKey = info.catalogueCode;
+    sections.innerHTML = `<p class="product-detail-note">${escapeHtml(text)}</p>`;
+  } else if (loading) {
     loading.className = 'product-detail-note';
     loading.textContent = text;
   }
-
-  const sections = dialog.querySelector<HTMLElement>('.product-detail-sections');
-  if (sections && sections.dataset.skuGuard !== 'unmatched') {
-    sections.dataset.skuGuard = 'unmatched';
-    sections.innerHTML = '';
-    const note = document.createElement('p');
-    note.className = 'product-detail-note';
-    note.textContent = text;
-    sections.append(note);
-  }
-
-  dialog.querySelector('.product-detail-source')?.remove();
-
-  const media = dialog.querySelector<HTMLElement>('.product-detail-media');
-  if (media && (media.querySelector('img') || !media.querySelector('.product-detail-image-stage[data-empty="true"]'))) {
-    media.innerHTML = '<div class="product-detail-image-stage" data-empty="true"></div>';
-  }
+  dialog.dataset.shopifyMatch = status;
 }
 
-function expectedSourcePresent(dialog: HTMLDialogElement, handle: string): boolean {
-  const source = dialog.querySelector<HTMLAnchorElement>('.product-detail-source');
-  if (!source) return true;
-  try {
-    return new URL(source.href).pathname.includes(`/products/${handle}`);
-  } catch {
-    return false;
-  }
+function hasVerifiedMarker(dialog: HTMLDialogElement, info: RowInfo, mapping: VerifiedProductDetailMapping): boolean {
+  return dialog.querySelector<HTMLElement>('.product-detail-sections')?.dataset.skuGuardKey === `${info.catalogueCode}:${mapping.siteSku}`
+    && dialog.querySelector<HTMLElement>('[data-site-sku]')?.textContent === mapping.siteSku;
+}
+
+function hasUnmatchedMarker(dialog: HTMLDialogElement, info: RowInfo): boolean {
+  return dialog.querySelector<HTMLElement>('.product-detail-sections')?.dataset.skuGuardKey === info.catalogueCode
+    && dialog.querySelector<HTMLElement>('.product-detail-sections')?.dataset.skuGuard === 'unmatched';
 }
 
 async function auditDialog(dialog: HTMLDialogElement): Promise<void> {
   const info = rowInfo(dialog);
   if (!info) return;
   relabelCatalogueCode(dialog, info);
+  const mapping = VERIFIED_PRODUCT_DETAIL_MAP[info.catalogueCode];
 
-  const mapping = safeMapping(info);
   if (!mapping) {
-    scrubUnverifiedRemoteContent(dialog);
-    dialog.dataset.shopifyMatch = 'none';
+    if (!hasUnmatchedMarker(dialog, info)) scrubUnverified(dialog, info, 'none');
     return;
   }
 
-  if (!expectedSourcePresent(dialog, mapping.handle)) {
-    scrubUnverifiedRemoteContent(dialog);
-    dialog.dataset.shopifyMatch = 'source-mismatch';
-    return;
-  }
+  if (dialog.dataset.shopifyMatch === 'verified' && hasVerifiedMarker(dialog, info, mapping)) return;
+  const auditKey = `${info.catalogueCode}:${mapping.siteSku}:${locale()}`;
+  if (dialog.dataset.skuGuardPending === auditKey) return;
+  dialog.dataset.skuGuardPending = auditKey;
+  dialog.dataset.shopifyMatch = 'pending';
 
   const sequence = ++auditSequence;
   const product = await fetchProduct(mapping.handle, locale());
   if (sequence !== auditSequence || !dialog.open || dialog.dataset.sku !== info.catalogueCode) return;
-  const variant = product ? exactVariant(product, info, mapping) : undefined;
-  if (!variant) {
-    scrubUnverifiedRemoteContent(dialog);
-    dialog.dataset.shopifyMatch = 'variant-mismatch';
+  delete dialog.dataset.skuGuardPending;
+  const variant = product ? exactVariant(product, mapping) : undefined;
+  if (!product || !variant) {
+    scrubUnverified(dialog, info, 'variant-mismatch');
     return;
   }
-
-  dialog.dataset.shopifyMatch = 'verified';
-  const siteSku = compact(variant.sku);
-  setSiteSku(dialog, siteSku || undefined);
+  renderVerified(dialog, info, mapping, product);
 }
 
 function scheduleAudit(): void {
