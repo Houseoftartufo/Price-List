@@ -3,6 +3,9 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 mkdirSync('qa-screenshots', { recursive: true });
 
+const OFFICIAL_ORDERABLE_PRODUCTS = '43';
+const OFFICIAL_ACTIVE_CATEGORIES = '6';
+
 async function expectLoadedProductImage(image: Locator): Promise<void> {
   await expect(image).toBeVisible();
   await expect.poll(async () => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0)).toBe(true);
@@ -15,17 +18,23 @@ async function openProductDetails(page: Page, catalogueCode: string): Promise<Lo
   await row.locator('.product-cell').click();
   const dialog = page.locator('#product-detail-dialog');
   await expect(dialog).toBeVisible();
+  await expect(dialog).toHaveAttribute('data-official-master', 'matched');
   return dialog;
 }
 
-test('production homepage serves the verified buyer catalogue', async ({ page }) => {
+test('production homepage serves only the official Excel-backed catalogue', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/?sku=29');
 
-  await expect(page.locator('#metric-products')).toHaveText('145');
-  await expect(page.locator('#metric-categories')).toHaveText('8');
+  await expect(page.locator('#metric-products')).toHaveText(OFFICIAL_ORDERABLE_PRODUCTS);
+  await expect(page.locator('#metric-categories')).toHaveText(OFFICIAL_ACTIVE_CATEGORIES);
   await expect(page.locator('tr[data-sku="29"]')).toBeVisible();
   await expect(page.locator('#quote-trigger')).toBeVisible();
+
+  // These rows exist in the old commercial sheet but are not in the two official Excel files.
+  for (const excludedCode of ['15', '27', '60', '83', '136', '151']) {
+    await expect(page.locator(`tr[data-sku="${excludedCode}"]`)).toHaveCount(0);
+  }
 
   const robots = page.locator('meta[name="robots"]');
   await expect(robots).toHaveAttribute('content', 'index,follow');
@@ -37,16 +46,20 @@ test('production homepage serves the verified buyer catalogue', async ({ page })
   await page.screenshot({ path: 'qa-screenshots/production-homepage.png' });
 });
 
-test('desktop buyer can find a SKU, price quantity and build a quote', async ({ page }) => {
+test('desktop buyer can price an official variant and build a quote', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/preview.html?sku=29');
 
-  await expect(page.locator('#metric-products')).toHaveText('145');
-  await expect(page.locator('#metric-categories')).toHaveText('8');
+  await expect(page.locator('#metric-products')).toHaveText(OFFICIAL_ORDERABLE_PRODUCTS);
+  await expect(page.locator('#metric-categories')).toHaveText(OFFICIAL_ACTIVE_CATEGORIES);
 
   const row = page.locator('tr[data-sku="29"]');
   await expect(row).toBeVisible();
   await expect(row.locator('.dynamic-price')).toBeVisible();
+
+  // Official box cross-check: White Truffle Sauce 500g is 6 units/box, not the old 12.
+  const cells = row.locator('td');
+  await expect(cells.nth(2)).toContainText('6');
 
   const quantity = row.locator('[data-qty-input="29"]');
   await quantity.fill('2');
@@ -70,16 +83,17 @@ test('desktop buyer can find a SKU, price quantity and build a quote', async ({ 
   await page.screenshot({ path: 'qa-screenshots/desktop-buyer.png' });
 });
 
-test('clicking a product opens the descriptive card only after exact official site variant verification', async ({ page }) => {
+test('clicking an official product opens the same premium card with Excel ingredients and exact Shopify enrichment', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   const dialog = await openProductDetails(page, '87');
 
   await expect(dialog.locator('#product-detail-title')).toContainText(/Summer Truffle Carpaccio/i);
-  await expect(dialog).toHaveAttribute('data-shopify-match', 'verified', { timeout: 12_000 });
+  await expect(dialog).toHaveAttribute('data-shopify-match', 'verified');
   await expect(dialog).toContainText(/Catalogue code/i);
-  await expect(dialog.locator('[data-site-sku]')).toHaveText('Product86');
+  await expect(dialog.locator('[data-official-sku]')).toHaveText('Product86');
   await expect(dialog.locator('.product-detail-source')).toHaveAttribute('href', /houseoftartufo\.com\/products\/summer-truffle-carpaccio/);
-  await expect(dialog).toContainText(/Ingredients/i, { timeout: 12_000 });
+  await expect(dialog).toContainText(/Ingredients/i);
+  await expect(dialog).toContainText(/Summer truffle.*60%.*water.*flavouring/i);
   await expectLoadedProductImage(dialog.locator('[data-product-detail-main-image]'));
 
   await page.screenshot({ path: 'qa-screenshots/product-detail-desktop.png' });
@@ -89,46 +103,57 @@ test('clicking a product opens the descriptive card only after exact official si
   await expect(page.locator('#quote-count')).toHaveText('0');
 });
 
-test('exact Shopify map covers sauce and butter variants with the real site SKU', async ({ page }) => {
+test('official SKU, pack and Shopify mappings stay exact across product families', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
 
   const checks = [
-    ['18', '5430004174103'],
-    ['27', '5430004174325'],
-    ['49', '5430004174486'],
+    ['18', '5430004174103', '12'],
+    ['20', '5430004174127', '6'],
+    ['29', '5430004174240', '6'],
+    ['49', '5430004174486', '12'],
+    ['58', '5430004174493', '12'],
+    ['62', '5430004174035', '4'],
   ] as const;
 
-  for (const [catalogueCode, expectedSiteSku] of checks) {
+  for (const [catalogueCode, expectedSku, expectedCasePack] of checks) {
     const dialog = await openProductDetails(page, catalogueCode);
-    await expect(dialog).toHaveAttribute('data-shopify-match', 'verified', { timeout: 12_000 });
-    await expect(dialog.locator('[data-site-sku]')).toHaveText(expectedSiteSku);
+    await expect(dialog.locator('[data-official-sku]')).toHaveText(expectedSku);
+    await expect(dialog.locator('.product-detail-specs .product-detail-spec').nth(2)).toContainText(expectedCasePack);
+    await expect(dialog).toContainText(/Ingredients/i);
     await expect(dialog.locator('.product-detail-source')).toHaveCount(1);
     await expectLoadedProductImage(dialog.locator('[data-product-detail-main-image]'));
     await dialog.locator('[data-product-detail-close]').click();
   }
 });
 
-test('rows without an exact public Shopify variant never inherit a site SKU, photo or product sheet', async ({ page }) => {
+test('products outside the two official Excel files never appear in the buyer catalogue', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/preview.html');
 
-  for (const catalogueCode of ['15', '22', '57', '151']) {
-    const dialog = await openProductDetails(page, catalogueCode);
-    await expect(dialog).toHaveAttribute('data-shopify-match', 'none', { timeout: 12_000 });
-    await page.waitForTimeout(350);
-    await expect(dialog.locator('[data-site-sku]')).toHaveCount(0);
-    await expect(dialog.locator('.product-detail-source')).toHaveCount(0);
-    await expect(dialog.locator('[data-product-detail-main-image]')).toHaveCount(0);
-    await expect(dialog.locator('.product-detail-note')).toBeVisible();
-    await dialog.locator('[data-product-detail-close]').click();
+  const excludedCodes = [
+    '1',   // Bolognese Ragout
+    '15',  // 3% black sauce
+    '27',  // White sauce 80g
+    '60',  // White EVOO 500ml
+    '83',  // Pure White Truffle Cream 80g
+    '94',  // Whole Summer Truffle in brine
+    '117', // White Truffle Tagliatelle
+    '136', // Honey 650g
+    '151', // Natural Line Carpaccio
+  ];
+
+  for (const code of excludedCodes) {
+    await expect(page.locator(`tr[data-sku="${code}"]`)).toHaveCount(0);
   }
 });
 
 test('product detail card stays contained on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const dialog = await openProductDetails(page, '87');
-  await expect(dialog).toHaveAttribute('data-shopify-match', 'verified', { timeout: 12_000 });
-  await expect(dialog.locator('[data-site-sku]')).toHaveText('Product86');
-  await expect(dialog).toContainText(/Ingredients/i, { timeout: 12_000 });
+  await expect(dialog).toHaveAttribute('data-shopify-match', 'verified');
+  await expect(dialog.locator('[data-official-sku]')).toHaveText('Product86');
+  await expect(dialog).toContainText(/Ingredients/i);
+  await expect(dialog).toContainText(/Summer truffle.*60%.*water.*flavouring/i);
   await expectLoadedProductImage(dialog.locator('[data-product-detail-main-image]'));
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
