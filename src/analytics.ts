@@ -1,5 +1,6 @@
 import './product-details';
 import './product-details-sku-guard-v2';
+import './official-standby-ui';
 
 type AnalyticsPayload = Record<string, string | number | boolean | undefined>;
 
@@ -49,7 +50,7 @@ function bind(): void {
     const detailRow = target.closest<HTMLElement>('.product-cell[data-product-details-ready="true"]')?.closest<HTMLTableRowElement>('tr[data-sku]');
     if (detailRow?.dataset.sku) emit('product_detail_open', { sku: detailRow.dataset.sku });
 
-    const quoteSku = target.closest<HTMLElement>('[data-add-quote]')?.dataset.addQuote;
+    const quoteSku = target.closest<HTMLElement>('[data-add-quote]:not(:disabled)')?.dataset.addQuote;
     if (quoteSku) emit('quote_add_or_update', { sku: quoteSku });
 
     if (target.closest('#quote-trigger')) emit('quote_open');
