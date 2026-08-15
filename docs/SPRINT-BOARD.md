@@ -1,16 +1,16 @@
 # Price List 10x — Sprint Board
 
-Last updated: 2026-08-12
+Last updated: 2026-08-15
 
 Legend: `DONE` · `NEXT` · `BLOCKED`
 
 ## Current state
 
-**READY FOR FINAL APPROVAL.**
+**PRODUCTION LIVE — iterative hardening in progress.**
 
-Working branch: `codex/price-list-10x`
+Production branch: `main`.
 
-PR #1 remains draft and isolated from `main`.
+Current isolated feature branch: `feat/product-detail-quote-cta`.
 
 ## Safety & data
 
@@ -20,16 +20,17 @@ PR #1 remains draft and isolated from `main`.
 | Master plan + data contract | DONE |
 | Automated quality gate | DONE |
 | Google Sheet source identified | DONE |
-| Verified catalogue baseline | DONE — 145 SKUs / 8 categories |
+| Official Excel master baseline | DONE — 55 variants |
 | Typed catalogue/product contract | DONE |
 | Central discount policy | DONE |
 | Deterministic pricing engine | DONE |
 | Header-based source parser | DONE |
-| Base case + all discount tiers reconciled | DONE — 0 issues |
+| Base case + all discount tiers reconciled | DONE |
 | Build-time verified catalogue snapshot | DONE |
 | Direct current-sheet sync | DONE |
 | Runtime rejection of incomplete live catalogue | DONE |
 | Safe verified fallback | DONE |
+| Shopify Admin API enrichment | DONE |
 
 ## Internationalisation
 
@@ -55,6 +56,7 @@ PR #1 remains draft and isolated from `main`.
 | Desktop table | DONE |
 | Mobile product cards | DONE |
 | Deep-link state | DONE |
+| Product detail cards | DONE |
 
 ## Wholesale pricing
 
@@ -78,7 +80,26 @@ PR #1 remains draft and isolated from `main`.
 | WhatsApp request | DONE |
 | Email request | DONE |
 | Copy order | DONE |
+| Add/update quote directly from product detail card | NEXT — PR #3 |
 | Printable/exportable quote | NEXT — optional |
+
+## Official brand identity — logo rollout sprint
+
+**Reference master:** the House of Tartufo logo supplied by the owner on 2026-08-15 — beige double-outline `H` symbol above `HOUSE / OF TARTUFO` on a light background.
+
+**Non-negotiable rule:** this supplied artwork is the official logo master. Do not redraw, reinterpret, change geometry, replace the wordmark, recolor it, change typography, or generate an AI approximation.
+
+| Item | Status |
+| --- | --- |
+| Preserve supplied logo artwork as official master asset | NEXT |
+| Add web-optimized asset while preserving the master appearance exactly | NEXT |
+| Replace provisional/generated brand mark in the Price List header | NEXT |
+| Replace provisional/generated brand mark in the footer | NEXT |
+| Use official logo consistently in branded catalogue surfaces where the full mark fits | NEXT |
+| Keep adequate clear space and prevent stretching/cropping | NEXT |
+| Verify logo rendering on desktop + mobile and light/dark surrounding surfaces | NEXT |
+| Add visual regression coverage so the official logo cannot silently be replaced | NEXT |
+| Review OG/app-icon derivatives separately before using cropped symbol-only versions | NEXT — requires explicit derivative approval |
 
 ## Mobile & accessibility
 
@@ -106,14 +127,14 @@ PR #1 remains draft and isolated from `main`.
 | Buyer funnel events | DONE |
 | `dataLayer` forwarding when present | DONE |
 | Lighthouse CI | NEXT — optional hardening |
-| Dedicated OG image / app icons | NEXT — optional brand asset |
+| Dedicated OG image / app icons | NEXT — coordinate with official logo sprint |
 
 ## QA / release readiness
 
 | Item | Status |
 | --- | --- |
 | Typecheck | DONE |
-| Unit tests | DONE — 33 |
+| Unit tests | DONE |
 | Preview integrity QA | DONE |
 | Chromium desktop E2E | DONE |
 | Chromium mobile E2E | DONE — 320 / 360 / 390 / 430 px |
@@ -123,9 +144,9 @@ PR #1 remains draft and isolated from `main`.
 | Release-candidate artifact | DONE |
 | Release checklist | DONE — `docs/RELEASE.md` |
 | Rollback runbook | DONE — `docs/RELEASE.md` |
-| Automatic Vercel branch preview | BLOCKED — current project history only shows Git deployments from `main` |
-| Final approval | NEXT |
+| Production Vercel deployment | DONE |
+| Post-deploy runtime-error check | DONE |
 
 ## Final gate
 
-The exact final head commit must pass the complete `Quality Gate`, final screenshots must be reviewed, and approval must be explicit before `main` is changed.
+Every feature head commit must pass the complete `Quality Gate` before merge to `main`. Visual changes must be checked on desktop and mobile, and official brand assets must remain identical to the approved reference master.
