@@ -85,13 +85,15 @@ Current isolated feature branch: `feat/product-detail-quote-cta`.
 
 ## Official brand identity — logo rollout sprint
 
-**Reference master:** the House of Tartufo logo supplied by the owner on 2026-08-15 — beige double-outline `H` symbol above `HOUSE / OF TARTUFO` on a light background.
+**Reference master:** the corrected House of Tartufo logo supplied by the owner on 2026-08-15 — the full `HOT` monogram with the truffle silhouette integrated in the `O`, paired with the stacked `HOUSE OF TARTUFO` wordmark, shown in the uploaded reference artwork.
 
-**Non-negotiable rule:** this supplied artwork is the official logo master. Do not redraw, reinterpret, change geometry, replace the wordmark, recolor it, change typography, or generate an AI approximation.
+**Supersedes:** the previously supplied beige double-outline `H` reference. That earlier asset is not the official logo and must not be used.
+
+**Non-negotiable rule:** the corrected supplied artwork is the official logo master. Do not redraw, reinterpret, change geometry, alter the truffle silhouette, replace the wordmark, recolor it, change typography, or generate an AI approximation.
 
 | Item | Status |
 | --- | --- |
-| Preserve supplied logo artwork as official master asset | NEXT |
+| Preserve corrected supplied logo artwork as official master asset | NEXT |
 | Add web-optimized asset while preserving the master appearance exactly | NEXT |
 | Replace provisional/generated brand mark in the Price List header | NEXT |
 | Replace provisional/generated brand mark in the footer | NEXT |
