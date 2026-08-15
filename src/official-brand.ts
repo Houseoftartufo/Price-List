@@ -1,7 +1,7 @@
 import './styles/official-brand.css';
 
-const DARK_LOGO = '/brand/house-of-tartufo-logo-dark.webp';
-const WHITE_LOGO = '/brand/house-of-tartufo-logo-white.webp';
+const DARK_LOGO = '/brand/house-of-tartufo-logo-dark.png';
+const WHITE_LOGO = '/brand/house-of-tartufo-logo-white.png';
 
 function logoFor(brand: HTMLElement): string {
   return brand.dataset.brandVariant === 'white' || brand.classList.contains('brand-on-dark')
