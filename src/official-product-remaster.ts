@@ -32,7 +32,7 @@ function measureKey(value: string): string | undefined {
   if (!Number.isFinite(amount)) return undefined;
   const unit = match[2] === 'gr' ? 'g' : match[2];
   if (unit === 'kg') return `${Math.round(amount * 1000)}g`;
-  if (unit === 'l') return `${Number.isInteger(amount) ? amount : String(amount)}l`;
+  if (unit === 'l') return `${Math.round(amount * 1000)}ml`;
   return `${Number.isInteger(amount) ? amount : amount.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}${unit}`;
 }
 
@@ -44,28 +44,49 @@ function aliases(entry: OfficialProductVariant): readonly string[] {
   return [entry.product, entry.sourceName, ...entry.aliases];
 }
 
-export function findRemasteredOfficialVariant(name: string, size: string): RemasteredOfficialVariant | undefined {
-  const wantedName = normalise(name);
-  const wantedSize = measureKey(size);
-  if (!wantedName || !wantedSize) return undefined;
+function percentToken(value: string): string | undefined {
+  return normalise(value).match(/\b(\d+)%\b/)?.[1];
+}
 
-  const matches = OFFICIAL_PRODUCT_VARIANTS.filter((entry) => {
-    if (measureKey(entry.size) !== wantedSize) return false;
-    return aliases(entry).some((alias) => {
-      const candidate = normalise(alias);
-      return wantedName === candidate || wantedName.includes(candidate) || candidate.includes(wantedName);
-    });
-  });
-
-  if (matches.length !== 1) return undefined;
-  const entry = matches[0];
-  if (!entry) return undefined;
+function remastered(entry: OfficialProductVariant): RemasteredOfficialVariant {
   return {
     ...entry,
     officialKey: officialVariantKey(entry),
     packStatus: 'resolved',
     skuSource: 'master',
   };
+}
+
+export function findRemasteredOfficialVariant(name: string, size: string): RemasteredOfficialVariant | undefined {
+  const wantedName = normalise(name);
+  const wantedSize = measureKey(size);
+  if (!wantedName || !wantedSize) return undefined;
+
+  const sameSize = OFFICIAL_PRODUCT_VARIANTS.filter((entry) => measureKey(entry.size) === wantedSize);
+  const exact = sameSize.filter((entry) => aliases(entry).some((alias) => normalise(alias) === wantedName));
+  if (exact.length === 1 && exact[0]) return remastered(exact[0]);
+  if (exact.length > 1) return undefined;
+
+  const wantedPercent = percentToken(name);
+  const scored = sameSize
+    .map((entry) => {
+      const entryPercent = percentToken(entry.product);
+      if (wantedPercent && entryPercent && wantedPercent !== entryPercent) return { entry, score: -1 };
+      const score = Math.max(0, ...aliases(entry).map((alias) => {
+        const candidate = normalise(alias);
+        if (!candidate) return 0;
+        if (wantedName.includes(candidate)) return candidate.length;
+        if (candidate.includes(wantedName)) return wantedName.length;
+        return 0;
+      }));
+      return { entry, score };
+    })
+    .filter((candidate) => candidate.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  if (!scored[0]) return undefined;
+  if (scored[1]?.score === scored[0].score) return undefined;
+  return remastered(scored[0].entry);
 }
 
 export interface OfficialCatalogueAudit {
@@ -99,12 +120,7 @@ export function remasterCatalogueProducts(sourceProducts: readonly Product[]): O
     });
   }
 
-  const allOfficial = OFFICIAL_PRODUCT_VARIANTS.map((entry) => {
-    const remastered = findRemasteredOfficialVariant(entry.product, entry.size);
-    if (!remastered) throw new Error(`Official master could not resolve its own row: ${entry.product} ${entry.size}.`);
-    return remastered;
-  });
-
+  const allOfficial = OFFICIAL_PRODUCT_VARIANTS.map(remastered);
   const matched = new Set(chosen.keys());
   return {
     products: [...chosen.values()],
