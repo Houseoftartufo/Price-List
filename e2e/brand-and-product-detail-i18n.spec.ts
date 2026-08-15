@@ -18,17 +18,17 @@ test('official transparent logo masters replace provisional marks without changi
   const footerLogo = page.locator('.site-footer .brand-logo');
   await expect(headerLogo).toBeVisible();
   await expect(footerLogo).toBeVisible();
-  await expect(headerLogo).toHaveAttribute('src', '/brand/house-of-tartufo-logo-dark.webp');
-  await expect(footerLogo).toHaveAttribute('src', '/brand/house-of-tartufo-logo-dark.webp');
+  await expect(headerLogo).toHaveAttribute('src', '/brand/house-of-tartufo-logo-dark.png');
+  await expect(footerLogo).toHaveAttribute('src', '/brand/house-of-tartufo-logo-dark.png');
   await expect(page.locator('.brand-mark')).toHaveCount(0);
   await expect(page.locator('.brand-words')).toHaveCount(0);
 
-  const dark = await request.get('/brand/house-of-tartufo-logo-dark.webp');
-  const white = await request.get('/brand/house-of-tartufo-logo-white.webp');
+  const dark = await request.get('/brand/house-of-tartufo-logo-dark.png');
+  const white = await request.get('/brand/house-of-tartufo-logo-white.png');
   expect(dark.ok()).toBeTruthy();
   expect(white.ok()).toBeTruthy();
-  expect(dark.headers()['content-type']).toContain('image/webp');
-  expect(white.headers()['content-type']).toContain('image/webp');
+  expect(dark.headers()['content-type']).toContain('image/png');
+  expect(white.headers()['content-type']).toContain('image/png');
 });
 
 test('French product detail uses translated official master content and never leaks Italian copy', async ({ page }) => {
