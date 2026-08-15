@@ -58,6 +58,8 @@ function bind(): void {
     if (target.closest('#copy-order')) emit('quote_copy');
     if (target.closest('#whatsapp-order')) emit('quote_whatsapp');
     if (target.closest('#email-order')) emit('quote_email');
+    if (target.closest('[data-remove-quote]')) emit('quote_remove');
+    if (target.closest('#clear-quote')) emit('quote_clear');
   });
 }
 
@@ -66,3 +68,5 @@ if (document.readyState === 'loading') {
 } else {
   bind();
 }
+
+export {};
