@@ -1,6 +1,7 @@
 import './styles/product-details-guard.css';
 import { findRemasteredOfficialVariant, type RemasteredOfficialVariant } from './official-product-remaster';
 import { OFFICIAL_SHOPIFY_MAP } from './official-shopify-map';
+import { getShopifyLiveVariant, type ShopifyLiveImage } from './shopify-live';
 
 type Locale = 'en' | 'it' | 'fr' | 'nl';
 
@@ -70,31 +71,59 @@ function setCasePack(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant
   if (value) value.textContent = String(entry.unitsPerCase);
 }
 
-function setImage(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant): void {
+function imageStage(dialog: HTMLDialogElement): HTMLElement | undefined {
   const media = dialog.querySelector<HTMLElement>('.product-detail-media');
-  if (!media) return;
-  const mapping = OFFICIAL_SHOPIFY_MAP[entry.officialKey];
-  if (!mapping?.image) {
-    media.innerHTML = '<div class="product-detail-image-stage" data-empty="true"></div>';
-    return;
+  if (!media) return undefined;
+  let stage = media.querySelector<HTMLElement>('.product-detail-image-stage');
+  if (!stage) {
+    stage = document.createElement('div');
+    stage.className = 'product-detail-image-stage';
+    media.replaceChildren(stage);
   }
-  const alt = compact(dialog.querySelector('#product-detail-title')?.textContent) || entry.product;
-  media.innerHTML = `<div class="product-detail-image-stage"><img data-product-detail-main-image src="${escapeHtml(mapping.image)}" alt="${escapeHtml(alt)}" loading="eager" /></div>`;
+  return stage;
 }
 
-function setSourceLink(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant): void {
-  dialog.querySelector('.product-detail-source')?.remove();
+function setImageUrl(dialog: HTMLDialogElement, image: ShopifyLiveImage | { url: string; alt?: string | null }): void {
+  const stage = imageStage(dialog);
+  if (!stage) return;
+  const img = document.createElement('img');
+  img.dataset.productDetailMainImage = 'true';
+  img.src = image.url;
+  img.alt = compact(image.alt) || compact(dialog.querySelector('#product-detail-title')?.textContent) || 'House of Tartufo product';
+  img.loading = 'eager';
+  stage.removeAttribute('data-empty');
+  stage.replaceChildren(img);
+}
+
+function setStaticImage(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant): void {
+  const stage = imageStage(dialog);
+  if (!stage) return;
   const mapping = OFFICIAL_SHOPIFY_MAP[entry.officialKey];
-  if (!mapping?.handle) return;
+  if (!mapping?.image) {
+    stage.dataset.empty = 'true';
+    stage.replaceChildren();
+    return;
+  }
+  setImageUrl(dialog, { url: mapping.image, alt: entry.product });
+}
+
+function setSourceUrl(dialog: HTMLDialogElement, url: string | undefined): void {
+  dialog.querySelector('.product-detail-source')?.remove();
+  if (!url) return;
   const content = dialog.querySelector<HTMLElement>('.product-detail-content');
   if (!content) return;
   const link = document.createElement('a');
   link.className = 'product-detail-source';
-  link.href = `${SHOP_ORIGIN}/products/${mapping.handle}`;
+  link.href = url;
   link.target = '_blank';
   link.rel = 'noopener';
   link.textContent = copy[locale()].website;
   content.append(link);
+}
+
+function setStaticSourceLink(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant): void {
+  const mapping = OFFICIAL_SHOPIFY_MAP[entry.officialKey];
+  setSourceUrl(dialog, mapping?.handle ? `${SHOP_ORIGIN}/products/${mapping.handle}` : undefined);
 }
 
 function ensureSections(dialog: HTMLDialogElement): HTMLElement | undefined {
@@ -122,7 +151,7 @@ function formatNumber(value: number | undefined): string | undefined {
 
 function nutritionFacts(entry: RemasteredOfficialVariant): string {
   const n = entry.nutrition;
-  const rows = [
+  return [
     n.energyKj !== undefined || n.energyKcal !== undefined ? fact('Energy', `${formatNumber(n.energyKj) ?? '—'} kJ · ${formatNumber(n.energyKcal) ?? '—'} kcal`) : '',
     n.fat !== undefined ? fact('Fat', `${formatNumber(n.fat)} g`) : '',
     n.saturates !== undefined ? fact('Saturates', `${formatNumber(n.saturates)} g`) : '',
@@ -132,13 +161,37 @@ function nutritionFacts(entry: RemasteredOfficialVariant): string {
     n.salt !== undefined ? fact('Salt', `${formatNumber(n.salt)} g`) : '',
     n.fibre !== undefined ? fact('Fibre', `${formatNumber(n.fibre)} g`) : '',
   ].filter(Boolean).join('');
-  return rows;
+}
+
+async function enrichFromShopify(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant): Promise<void> {
+  if (dialog.dataset.shopifyLiveRequested === entry.sku) return;
+  dialog.dataset.shopifyLiveRequested = entry.sku;
+
+  const match = await getShopifyLiveVariant(entry.sku);
+  if (!match || !dialog.open || rowInfo(dialog)?.sku !== entry.sku) return;
+
+  if (match.variant.barcode && match.variant.barcode !== entry.barcode) {
+    console.warn('[HOT Price List] Shopify/master barcode mismatch', {
+      sku: entry.sku,
+      masterBarcode: entry.barcode,
+      shopifyBarcode: match.variant.barcode,
+    });
+  }
+
+  const liveImage = match.variant.media[0] ?? match.product.media[0];
+  if (liveImage) setImageUrl(dialog, liveImage);
+
+  const publishedUrl = match.product.status === 'ACTIVE' ? match.product.onlineStoreUrl ?? undefined : undefined;
+  setSourceUrl(dialog, publishedUrl);
+  dialog.dataset.shopifyMatch = 'live-api';
+  dialog.dataset.shopifyStatus = match.product.status.toLowerCase();
+  dialog.dataset.shopifyUpdatedAt = match.product.updatedAt;
 }
 
 function renderOfficial(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant): void {
   setOfficialSku(dialog, entry.sku);
   setCasePack(dialog, entry);
-  setImage(dialog, entry);
+  setStaticImage(dialog, entry);
   const sections = ensureSections(dialog);
   if (sections) {
     const t = copy[locale()];
@@ -153,20 +206,25 @@ function renderOfficial(dialog: HTMLDialogElement, entry: RemasteredOfficialVari
     `;
     sections.dataset.officialMasterKey = entry.officialKey;
   }
-  setSourceLink(dialog, entry);
-  dialog.dataset.shopifyMatch = OFFICIAL_SHOPIFY_MAP[entry.officialKey] ? 'verified' : 'official';
+  setStaticSourceLink(dialog, entry);
+  dialog.dataset.shopifyMatch = OFFICIAL_SHOPIFY_MAP[entry.officialKey] ? 'fallback-verified' : 'master-only';
   dialog.dataset.officialMaster = 'matched';
+  void enrichFromShopify(dialog, entry);
 }
 
 function renderNotOfficial(dialog: HTMLDialogElement): void {
-  const media = dialog.querySelector<HTMLElement>('.product-detail-media');
-  if (media) media.innerHTML = '<div class="product-detail-image-stage" data-empty="true"></div>';
-  dialog.querySelector('.product-detail-source')?.remove();
+  const stage = imageStage(dialog);
+  if (stage) {
+    stage.dataset.empty = 'true';
+    stage.replaceChildren();
+  }
+  setSourceUrl(dialog, undefined);
   const sections = ensureSections(dialog);
   if (sections) {
     sections.innerHTML = `<p class="product-detail-note">${escapeHtml(copy[locale()].notOfficial)}</p>`;
     delete sections.dataset.officialMasterKey;
   }
+  delete dialog.dataset.shopifyLiveRequested;
   dialog.dataset.shopifyMatch = 'none';
   dialog.dataset.officialMaster = 'none';
 }
@@ -179,6 +237,7 @@ function applyOfficialMaster(): void {
   const entry = findRemasteredOfficialVariant(info.name, info.size);
   const key = entry?.officialKey;
   if (dialog.dataset.officialMaster === (entry ? 'matched' : 'none') && dialog.querySelector<HTMLElement>('.product-detail-sections')?.dataset.officialMasterKey === key) return;
+  delete dialog.dataset.shopifyLiveRequested;
   if (entry) renderOfficial(dialog, entry); else renderNotOfficial(dialog);
 }
 
