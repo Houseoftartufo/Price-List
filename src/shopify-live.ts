@@ -104,6 +104,25 @@ export function matchShopifyLiveVariant(payload: ShopifyLivePayload | undefined,
   return match;
 }
 
+export function matchShopifyLiveProduct(
+  payload: ShopifyLivePayload | undefined,
+  handles: string | readonly string[],
+): ShopifyLiveProduct | undefined {
+  if (!payload?.available || !payload.products) return undefined;
+  const wanted = (Array.isArray(handles) ? handles : [handles])
+    .map((handle) => handle.trim())
+    .filter(Boolean);
+  for (const handle of wanted) {
+    const matches = payload.products.filter((product) => product.handle === handle);
+    if (matches.length === 1) return matches[0];
+  }
+  return undefined;
+}
+
 export async function getShopifyLiveVariant(sku: string): Promise<ShopifyLiveMatch | undefined> {
   return matchShopifyLiveVariant(await loadShopifyLiveCatalogue(), sku);
+}
+
+export async function getShopifyLiveProduct(handles: string | readonly string[]): Promise<ShopifyLiveProduct | undefined> {
+  return matchShopifyLiveProduct(await loadShopifyLiveCatalogue(), handles);
 }
