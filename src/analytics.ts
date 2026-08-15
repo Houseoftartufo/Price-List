@@ -1,4 +1,5 @@
 import './product-details';
+import './product-detail-quote-cta';
 import './product-details-sku-guard-v2';
 import './official-runtime-guard';
 
