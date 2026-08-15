@@ -85,22 +85,30 @@ Current isolated feature branch: `feat/product-detail-quote-cta`.
 
 ## Official brand identity — logo rollout sprint
 
-**Reference master:** the corrected House of Tartufo logo supplied by the owner on 2026-08-15 — the full `HOT` monogram with the truffle silhouette integrated in the `O`, paired with the stacked `HOUSE OF TARTUFO` wordmark, shown in the uploaded reference artwork.
+**Official logo system:** the corrected `HOT` monogram with the truffle silhouette integrated in the `O`, paired with the stacked `HOUSE OF TARTUFO` wordmark.
+
+**Two approved master variants supplied by the owner on 2026-08-15:**
+- **Dark / brown master:** for light or cream backgrounds.
+- **White master:** for dark backgrounds.
+
+Both artworks are official and ready for use. They are two colorway variants of the same approved logo geometry and wordmark.
 
 **Supersedes:** the previously supplied beige double-outline `H` reference. That earlier asset is not the official logo and must not be used.
 
-**Non-negotiable rule:** the corrected supplied artwork is the official logo master. Do not redraw, reinterpret, change geometry, alter the truffle silhouette, replace the wordmark, recolor it, change typography, or generate an AI approximation.
+**Non-negotiable rule:** use the supplied official artwork only. Do not redraw, reinterpret, change geometry, alter the truffle silhouette, replace the wordmark, change typography, recolor either master, or generate an AI approximation. Select the dark/brown or white master according to background contrast.
 
 | Item | Status |
 | --- | --- |
-| Preserve corrected supplied logo artwork as official master asset | NEXT |
-| Add web-optimized asset while preserving the master appearance exactly | NEXT |
+| Preserve dark/brown supplied logo artwork as official light-background master | NEXT |
+| Preserve white supplied logo artwork as official dark-background master | NEXT |
+| Add web-optimized assets while preserving both master appearances exactly | NEXT |
 | Replace provisional/generated brand mark in the Price List header | NEXT |
 | Replace provisional/generated brand mark in the footer | NEXT |
 | Use official logo consistently in branded catalogue surfaces where the full mark fits | NEXT |
+| Automatically/selectively use dark master on light surfaces and white master on dark surfaces | NEXT |
 | Keep adequate clear space and prevent stretching/cropping | NEXT |
-| Verify logo rendering on desktop + mobile and light/dark surrounding surfaces | NEXT |
-| Add visual regression coverage so the official logo cannot silently be replaced | NEXT |
+| Verify both logo variants on desktop + mobile | NEXT |
+| Add visual regression coverage so neither official logo can silently be replaced or altered | NEXT |
 | Review OG/app-icon derivatives separately before using cropped symbol-only versions | NEXT — requires explicit derivative approval |
 
 ## Mobile & accessibility
@@ -151,4 +159,4 @@ Current isolated feature branch: `feat/product-detail-quote-cta`.
 
 ## Final gate
 
-Every feature head commit must pass the complete `Quality Gate` before merge to `main`. Visual changes must be checked on desktop and mobile, and official brand assets must remain identical to the approved reference master.
+Every feature head commit must pass the complete `Quality Gate` before merge to `main`. Visual changes must be checked on desktop and mobile, and official brand assets must remain identical to the approved reference masters.
