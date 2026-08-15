@@ -62,7 +62,10 @@ function ensureQuoteAction(dialog: HTMLDialogElement): HTMLButtonElement | undef
   const inQuote = source?.dataset.inQuote === 'true' || row?.dataset.inQuote === 'true';
   const label = compact(source?.textContent) || fallbackCopy[locale()].add;
 
-  button.textContent = label;
+  // Avoid creating a new text node on every MutationObserver pass.
+  // Rewriting textContent would itself emit a childList mutation and could
+  // keep the observer busy indefinitely while the product dialog is open.
+  if (compact(button.textContent) !== label) button.textContent = label;
   button.disabled = !source || source.disabled;
   button.dataset.inQuote = String(inQuote);
   button.setAttribute('aria-pressed', String(inQuote));
