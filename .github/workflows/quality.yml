@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   quality:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
@@ -31,11 +31,17 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Unit tests
+      - name: Official Excel master tests
         run: npm test
 
       - name: Production build
         run: npm run build
+
+      - name: Official Shopify enrichment cross-check
+        run: npm run audit:shopify
+
+      - name: Official Shopify candidate discovery
+        run: CI_SHOPIFY_DISCOVERY=1 npx vitest run tests/official-shopify-discovery.spec.ts
 
       - name: Preview integrity
         run: npm run qa:preview

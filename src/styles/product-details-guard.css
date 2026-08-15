@@ -1,0 +1,28 @@
+.product-detail-dialog:not([data-shopify-match]) .product-detail-media img,
+.product-detail-dialog:not([data-shopify-match]) .product-detail-thumbs,
+.product-detail-dialog:not([data-shopify-match]) .product-detail-source,
+.product-detail-dialog:not([data-shopify-match]) .product-detail-sections,
+.product-detail-dialog[data-shopify-match="pending"] .product-detail-media img,
+.product-detail-dialog[data-shopify-match="pending"] .product-detail-thumbs,
+.product-detail-dialog[data-shopify-match="pending"] .product-detail-source,
+.product-detail-dialog[data-shopify-match="pending"] .product-detail-sections {
+  visibility: hidden;
+}
+
+.product-detail-dialog[data-shopify-match="pending"] .product-detail-media {
+  position: relative;
+}
+
+.product-detail-dialog[data-shopify-match="pending"] .product-detail-media::after {
+  content: "HOUSE OF TARTUFO";
+  position: absolute;
+  inset: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(88, 61, 45, 0.11);
+  border-radius: 18px;
+  color: rgba(88, 61, 45, 0.45);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  background: #f9f8f5;
+}

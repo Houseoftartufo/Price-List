@@ -11,6 +11,8 @@ function isIsoDate(value: string): boolean {
 
 export function validateProduct(product: Product): ValidationResult {
   const errors: string[] = [];
+  const standby = product.orderStatus === 'standby';
+  const reasons = new Set(product.standbyReasons ?? []);
 
   if (!product.sku?.trim()) errors.push('SKU is required.');
   if (!product.categoryId?.trim()) errors.push(`SKU ${product.sku || '?'}: categoryId is required.`);
@@ -18,12 +20,27 @@ export function validateProduct(product: Product): ValidationResult {
   if (!product.name?.trim()) errors.push(`SKU ${product.sku || '?'}: name is required.`);
   if (!product.sizeLabel?.trim()) errors.push(`SKU ${product.sku || '?'}: sizeLabel is required.`);
 
-  if (!Number.isFinite(product.baseUnitPrice) || product.baseUnitPrice <= 0) {
-    errors.push(`SKU ${product.sku || '?'}: baseUnitPrice must be > 0.`);
-  }
-
-  if (!Number.isInteger(product.unitsPerCase) || product.unitsPerCase <= 0) {
-    errors.push(`SKU ${product.sku || '?'}: unitsPerCase must be a positive integer.`);
+  if (standby) {
+    if (reasons.size === 0) errors.push(`SKU ${product.sku || '?'}: standbyReasons are required for a standby product.`);
+    if (!Number.isFinite(product.baseUnitPrice) || product.baseUnitPrice < 0) {
+      errors.push(`SKU ${product.sku || '?'}: standby baseUnitPrice must be >= 0.`);
+    }
+    if (reasons.has('price') && product.baseUnitPrice !== 0) {
+      errors.push(`SKU ${product.sku || '?'}: price-pending standby row must use baseUnitPrice 0.`);
+    }
+    if (!Number.isInteger(product.unitsPerCase) || product.unitsPerCase < 0) {
+      errors.push(`SKU ${product.sku || '?'}: standby unitsPerCase must be an integer >= 0.`);
+    }
+    if (reasons.has('case-pack') && product.unitsPerCase !== 0) {
+      errors.push(`SKU ${product.sku || '?'}: case-pack-pending standby row must use unitsPerCase 0.`);
+    }
+  } else {
+    if (!Number.isFinite(product.baseUnitPrice) || product.baseUnitPrice <= 0) {
+      errors.push(`SKU ${product.sku || '?'}: baseUnitPrice must be > 0.`);
+    }
+    if (!Number.isInteger(product.unitsPerCase) || product.unitsPerCase <= 0) {
+      errors.push(`SKU ${product.sku || '?'}: unitsPerCase must be a positive integer.`);
+    }
   }
 
   if (product.currency !== 'EUR') {
