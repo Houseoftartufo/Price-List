@@ -1,6 +1,6 @@
 import './product-details';
-import './product-detail-quote-cta';
 import './product-details-sku-guard-v2';
+import './product-detail-quote-cta';
 import './official-runtime-guard';
 
 type AnalyticsPayload = Record<string, string | number | boolean | undefined>;
@@ -58,8 +58,6 @@ function bind(): void {
     if (target.closest('#copy-order')) emit('quote_copy');
     if (target.closest('#whatsapp-order')) emit('quote_whatsapp');
     if (target.closest('#email-order')) emit('quote_email');
-    if (target.closest('[data-remove-quote]')) emit('quote_remove');
-    if (target.closest('#clear-quote')) emit('quote_clear');
   });
 }
 
@@ -68,5 +66,3 @@ if (document.readyState === 'loading') {
 } else {
   bind();
 }
-
-export {};
