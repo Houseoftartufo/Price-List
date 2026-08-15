@@ -1,3 +1,5 @@
+import './official-brand';
+import './product-detail-localization';
 import './styles/product-detail-quote-cta.css';
 
 type Locale = 'en' | 'it' | 'fr' | 'nl';
