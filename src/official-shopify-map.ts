@@ -28,6 +28,10 @@ export const OFFICIAL_SHOPIFY_MAP: Readonly<Record<string, OfficialShopifyMappin
     image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/04.1_Black_Truffle_Sauce.webp?v=1736518396',
   },
 
+  'tartufata white sauce with bianchetto 2%|80g': {
+    handle: 'white-truffle-sauce', siteSku: '5430004174325',
+    image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/05.1_White_Truffle_Sauce.webp?v=1736517835',
+  },
   'tartufata white sauce with bianchetto 2%|170g': {
     handle: 'white-truffle-sauce', siteSku: '5430004174134',
     image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/05.1_White_Truffle_Sauce.webp?v=1736517835',
@@ -35,6 +39,11 @@ export const OFFICIAL_SHOPIFY_MAP: Readonly<Record<string, OfficialShopifyMappin
   'tartufata white sauce with bianchetto 2%|500g': {
     handle: 'white-truffle-sauce', siteSku: '5430004174240',
     image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/05.1_White_Truffle_Sauce.webp?v=1736517835',
+  },
+
+  'truffle mayonnaise|120g': {
+    handle: 'vegan-black-truffle-mayonnaise', siteSku: '5430004174189',
+    image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/09.1_Black_Truffle_Mayo.webp?v=1736517836',
   },
 
   'butter with bianchetto truffle 6%|80g': {
