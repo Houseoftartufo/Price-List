@@ -49,10 +49,13 @@ test('French product detail uses the selected locale and never leaks Italian mas
   });
 
   await page.goto('/preview.html');
+  const row = page.locator('#product-rows tr[data-official-key="summer truffle carpaccio|80g"]');
+  // The locale listeners are installed only after catalogue + translation
+  // initialization. A real rendered official row is our readiness signal.
+  await expect(row).toBeVisible();
+
   await page.locator('[data-locale="fr"]').click();
   await expect(page.locator('html')).toHaveAttribute('lang', /^fr/i);
-
-  const row = page.locator('#product-rows tr[data-official-key="summer truffle carpaccio|80g"]');
   await expect(row).toBeVisible();
   await row.locator('.product-cell').click();
 
