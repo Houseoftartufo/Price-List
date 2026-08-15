@@ -80,6 +80,18 @@ function sourceHandle(dialog: HTMLDialogElement): string {
   }
 }
 
+function localizeSourceLink(dialog: HTMLDialogElement, currentLocale: Locale, handle: string): void {
+  if (!handle) return;
+  const source = dialog.querySelector<HTMLAnchorElement>('.product-detail-source');
+  if (!source) return;
+  const prefix = currentLocale === 'en' ? '' : `/${currentLocale}`;
+  const wantedHref = `https://houseoftartufo.com${prefix}/products/${handle}`;
+  // The master/Shopify guards may refresh their verified base URL after the
+  // dialog opens. Re-apply only when necessary so the observer cannot loop.
+  if (source.href !== wantedHref) source.href = wantedHref;
+  if (source.textContent !== copy[currentLocale].website) source.textContent = copy[currentLocale].website;
+}
+
 async function fetchPublishedTitle(sku: string, currentLocale: Locale, handle: string): Promise<LocalizedProductPayload | undefined> {
   if (!handle) return undefined;
   const key = `${currentLocale}:${sku}:${handle}`;
@@ -158,7 +170,7 @@ function localizeChrome(dialog: HTMLDialogElement, currentLocale: Locale): void 
   }
 
   const source = dialog.querySelector<HTMLAnchorElement>('.product-detail-source');
-  if (source) source.textContent = t.website;
+  if (source && source.textContent !== t.website) source.textContent = t.website;
 }
 
 function renderMasterTranslation(dialog: HTMLDialogElement, entry: OfficialProductVariant, currentLocale: Locale): void {
@@ -197,6 +209,8 @@ async function localizeOpenDialog(): Promise<void> {
   if (!sentinel) renderMasterTranslation(dialog, entry, currentLocale);
 
   const handle = sourceHandle(dialog);
+  localizeSourceLink(dialog, currentLocale, handle);
+
   const signature = `${currentLocale}:${sku}:${handle}`;
   if (dialog.dataset.productPublishedTitleSignature === signature) return;
   dialog.dataset.productPublishedTitleSignature = signature;
@@ -207,12 +221,7 @@ async function localizeOpenDialog(): Promise<void> {
 
   const title = dialog.querySelector<HTMLElement>('.product-detail-title');
   if (title) title.textContent = payload.product.title;
-  const source = dialog.querySelector<HTMLAnchorElement>('.product-detail-source');
-  if (source && payload.product.handle) {
-    const prefix = currentLocale === 'en' ? '' : `/${currentLocale}`;
-    source.href = `https://houseoftartufo.com${prefix}/products/${payload.product.handle}`;
-    source.textContent = copy[currentLocale].website;
-  }
+  if (payload.product.handle) localizeSourceLink(dialog, currentLocale, payload.product.handle);
   dialog.dataset.productTranslationSource = 'published-title+official-master';
 }
 
