@@ -81,10 +81,10 @@ test('product card uses master technical data and public-verified Shopify fallba
   await expect(dialog).toHaveAttribute('data-shopify-match', 'fallback-verified');
   await expect(dialog.locator('[data-official-sku]')).toHaveText('5430004174417');
   await expect(dialog.locator('.product-detail-source')).toHaveAttribute('href', /houseoftartufo\.com\/products\/summer-truffle-carpaccio/);
-  await expect(dialog).toContainText(/Tartufo estivo.*60%.*acqua.*aroma/i);
+  await expect(dialog).toContainText(/Summer truffle.*60%.*water.*flavouring/i);
   await expect(dialog).toContainText('05430004174417');
   await expect(dialog).toContainText(/36 months/i);
-  await expect(dialog).toContainText(/Valori nutrizionali|Nutrition/i);
+  await expect(dialog).toContainText(/Nutrition/i);
   await expectLoadedProductImage(dialog.locator('[data-product-detail-main-image]'));
 
   await page.screenshot({ path: 'qa-screenshots/product-detail-desktop.png' });
@@ -124,15 +124,15 @@ test('master variants without a public Shopify fallback still expose complete te
   await expect(pesto.locator('.product-detail-source')).toHaveCount(0);
   await expect(pesto.locator('[data-product-detail-main-image]')).toHaveCount(0);
   await expect(pesto.locator('[data-official-sku]')).toHaveText('5430004174509');
-  await expect(pesto).toContainText(/basilico Genovese/i);
-  await expect(pesto).toContainText(/Frutta a guscio/i);
+  await expect(pesto).toContainText(/Genovese basil/i);
+  await expect(pesto).toContainText(/Nuts.*traces/i);
   await pesto.locator('[data-product-detail-close]').click();
 
   const pearls = (await openOfficialProduct(page, 'balsamic vinegar pearls|50ml')).dialog;
   await expect(pearls).toHaveAttribute('data-shopify-match', 'master-only');
   await expect(pearls.locator('[data-official-sku]')).toHaveText('5430004174578');
-  await expect(pearls).toContainText(/Aceto Balsamico di Modena/i);
-  await expect(pearls).toContainText(/Solfiti/i);
+  await expect(pearls).toContainText(/Modena Balsamic Vinegar/i);
+  await expect(pearls).toContainText(/Sulphites/i);
   await expect(pearls.locator('.product-detail-source')).toHaveCount(0);
   await pearls.locator('[data-product-detail-close]').click();
 });
@@ -187,7 +187,7 @@ test('all price-pending master variants stay visible and clickable but cannot en
   const dialog = page.locator('#product-detail-dialog');
   await expect(dialog).toBeVisible();
   await expect(dialog.locator('[data-official-sku]')).toHaveText('5430004174462');
-  await expect(dialog).toContainText(/Olio extravergine di oliva/i);
+  await expect(dialog).toContainText(/Extra virgin olive oil/i);
   await expect(dialog).not.toContainText(/Case pack pending/i);
   await dialog.locator('[data-product-detail-close]').click();
 
@@ -203,7 +203,7 @@ test('product detail card stays contained on mobile', async ({ page }) => {
   const { dialog } = await openOfficialProduct(page, 'summer truffle carpaccio|45g');
   await expect(dialog).toHaveAttribute('data-shopify-match', 'fallback-verified');
   await expect(dialog.locator('[data-official-sku]')).toHaveText('5430004174417');
-  await expect(dialog).toContainText(/Tartufo estivo.*60%.*acqua.*aroma/i);
+  await expect(dialog).toContainText(/Summer truffle.*60%.*water.*flavouring/i);
   await expectLoadedProductImage(dialog.locator('[data-product-detail-main-image]'));
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
