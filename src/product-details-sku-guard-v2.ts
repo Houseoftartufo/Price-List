@@ -1,7 +1,7 @@
 import './styles/product-details-guard.css';
 import { findRemasteredOfficialVariant, type RemasteredOfficialVariant } from './official-product-remaster';
 import { OFFICIAL_SHOPIFY_MAP } from './official-shopify-map';
-import { getShopifyLiveVariant, type ShopifyLiveImage } from './shopify-live';
+import { getShopifyLiveProduct, getShopifyLiveVariant, type ShopifyLiveImage } from './shopify-live';
 
 type Locale = 'en' | 'it' | 'fr' | 'nl';
 
@@ -168,24 +168,51 @@ async function enrichFromShopify(dialog: HTMLDialogElement, entry: RemasteredOff
   dialog.dataset.shopifyLiveRequested = entry.sku;
 
   const match = await getShopifyLiveVariant(entry.sku);
-  if (!match || !dialog.open || rowInfo(dialog)?.sku !== entry.sku) return;
+  if (match) {
+    if (!dialog.open || rowInfo(dialog)?.sku !== entry.sku) return;
 
-  if (match.variant.barcode && match.variant.barcode !== entry.barcode) {
-    console.warn('[HOT Price List] Shopify/master barcode mismatch', {
-      sku: entry.sku,
-      masterBarcode: entry.barcode,
-      shopifyBarcode: match.variant.barcode,
-    });
+    if (match.variant.barcode && match.variant.barcode !== entry.barcode) {
+      console.warn('[HOT Price List] Shopify/master barcode mismatch', {
+        sku: entry.sku,
+        masterBarcode: entry.barcode,
+        shopifyBarcode: match.variant.barcode,
+      });
+    }
+
+    const liveImage = match.variant.media[0] ?? match.product.media[0];
+    if (liveImage) setImageUrl(dialog, liveImage);
+
+    const publishedUrl = match.product.status === 'ACTIVE' ? match.product.onlineStoreUrl ?? undefined : undefined;
+    setSourceUrl(dialog, publishedUrl);
+    dialog.dataset.shopifyMatch = 'live-api';
+    dialog.dataset.shopifyStatus = match.product.status.toLowerCase();
+    dialog.dataset.shopifyUpdatedAt = match.product.updatedAt;
+    return;
   }
 
-  const liveImage = match.variant.media[0] ?? match.product.media[0];
-  if (liveImage) setImageUrl(dialog, liveImage);
+  // Some official wholesale formats deliberately exist only in the Excel master
+  // (currently the 1L/3L oil formats), while the same product family is live in
+  // Shopify under another exact variant. In that case Shopify may enrich only
+  // product-level presentation (image/link/status). SKU, barcode, size, pack and
+  // B2B price remain exclusively master-owned and are never inferred from a
+  // different Shopify variant.
+  const reference = entry.shopify;
+  const handles = reference
+    ? [reference.publicHandle, reference.handle].filter((value): value is string => Boolean(value))
+    : [];
+  if (!handles.length) return;
 
-  const publishedUrl = match.product.status === 'ACTIVE' ? match.product.onlineStoreUrl ?? undefined : undefined;
+  const product = await getShopifyLiveProduct(handles);
+  if (!product || !dialog.open || rowInfo(dialog)?.sku !== entry.sku) return;
+
+  const liveImage = product.media[0];
+  if (liveImage) setImageUrl(dialog, liveImage);
+  const publishedUrl = product.status === 'ACTIVE' ? product.onlineStoreUrl ?? undefined : undefined;
   setSourceUrl(dialog, publishedUrl);
-  dialog.dataset.shopifyMatch = 'live-api';
-  dialog.dataset.shopifyStatus = match.product.status.toLowerCase();
-  dialog.dataset.shopifyUpdatedAt = match.product.updatedAt;
+  dialog.dataset.shopifyMatch = 'live-api-family';
+  dialog.dataset.shopifyStatus = product.status.toLowerCase();
+  dialog.dataset.shopifyUpdatedAt = product.updatedAt;
+  dialog.dataset.shopifyFamilyFallback = 'true';
 }
 
 function renderOfficial(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant): void {
@@ -209,6 +236,7 @@ function renderOfficial(dialog: HTMLDialogElement, entry: RemasteredOfficialVari
   setStaticSourceLink(dialog, entry);
   dialog.dataset.shopifyMatch = OFFICIAL_SHOPIFY_MAP[entry.officialKey] ? 'fallback-verified' : 'master-only';
   dialog.dataset.officialMaster = 'matched';
+  delete dialog.dataset.shopifyFamilyFallback;
   void enrichFromShopify(dialog, entry);
 }
 
@@ -225,6 +253,7 @@ function renderNotOfficial(dialog: HTMLDialogElement): void {
     delete sections.dataset.officialMasterKey;
   }
   delete dialog.dataset.shopifyLiveRequested;
+  delete dialog.dataset.shopifyFamilyFallback;
   dialog.dataset.shopifyMatch = 'none';
   dialog.dataset.officialMaster = 'none';
 }
@@ -238,6 +267,7 @@ function applyOfficialMaster(): void {
   const key = entry?.officialKey;
   if (dialog.dataset.officialMaster === (entry ? 'matched' : 'none') && dialog.querySelector<HTMLElement>('.product-detail-sections')?.dataset.officialMasterKey === key) return;
   delete dialog.dataset.shopifyLiveRequested;
+  delete dialog.dataset.shopifyFamilyFallback;
   if (entry) renderOfficial(dialog, entry); else renderNotOfficial(dialog);
 }
 
