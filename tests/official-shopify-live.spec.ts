@@ -52,7 +52,7 @@ liveDescribe('official Shopify enrichment live gate', () => {
       byHandle.set(mapping.handle, list);
     }
 
-    expect(byHandle.size).toBe(6);
+    expect(byHandle.size).toBe(7);
     const failures: string[] = [];
 
     for (const [handle, expected] of byHandle) {
