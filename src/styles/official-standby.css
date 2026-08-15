@@ -1,0 +1,41 @@
+.catalogue-table tbody tr[data-order-status='standby'] {
+  background: linear-gradient(90deg, rgba(155, 116, 70, 0.035), transparent 34%);
+}
+
+.catalogue-table tbody tr[data-order-status='standby'] .standby-value {
+  color: #8c7a6d;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.catalogue-table tbody tr[data-order-status='standby'] .standby-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 10px;
+  border: 1px solid rgba(155, 116, 70, 0.22);
+  border-radius: 999px;
+  background: rgba(155, 116, 70, 0.08);
+  color: #765131;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.catalogue-table tbody tr[data-order-status='standby'] .standby-price strong {
+  color: #8c7a6d;
+}
+
+.catalogue-table tbody tr[data-order-status='standby'] .standby-button {
+  cursor: default;
+  opacity: 0.58;
+}
+
+.catalogue-table tbody tr[data-order-status='standby'] .sku-badge[data-official-sku='pending'] {
+  min-width: auto;
+  color: #846b5b;
+  border-color: rgba(72, 52, 40, 0.12);
+  background: #f2eee7;
+}
