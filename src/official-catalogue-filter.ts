@@ -7,7 +7,6 @@ export interface StrictOfficialCatalogueAudit {
   duplicatePriceRows: string[];
   missingPriceVariants: RemasteredOfficialVariant[];
   missingPackVariants: RemasteredOfficialVariant[];
-  /** Retained for backwards-compatible diagnostics. Official rows are no longer excluded. */
   excludedForMissingPack: RemasteredOfficialVariant[];
 }
 
@@ -19,21 +18,13 @@ function allOfficialVariants(): RemasteredOfficialVariant[] {
   });
 }
 
-function displayName(value: string): string {
-  return value
-    .toLocaleLowerCase('en')
-    .replace(/\b([a-z])/g, (letter) => letter.toUpperCase())
-    .replace(/\s+%/g, '%')
-    .replace(/Extra-Virgin/gi, 'Extra Virgin');
-}
-
 function inferCategory(entry: RemasteredOfficialVariant): string {
   const name = entry.product.toLowerCase();
-  if (/oil|aceto balsamico/.test(name)) return 'oils';
+  if (/olive oil/.test(name)) return 'oils';
   if (/butter/.test(name)) return 'butters';
   if (/carpaccio/.test(name)) return 'pure-creams-carpaccio';
   if (/salt|honey|cashew|almond|walnut/.test(name)) return 'salts-honey';
-  if (/risotto|polenta/.test(name)) return 'pasta-rice-meals';
+  if (/risotto|polenta|tarallini/.test(name)) return 'pasta-rice-meals';
   return 'sauces-condiments';
 }
 
@@ -48,12 +39,20 @@ function inferTruffleType(name: string): TruffleType {
   return unique.length > 1 ? 'mixed' : unique[0] ?? 'none';
 }
 
+function shelfLifeMonths(value: string): number | undefined {
+  const text = value.trim().toLowerCase();
+  const years = text.match(/^(\d+)\s*years?/);
+  if (years?.[1]) return Number.parseInt(years[1], 10) * 12;
+  const months = text.match(/^(\d+)\s*months?/);
+  return months?.[1] ? Number.parseInt(months[1], 10) : undefined;
+}
+
 export function buildStrictOfficialCatalogue(sourceProducts: readonly Product[]): StrictOfficialCatalogueAudit {
   const priced = new Map<string, Product>();
   const duplicates: string[] = [];
 
-  // The old price source is only a price bridge. A row can enter this map only
-  // when it resolves to one exact official Excel product + size combination.
+  // The legacy Price List is a price bridge only. It can donate a B2B price
+  // exclusively when product identity + format resolve to one master row.
   for (const product of sourceProducts) {
     const official = findRemasteredOfficialVariant(product.name, product.sizeLabel);
     if (!official) continue;
@@ -66,48 +65,45 @@ export function buildStrictOfficialCatalogue(sourceProducts: readonly Product[])
 
   const official = allOfficialVariants();
   const missingPriceVariants = official.filter((entry) => !priced.has(entry.officialKey));
-  const missingPackVariants = official.filter((entry) => entry.packStatus !== 'resolved');
 
-  const products = official.map((entry, index): Product => {
+  const products = official.map((entry): Product => {
     const source = priced.get(entry.officialKey);
-    const standbyReasons: Array<'price' | 'case-pack'> = [];
-    if (!source) standbyReasons.push('price');
-    if (entry.packStatus !== 'resolved' || !entry.unitsPerCase) standbyReasons.push('case-pack');
-    const standby = standbyReasons.length > 0;
-
+    const standby = !source;
     const categoryId = source?.categoryId ?? inferCategory(entry);
+    const masterShelfLifeMonths = shelfLifeMonths(entry.shelfLife);
+
     return {
-      sku: source?.sku ?? `MASTER-${String(index + 1).padStart(3, '0')}`,
+      // The visible/runtime SKU is the official SKU from Master_file_prodotti.xlsx.
+      sku: entry.sku,
       categoryId,
       groupId: categoryId,
-      // Product existence/name/size/ingredients come exclusively from the Excel master.
-      name: displayName(entry.product),
-      sizeLabel: entry.size.replace(/\s+/g, ''),
+      name: entry.product,
+      sizeLabel: entry.size,
       baseUnitPrice: source?.baseUnitPrice ?? 0,
-      unitsPerCase: entry.unitsPerCase ?? 0,
+      unitsPerCase: entry.unitsPerCase,
       currency: 'EUR',
       truffleType: inferTruffleType(entry.product),
       line: 'standard',
-      ...(source?.shelfLifeMonths ? { shelfLifeMonths: source.shelfLifeMonths } : {}),
+      ...(masterShelfLifeMonths ? { shelfLifeMonths: masterShelfLifeMonths } : {}),
       active: true,
       orderStatus: standby ? 'standby' : 'orderable',
-      ...(standby ? { standbyReasons } : {}),
+      ...(standby ? { standbyReasons: ['price'] as const } : {}),
       officialKey: entry.officialKey,
       officialIngredients: entry.ingredients,
-      ...(entry.sku ? { officialSku: entry.sku } : {}),
-      syntheticCatalogueCode: !source,
+      officialSku: entry.sku,
+      syntheticCatalogueCode: false,
     };
   });
 
-  if (products.length !== OFFICIAL_PRODUCT_VARIANTS.length) {
-    throw new Error(`Official catalogue cardinality mismatch: ${products.length}/${OFFICIAL_PRODUCT_VARIANTS.length}.`);
+  if (products.length !== 55 || products.length !== OFFICIAL_PRODUCT_VARIANTS.length) {
+    throw new Error(`Official catalogue cardinality mismatch: ${products.length}/${OFFICIAL_PRODUCT_VARIANTS.length}; expected 55.`);
   }
 
   return {
     products,
     duplicatePriceRows: duplicates,
     missingPriceVariants,
-    missingPackVariants,
+    missingPackVariants: [],
     excludedForMissingPack: [],
   };
 }
