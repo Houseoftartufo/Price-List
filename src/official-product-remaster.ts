@@ -3,110 +3,9 @@ import type { Product } from './catalog/types';
 
 export interface RemasteredOfficialVariant extends OfficialProductVariant {
   officialKey: string;
-  packStatus: 'resolved' | 'missing';
-  unitsPerCase?: number;
-  sku?: string;
-  skuSource?: 'excel' | 'shopify-verified';
+  packStatus: 'resolved';
+  skuSource: 'master';
 }
-
-// Source: incrocio_shopify_unita_per_box.xlsx. Shopify is used only to
-// disambiguate variant ordering/identity; it never adds products to the master.
-const PACK_OVERRIDES: Readonly<Record<string, number | null>> = {
-  'black truffle sauce 10%|80g': 12,
-  'black truffle sauce 10%|170g': 12,
-  'black truffle sauce 10%|500g': 6,
-  'black truffle sauce 5%|80g': 12,
-  'black truffle sauce 5%|170g': 12,
-  'black truffle sauce 5%|500g': 6,
-  'white truffle sauce|170g': 12,
-  'white truffle sauce|500g': 6,
-  'black truffle mayonnaise|120g': 12,
-  'truffled ketchup|85g': 12,
-  'truffled ketchup|30g': 12,
-  'porcini mushrooms creams with summer truffles|180g': 12,
-  'porcini mushrooms creams with summer truffles|80g': 12,
-  'summer truffle carpaccio|500g': 12,
-  'summer truffle carpaccio|170g': 12,
-  'summer truffle carpaccio|80g': 12,
-  'summer truffle carpaccio|45g': 12,
-  'black truffle butter|450g': 12,
-  'black truffle butter|160g': 12,
-  'black truffle butter|80g': 12,
-  'white truffle butter|450g': 12,
-  'white truffle butter|160g': 12,
-  'white truffle butter|80g': 12,
-  'truffle cashew|80g': 16,
-  'truffle almonds|80g': 16,
-  'truffle walnuts|80g': 16,
-  'salt with summer truffle|120g': null,
-  'salt with summer truffle|30g': null,
-  'salt with white truffle|120g': 12,
-  'salt with white truffle|30g': 12,
-  'grey salt with truffle|100g': 12,
-  'himalayan pink salt with truffle|100g': 12,
-  'spicy truffle sauce|180g': 12,
-  'spicy truffle sauce|80g': 12,
-  'polenta with summer truffle|125g': 12,
-  'risotto with summer truffle|300g': 24,
-  'risotto with summer truffle|170g': 24,
-  'white truffle genovese pesto|80g': 12,
-  'acacia honey with truffle|450g': null,
-  'acacia honey with truffle|220g': 12,
-  'acacia honey with truffle|110g': 12,
-  'aceto balsamico di modena|100ml': 12,
-  'white truffle extra virgin olive oil|60ml': 12,
-  'white truffle extra virgin olive oil|100ml': 12,
-  'white truffle extra virgin olive oil|250ml': 12,
-  'white truffle extra virgin olive oil|1000ml': 6,
-  'white truffle extra virgin olive oil|5000ml': 4,
-  'black truffle extra virgin olive oil|60ml': null,
-  'black truffle extra virgin olive oil|100ml': 12,
-  'black truffle extra virgin olive oil|250ml': 12,
-  'black truffle extra virgin olive oil|5000ml': 4,
-};
-
-// SKU values are exposed only when they are exact for an official Excel variant.
-// Candidate rows marked UNMATCHED in the cross-check workbook are deliberately
-// not promoted unless the live Shopify gate verifies the exact variant.
-const SKU_OVERRIDES: Readonly<Record<string, { sku: string; source: 'excel' | 'shopify-verified' }>> = {
-  'black truffle sauce 5%|80g': { sku: '5430004174103', source: 'excel' },
-  'black truffle sauce 5%|170g': { sku: '5430004174110', source: 'excel' },
-  'black truffle sauce 5%|500g': { sku: '5430004174127', source: 'excel' },
-  'black truffle sauce 10%|80g': { sku: '5430004174318', source: 'excel' },
-  'black truffle sauce 10%|500g': { sku: '5430004174332', source: 'excel' },
-  'white truffle sauce|170g': { sku: '5430004174134', source: 'excel' },
-  'white truffle sauce|500g': { sku: '5430004174240', source: 'excel' },
-
-  'white truffle butter|80g': { sku: '5430004174486', source: 'shopify-verified' },
-  'white truffle butter|160g': { sku: '5430004174141', source: 'shopify-verified' },
-  'white truffle butter|450g': { sku: '5430004174264', source: 'shopify-verified' },
-  'summer truffle carpaccio|45g': { sku: 'Product86', source: 'shopify-verified' },
-  'summer truffle carpaccio|80g': { sku: 'Product87', source: 'shopify-verified' },
-  'summer truffle carpaccio|170g': { sku: 'Product88', source: 'shopify-verified' },
-  'summer truffle carpaccio|500g': { sku: 'Product89', source: 'shopify-verified' },
-  'white truffle extra virgin olive oil|100ml': { sku: '5430004174493', source: 'shopify-verified' },
-  'white truffle extra virgin olive oil|250ml': { sku: '5430004174547', source: 'shopify-verified' },
-  'white truffle extra virgin olive oil|1000ml': { sku: '5430004174448', source: 'shopify-verified' },
-  'white truffle extra virgin olive oil|5000ml': { sku: '5430004174035', source: 'shopify-verified' },
-  'black truffle extra virgin olive oil|100ml': { sku: '5430004174530', source: 'shopify-verified' },
-  'black truffle extra virgin olive oil|250ml': { sku: '5430004174455', source: 'shopify-verified' },
-  'black truffle extra virgin olive oil|5000ml': { sku: '5430004174028', source: 'shopify-verified' },
-};
-
-const EXTRA_ALIASES: Readonly<Record<string, readonly string[]>> = {
-  'risotto with summer truffle': ['truffle risotto', 'rice with truffle'],
-  'black truffle mayonnaise': ['truffle mayonnaise', 'black truffle mayonnaise'],
-  'truffled ketchup': ['truffle ketchup', 'truffled ketchup'],
-  'salt with summer truffle': ['sea salt with summer truffle', 'salt with summer truffle'],
-  'salt with white truffle': ['sea salt with white truffle', 'salt with white truffle'],
-  'black truffle butter': ['butter with summer truffle 3%', 'black truffle butter'],
-  'white truffle butter': ['butter with bianchetto truffle 6%', 'white truffle butter'],
-  'white truffle sauce': ['white truffled sauce bianchetto truffle 2%', 'white truffle sauce'],
-  'black truffle sauce 5%': ['truffled sauce summer truffle 5%', 'black truffle sauce 5%'],
-  'black truffle sauce 10%': ['truffled sauce summer truffle 10%', 'black truffle sauce 10%'],
-  'porcini mushrooms creams with summer truffles': ['porcini mushroom cream with summer truffle'],
-  'aceto balsamico di modena': ['white truffle balsamic cream of modena', 'aceto balsamico di modena'],
-};
 
 function compact(value: string | null | undefined): string {
   return String(value ?? '').replace(/\s+/g, ' ').trim();
@@ -133,23 +32,16 @@ function measureKey(value: string): string | undefined {
   if (!Number.isFinite(amount)) return undefined;
   const unit = match[2] === 'gr' ? 'g' : match[2];
   if (unit === 'kg') return `${Math.round(amount * 1000)}g`;
-  if (unit === 'l') return `${Math.round(amount * 1000)}ml`;
+  if (unit === 'l') return `${Number.isInteger(amount) ? amount : String(amount)}l`;
   return `${Number.isInteger(amount) ? amount : amount.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}${unit}`;
 }
 
-function baseKey(product: string, size: string): string {
-  return `${normalise(product)}|${measureKey(size) ?? normalise(size)}`;
-}
-
 export function officialVariantKey(entry: Pick<OfficialProductVariant, 'product' | 'size'>): string {
-  return baseKey(entry.product, entry.size);
+  return `${normalise(entry.product)}|${measureKey(entry.size) ?? normalise(entry.size)}`;
 }
 
 function aliases(entry: OfficialProductVariant): readonly string[] {
-  const sourceAliases = 'aliases' in entry && Array.isArray((entry as OfficialProductVariant & { aliases?: readonly string[] }).aliases)
-    ? ((entry as OfficialProductVariant & { aliases?: readonly string[] }).aliases ?? [])
-    : [];
-  return [entry.product, ...sourceAliases, ...(EXTRA_ALIASES[normalise(entry.product)] ?? [])];
+  return [entry.product, entry.sourceName, ...entry.aliases];
 }
 
 export function findRemasteredOfficialVariant(name: string, size: string): RemasteredOfficialVariant | undefined {
@@ -164,19 +56,15 @@ export function findRemasteredOfficialVariant(name: string, size: string): Remas
       return wantedName === candidate || wantedName.includes(candidate) || candidate.includes(wantedName);
     });
   });
-  if (matches.length !== 1) return undefined;
 
+  if (matches.length !== 1) return undefined;
   const entry = matches[0];
   if (!entry) return undefined;
-  const officialKey = officialVariantKey(entry);
-  const pack = PACK_OVERRIDES[officialKey];
-  const sku = SKU_OVERRIDES[officialKey];
   return {
     ...entry,
-    officialKey,
-    packStatus: typeof pack === 'number' ? 'resolved' : 'missing',
-    ...(typeof pack === 'number' ? { unitsPerCase: pack } : { unitsPerCase: undefined }),
-    ...(sku ? { sku: sku.sku, skuSource: sku.source } : { sku: undefined, skuSource: undefined }),
+    officialKey: officialVariantKey(entry),
+    packStatus: 'resolved',
+    skuSource: 'master',
   };
 }
 
@@ -199,11 +87,15 @@ export function remasterCatalogueProducts(sourceProducts: readonly Product[]): O
       duplicates.push(`${official.officialKey}:${product.sku}`);
       continue;
     }
-    if (official.packStatus !== 'resolved' || !official.unitsPerCase) continue;
-
     chosen.set(official.officialKey, {
       ...product,
+      sku: official.sku,
+      name: official.product,
+      sizeLabel: official.size,
       unitsPerCase: official.unitsPerCase,
+      officialSku: official.sku,
+      officialKey: official.officialKey,
+      officialIngredients: official.ingredients,
     });
   }
 
@@ -219,7 +111,7 @@ export function remasterCatalogueProducts(sourceProducts: readonly Product[]): O
     matchedOfficialKeys: [...matched],
     duplicatePriceRows: duplicates,
     missingOfficialVariants: allOfficial.filter((entry) => !matched.has(entry.officialKey)),
-    missingPackVariants: allOfficial.filter((entry) => entry.packStatus !== 'resolved'),
+    missingPackVariants: [],
   };
 }
 
