@@ -9,7 +9,7 @@ export const LIVE_PRODUCTS_URL =
 
 const SPREADSHEET_ID = '1qqOv6i2UrZZwtbW8awMzawBNs8f9UblGoL25QZf3u94';
 const SNAPSHOT_URL = '/data/catalog.snapshot.json';
-const CACHE_KEY = 'hot-price-list:catalogue:v2:official-excel-master';
+const CACHE_KEY = 'hot-price-list:catalogue:v3:master-file-prodotti';
 const STALE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const LIVE_TIMEOUT_MS = 8_000;
 
@@ -33,7 +33,7 @@ function emitCatalogueError(stage: string, error: unknown): void {
 
 function applyOfficialExcelMaster(catalogue: Catalogue): Catalogue {
   const audit = buildStrictOfficialCatalogue(catalogue.products);
-  if (!audit.products.length) throw new Error('Official Excel master produced an empty priced catalogue.');
+  if (!audit.products.length) throw new Error('Official master produced an empty catalogue.');
 
   if (
     audit.missingPriceVariants.length
@@ -41,8 +41,8 @@ function applyOfficialExcelMaster(catalogue: Catalogue): Catalogue {
     || audit.duplicatePriceRows.length
     || audit.excludedForMissingPack.length
   ) {
-    console.warn('[HOT Price List] Official Excel master reconciliation', {
-      officialOrderableVariants: audit.products.length,
+    console.warn('[HOT Price List] Master_file_prodotti reconciliation', {
+      officialVariants: audit.products.length,
       missingOfficialPriceRows: audit.missingPriceVariants.map((entry) => `${entry.product} · ${entry.size}`),
       officialVariantsMissingPack: audit.missingPackVariants.map((entry) => `${entry.product} · ${entry.size}`),
       excludedForMissingPack: audit.excludedForMissingPack.map((entry) => `${entry.product} · ${entry.size}`),
