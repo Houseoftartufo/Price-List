@@ -1,5 +1,5 @@
 const API_VERSION = '2026-07';
-const MAX_PAGES = 10;
+const MAX_PAGES = 25;
 
 // Mirror of the 55 official SKUs from Master_file_prodotti.xlsx.
 // This function intentionally has no TypeScript imports so Vercel can bundle it
@@ -25,7 +25,7 @@ let cachedToken;
 
 const PRODUCTS_QUERY = `#graphql
   query PriceListProducts($cursor: String) {
-    products(first: 40, after: $cursor, sortKey: UPDATED_AT, reverse: true) {
+    products(first: 20, after: $cursor, sortKey: UPDATED_AT, reverse: true) {
       nodes {
         id
         title
@@ -37,7 +37,7 @@ const PRODUCTS_QUERY = `#graphql
         updatedAt
         descriptionHtml
         onlineStoreUrl
-        media(first: 10) {
+        media(first: 5) {
           nodes {
             ... on MediaImage {
               id
@@ -46,10 +46,10 @@ const PRODUCTS_QUERY = `#graphql
             }
           }
         }
-        metafields(first: 100) {
+        metafields(first: 20) {
           nodes { namespace key type value }
         }
-        variants(first: 100) {
+        variants(first: 25) {
           nodes {
             id
             title
@@ -59,7 +59,7 @@ const PRODUCTS_QUERY = `#graphql
             compareAtPrice
             availableForSale
             selectedOptions { name value }
-            media(first: 5) {
+            media(first: 3) {
               nodes {
                 ... on MediaImage {
                   id
@@ -68,7 +68,7 @@ const PRODUCTS_QUERY = `#graphql
                 }
               }
             }
-            metafields(first: 50) {
+            metafields(first: 10) {
               nodes { namespace key type value }
             }
           }
