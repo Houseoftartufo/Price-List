@@ -11,7 +11,7 @@ const frenchTranslation = {
   },
 };
 
-test('official transparent logo masters replace provisional marks without changing layout surfaces', async ({ page, request }) => {
+test('official transparent dark logo replaces provisional marks on current light surfaces', async ({ page, request }) => {
   await page.goto('/preview.html');
 
   const headerLogo = page.locator('.site-header .brand-logo');
@@ -24,11 +24,8 @@ test('official transparent logo masters replace provisional marks without changi
   await expect(page.locator('.brand-words')).toHaveCount(0);
 
   const dark = await request.get('/brand/house-of-tartufo-logo-dark.png');
-  const white = await request.get('/brand/house-of-tartufo-logo-white.png');
   expect(dark.ok()).toBeTruthy();
-  expect(white.ok()).toBeTruthy();
   expect(dark.headers()['content-type']).toContain('image/png');
-  expect(white.headers()['content-type']).toContain('image/png');
 });
 
 test('French product detail uses translated official master content and never leaks Italian copy', async ({ page }) => {
