@@ -87,7 +87,7 @@ export function buildStrictOfficialCatalogue(sourceProducts: readonly Product[])
       ...(masterShelfLifeMonths ? { shelfLifeMonths: masterShelfLifeMonths } : {}),
       active: true,
       orderStatus: standby ? 'standby' : 'orderable',
-      ...(standby ? { standbyReasons: ['price'] as const } : {}),
+      ...(standby ? { standbyReasons: ['price'] } : {}),
       officialKey: entry.officialKey,
       officialIngredients: entry.ingredients,
       officialSku: entry.sku,
