@@ -25,7 +25,7 @@ let cachedToken;
 
 const PRODUCTS_QUERY = `#graphql
   query PriceListProducts($cursor: String) {
-    products(first: 100, after: $cursor, sortKey: UPDATED_AT, reverse: true) {
+    products(first: 40, after: $cursor, sortKey: UPDATED_AT, reverse: true) {
       nodes {
         id
         title
