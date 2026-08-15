@@ -1,0 +1,48 @@
+/* Official House of Tartufo brand assets.
+   The image files are owner-supplied masters with transparent backgrounds.
+   Do not recolor, redraw, distort, crop or approximate these marks. */
+
+.brand[data-official-brand='true'] {
+  min-width: 0;
+  line-height: 0;
+}
+
+.brand[data-official-brand='true'] .brand-mark,
+.brand[data-official-brand='true'] .brand-words {
+  display: none !important;
+}
+
+.brand-logo {
+  display: block;
+  width: 124px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.brand-footer .brand-logo {
+  width: 142px;
+}
+
+@media (max-width: 580px) {
+  .brand-logo {
+    width: 104px;
+  }
+
+  .brand-footer .brand-logo {
+    width: 124px;
+  }
+}
+
+@media (max-width: 390px) {
+  .brand-logo {
+    width: 94px;
+  }
+}
+
+@media (max-width: 340px) {
+  .brand-logo {
+    width: 82px;
+  }
+}

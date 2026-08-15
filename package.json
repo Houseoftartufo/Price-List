@@ -7,12 +7,13 @@
     "node": "24.x"
   },
   "scripts": {
+    "prepare:brand": "node scripts/prepare-brand-assets.mjs",
     "sync:catalog": "node scripts/sync-catalog.mjs",
     "audit:shopify": "CI_SHOPIFY_LIVE=1 vitest run tests/official-shopify-live.spec.ts",
     "audit:shopify-legacy": "npm run sync:catalog && node scripts/audit-shopify-catalog.mjs",
     "verify:product-map": "node scripts/verify-product-detail-map.mjs",
-    "dev": "npm run sync:catalog && vite",
-    "build": "npm run sync:catalog && vite build",
+    "dev": "npm run prepare:brand && npm run sync:catalog && vite",
+    "build": "npm run prepare:brand && npm run sync:catalog && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run tests",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
+    "@types/node": "^24.0.0",
     "typescript": "^7.0.2",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"

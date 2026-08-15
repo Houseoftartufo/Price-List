@@ -1,6 +1,6 @@
 import './product-details';
-import './product-detail-quote-cta';
 import './product-details-sku-guard-v2';
+import './product-detail-quote-cta';
 import './official-runtime-guard';
 
 type AnalyticsPayload = Record<string, string | number | boolean | undefined>;
