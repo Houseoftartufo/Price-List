@@ -6,15 +6,8 @@ const frenchTranslation = {
   product: {
     handle: 'summer-truffle-carpaccio',
     title: 'Carpaccio de Truffes d’Été',
-    descriptionHtml: `
-      <h3>Ingrédients</h3><p>Truffe d’été (Tuber aestivum Vittad.) 60 %, eau, arôme.</p>
-      <h3>Allergènes</h3><p>Aucun</p>
-      <h3>Comment utiliser</h3><p>Une fois ouvert, le produit est prêt à être utilisé ou consommé.</p>
-      <h3>Conservation</h3><p>Conserver à température ambiante, à l’abri de la lumière et des sources de chaleur. Après ouverture, conserver entre 0 et 4 °C.</p>
-    `,
     translated: true,
     translationAvailable: true,
-    translatedFields: { title: true, bodyHtml: true },
   },
 };
 
@@ -38,7 +31,7 @@ test('official transparent logo masters replace provisional marks without changi
   expect(white.headers()['content-type']).toContain('image/webp');
 });
 
-test('French product detail uses the selected locale and never leaks Italian master copy', async ({ page }) => {
+test('French product detail uses translated official master content and never leaks Italian copy', async ({ page }) => {
   await page.route('**/api/shopify-product-translation?**', async (route) => {
     const url = new URL(route.request().url());
     if (url.searchParams.get('locale') === 'fr') {
@@ -50,8 +43,6 @@ test('French product detail uses the selected locale and never leaks Italian mas
 
   await page.goto('/preview.html');
   const row = page.locator('#product-rows tr[data-official-key="summer truffle carpaccio|80g"]');
-  // The locale listeners are installed only after catalogue + translation
-  // initialization. A real rendered official row is our readiness signal.
   await expect(row).toBeVisible();
 
   await page.locator('[data-locale="fr"]').click();
@@ -60,17 +51,33 @@ test('French product detail uses the selected locale and never leaks Italian mas
   await row.locator('.product-cell').click();
 
   const dialog = page.locator('#product-detail-dialog');
+  const sections = dialog.locator('.product-detail-sections');
   await expect(dialog).toBeVisible();
   await expect(dialog.locator('.product-detail-title')).toHaveText('Carpaccio de Truffes d’Été');
   await expect(dialog).toHaveAttribute('data-product-content-locale', 'fr');
   await expect(dialog).toHaveAttribute('data-product-content-translated', 'true');
-  await expect(dialog.locator('.product-detail-sections')).toContainText('Ingrédients');
-  await expect(dialog.locator('.product-detail-sections')).toContainText('Comment utiliser');
-  await expect(dialog.locator('.product-detail-sections')).toContainText('Conservation');
-  await expect(dialog.locator('.product-detail-sections')).toContainText('Informations produit');
-  await expect(dialog.locator('.product-detail-sections')).toContainText('Durée de conservation');
-  await expect(dialog.locator('.product-detail-sections')).not.toContainText('Una volta aperto');
-  await expect(dialog.locator('.product-detail-sections')).not.toContainText('Conservare a temperatura');
+
+  await expect(sections).toContainText('Ingrédients');
+  await expect(sections).toContainText('Truffe d’été');
+  await expect(sections).toContainText('Allergènes');
+  await expect(sections).toContainText('Aucun');
+  await expect(sections).toContainText('Utilisation');
+  await expect(sections).toContainText('Une fois ouvert');
+  await expect(sections).toContainText('Conservation');
+  await expect(sections).toContainText('Conserver à température ambiante');
+  await expect(sections).toContainText('Informations produit');
+  await expect(sections).toContainText('Italie');
+  await expect(sections).toContainText('Durée de conservation');
+  await expect(sections).toContainText('36 mois');
+  await expect(sections).toContainText('Énergie');
+  await expect(sections).toContainText('Matières grasses');
+
+  await expect(sections).not.toContainText('Tartufo estivo');
+  await expect(sections).not.toContainText('Nessuno');
+  await expect(sections).not.toContainText('Una volta aperto');
+  await expect(sections).not.toContainText('Conservare a temperatura');
+  await expect(sections).not.toContainText('36 months');
+
   await expect(dialog.locator('[data-product-detail-quote]')).toHaveText('Ajouter au devis');
   await expect(dialog.locator('.product-detail-source')).toHaveAttribute('href', /\/fr\/products\/summer-truffle-carpaccio/);
 });
