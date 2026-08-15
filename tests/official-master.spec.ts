@@ -72,7 +72,7 @@ describe('official Master_file_prodotti product master', () => {
   });
 
   it('keeps every static Shopify fallback attached to one public-verified official SKU', () => {
-    expect(Object.keys(OFFICIAL_SHOPIFY_MAP)).toHaveLength(21);
+    expect(Object.keys(OFFICIAL_SHOPIFY_MAP)).toHaveLength(23);
     for (const [key, mapping] of Object.entries(OFFICIAL_SHOPIFY_MAP)) {
       expect(mapping.handle).toBeTruthy();
       expect(mapping.siteSku).toMatch(/^\d{13}$/);
