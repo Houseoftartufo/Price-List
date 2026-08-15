@@ -128,13 +128,13 @@ test('master variants without a public Shopify fallback still expose complete te
   await expect(pesto).toContainText(/Frutta a guscio/i);
   await pesto.locator('[data-product-detail-close]').click();
 
-  const mayo = (await openOfficialProduct(page, 'truffle mayonnaise|120g')).dialog;
-  await expect(mayo).toHaveAttribute('data-shopify-match', 'master-only');
-  await expect(mayo.locator('[data-official-sku]')).toHaveText('5430004174189');
-  await expect(mayo).toContainText(/UOVO pastorizzato/i);
-  await expect(mayo).not.toContainText(/almond/i);
-  await expect(mayo.locator('.product-detail-source')).toHaveCount(0);
-  await mayo.locator('[data-product-detail-close]').click();
+  const pearls = (await openOfficialProduct(page, 'balsamic vinegar pearls|50ml')).dialog;
+  await expect(pearls).toHaveAttribute('data-shopify-match', 'master-only');
+  await expect(pearls.locator('[data-official-sku]')).toHaveText('5430004174578');
+  await expect(pearls).toContainText(/Aceto Balsamico di Modena/i);
+  await expect(pearls).toContainText(/Solfiti/i);
+  await expect(pearls.locator('.product-detail-source')).toHaveCount(0);
+  await pearls.locator('[data-product-detail-close]').click();
 });
 
 test('products outside the 55-row official master never appear in the buyer catalogue', async ({ page }) => {
