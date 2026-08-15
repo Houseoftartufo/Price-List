@@ -1,79 +1,87 @@
 import { describe, expect, it } from 'vitest';
-import { OFFICIAL_PRODUCT_VARIANTS } from '../src/official-product-master';
+import { OFFICIAL_MASTER_COUNTS, OFFICIAL_PRODUCT_VARIANTS } from '../src/official-product-master';
 import {
   OFFICIAL_VARIANT_COUNT,
   findRemasteredOfficialVariant,
 } from '../src/official-product-remaster';
 import { OFFICIAL_SHOPIFY_MAP } from '../src/official-shopify-map';
 
-describe('official Excel product master', () => {
-  it('contains exactly the 51 official Excel variants and every row resolves to itself', () => {
-    expect(OFFICIAL_VARIANT_COUNT).toBe(51);
-    expect(OFFICIAL_PRODUCT_VARIANTS).toHaveLength(51);
+describe('official Master_file_prodotti product master', () => {
+  it('contains exactly 55 official variants and every row resolves to itself', () => {
+    expect(OFFICIAL_VARIANT_COUNT).toBe(55);
+    expect(OFFICIAL_PRODUCT_VARIANTS).toHaveLength(55);
+    expect(OFFICIAL_MASTER_COUNTS).toEqual({
+      variants: 55,
+      families: expect.any(Number),
+      withSku: 55,
+      withBarcode: 55,
+      withCasePack: 55,
+    });
 
     for (const entry of OFFICIAL_PRODUCT_VARIANTS) {
       const resolved = findRemasteredOfficialVariant(entry.product, entry.size);
       expect(resolved, `${entry.product} ${entry.size}`).toBeDefined();
+      expect(resolved?.sku).toBe(entry.sku);
+      expect(resolved?.barcode).toBe(entry.barcode);
+      expect(resolved?.unitsPerCase).toBe(entry.unitsPerCase);
       expect(resolved?.ingredients).toBe(entry.ingredients);
+      expect(resolved?.packStatus).toBe('resolved');
     }
   });
 
-  it('never admits variants that are not in the official Excel files', () => {
-    expect(findRemasteredOfficialVariant('White Truffled Sauce – Bianchetto Truffle 2%', '80g')).toBeUndefined();
+  it('includes the variants introduced or corrected by the new master', () => {
+    expect(findRemasteredOfficialVariant('Tartufata White Sauce (with Bianchetto 2%)', '80g')?.sku).toBe('5430004174325');
+    expect(findRemasteredOfficialVariant('Acacia Honey with Truffle', '650g')?.sku).toBe('5430004174301');
+    expect(findRemasteredOfficialVariant('Truffle Tarallini', '200g')?.sku).toBe('5430004174479');
+    expect(findRemasteredOfficialVariant('Balsamic Vinegar Pearls', '50ml')?.sku).toBe('5430004174578');
+    expect(findRemasteredOfficialVariant('White Truffle Extra Virgin Olive Oil', '3L')?.sku).toBe('5430004174431');
+    expect(findRemasteredOfficialVariant('Black Truffle Extra Virgin Olive Oil', '3L')?.sku).toBe('5430004174042');
+  });
+
+  it('normalizes equivalent unit notation while still rejecting non-master sizes', () => {
+    expect(findRemasteredOfficialVariant('White Truffle Extra Virgin Olive Oil', '1000ml')?.sku).toBe('5430004174448');
+    expect(findRemasteredOfficialVariant('White Truffle Extra Virgin Olive Oil', '3000 ml')?.sku).toBe('5430004174431');
     expect(findRemasteredOfficialVariant('White Truffle Extra Virgin Olive Oil', '500ml')).toBeUndefined();
-    expect(findRemasteredOfficialVariant('Acacia Honey with Truffle', '650g')).toBeUndefined();
-    expect(findRemasteredOfficialVariant('Truffle Tarallini', '200g')).toBeUndefined();
+    expect(findRemasteredOfficialVariant('Acacia Honey with Truffle', '450g')).toBeUndefined();
     expect(findRemasteredOfficialVariant('Pure White Truffle Cream', '80g')).toBeUndefined();
   });
 
-  it('uses only unit-per-box values deterministically resolved from the uploaded cross-check Excel', () => {
+  it('keeps 5% and 10% sauce identities unambiguous', () => {
+    expect(findRemasteredOfficialVariant('Black Truffle Sauce 5%', '80g')?.sku).toBe('5430004174103');
+    expect(findRemasteredOfficialVariant('Black Truffle Sauce 10%', '80g')?.sku).toBe('5430004174318');
+    expect(findRemasteredOfficialVariant('Black Truffle Sauce', '80g')).toBeUndefined();
+  });
+
+  it('uses the exact case packs from the new master', () => {
     expect(findRemasteredOfficialVariant('Truffled Sauce – Summer Truffle 5%', '500g')?.unitsPerCase).toBe(6);
-    expect(findRemasteredOfficialVariant('Truffled Sauce – Summer Truffle 10%', '500g')?.unitsPerCase).toBe(6);
-    expect(findRemasteredOfficialVariant('White Truffled Sauce – Bianchetto Truffle 2%', '500g')?.unitsPerCase).toBe(6);
+    expect(findRemasteredOfficialVariant('Tartufata White Sauce (with Bianchetto 2%)', '500g')?.unitsPerCase).toBe(6);
     expect(findRemasteredOfficialVariant('White Truffle Extra Virgin Olive Oil', '1L')?.unitsPerCase).toBe(6);
     expect(findRemasteredOfficialVariant('White Truffle Extra Virgin Olive Oil', '5L')?.unitsPerCase).toBe(4);
-    expect(findRemasteredOfficialVariant('Aceto Balsamico di Modena', '100ml')?.unitsPerCase).toBe(12);
-    expect(findRemasteredOfficialVariant('Truffle Cashew', '80g')?.unitsPerCase).toBe(16);
+    expect(findRemasteredOfficialVariant('Acacia Honey with Truffle', '650g')?.unitsPerCase).toBe(6);
+    expect(findRemasteredOfficialVariant('Truffle Cashews', '80g')?.unitsPerCase).toBe(16);
     expect(findRemasteredOfficialVariant('Truffle Almonds', '80g')?.unitsPerCase).toBe(16);
     expect(findRemasteredOfficialVariant('Truffle Walnuts', '80g')?.unitsPerCase).toBe(16);
   });
 
-  it('keeps only genuinely unresolved case packs explicitly in standby', () => {
-    const pending = OFFICIAL_PRODUCT_VARIANTS
-      .map((entry) => findRemasteredOfficialVariant(entry.product, entry.size))
-      .filter((entry) => entry?.packStatus === 'missing')
-      .map((entry) => `${entry?.product}|${entry?.size}`)
-      .sort();
-
-    expect(pending).toEqual([
-      'ACACIA HONEY WITH TRUFFLE|450 g',
-      'BLACK TRUFFLE EXTRA-VIRGIN OLIVE OIL|60 ml',
-      'SALT WITH SUMMER TRUFFLE|120 g',
-      'SALT WITH SUMMER TRUFFLE|30 g',
-    ].sort());
-
-    expect(findRemasteredOfficialVariant('Acacia Honey with Truffle', '450g')?.unitsPerCase).toBeUndefined();
-    expect(findRemasteredOfficialVariant('Black Truffle Extra Virgin Olive Oil', '60ml')?.unitsPerCase).toBeUndefined();
+  it('has no unresolved official SKU, barcode, or case pack', () => {
+    for (const entry of OFFICIAL_PRODUCT_VARIANTS) {
+      expect(entry.sku).toMatch(/^\d{13}$/);
+      expect(entry.barcode).toMatch(/^\d{14}$/);
+      expect(entry.unitsPerCase).toBeGreaterThan(0);
+    }
   });
 
-  it('does not promote SKU candidates that are unsafe or failed the live Shopify cross-check', () => {
-    expect(findRemasteredOfficialVariant('Black Truffle Mayonnaise', '120g')?.sku).toBeUndefined();
-    expect(findRemasteredOfficialVariant('White Truffle Genovese Pesto', '80g')?.sku).toBeUndefined();
-    expect(findRemasteredOfficialVariant('White Truffle Extra Virgin Olive Oil', '60ml')?.sku).toBeUndefined();
-    expect(findRemasteredOfficialVariant('Black Truffle Extra Virgin Olive Oil', '60ml')?.sku).toBeUndefined();
-  });
-
-  it('only exposes live-verified Shopify enrichment for official variants', () => {
-    expect(Object.keys(OFFICIAL_SHOPIFY_MAP)).toHaveLength(21);
+  it('keeps every static Shopify fallback attached to one official master SKU', () => {
+    expect(Object.keys(OFFICIAL_SHOPIFY_MAP)).toHaveLength(25);
     for (const [key, mapping] of Object.entries(OFFICIAL_SHOPIFY_MAP)) {
       expect(mapping.handle).toBeTruthy();
-      expect(mapping.siteSku).toBeTruthy();
+      expect(mapping.siteSku).toMatch(/^\d{13}$/);
       expect(mapping.image).toMatch(/^https:\/\/cdn\.shopify\.com\//);
-      const matched = OFFICIAL_PRODUCT_VARIANTS.some((entry) => {
-        const resolved = findRemasteredOfficialVariant(entry.product, entry.size);
-        return resolved?.officialKey === key;
-      });
-      expect(matched, key).toBe(true);
+      const resolved = OFFICIAL_PRODUCT_VARIANTS
+        .map((entry) => findRemasteredOfficialVariant(entry.product, entry.size))
+        .find((entry) => entry?.officialKey === key);
+      expect(resolved, key).toBeDefined();
+      expect(resolved?.sku).toBe(mapping.siteSku);
     }
   });
 });
