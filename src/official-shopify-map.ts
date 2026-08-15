@@ -79,15 +79,15 @@ export const OFFICIAL_SHOPIFY_MAP: Readonly<Record<string, OfficialShopifyMappin
     handle: 'parfumed-white-truffle-extra-virgin-olive-oil', siteSku: '5430004174547',
     image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/08.1_White_Truffle_Olive_Oil.webp?v=1736517835',
   },
-  'white truffle extra virgin olive oil|1l': {
+  'white truffle extra virgin olive oil|1000ml': {
     handle: 'parfumed-white-truffle-extra-virgin-olive-oil', siteSku: '5430004174448',
     image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/08.1_White_Truffle_Olive_Oil.webp?v=1736517835',
   },
-  'white truffle extra virgin olive oil|3l': {
+  'white truffle extra virgin olive oil|3000ml': {
     handle: 'parfumed-white-truffle-extra-virgin-olive-oil', siteSku: '5430004174431',
     image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/08.1_White_Truffle_Olive_Oil.webp?v=1736517835',
   },
-  'white truffle extra virgin olive oil|5l': {
+  'white truffle extra virgin olive oil|5000ml': {
     handle: 'parfumed-white-truffle-extra-virgin-olive-oil', siteSku: '5430004174035',
     image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/08.1_White_Truffle_Olive_Oil.webp?v=1736517835',
   },
@@ -100,15 +100,15 @@ export const OFFICIAL_SHOPIFY_MAP: Readonly<Record<string, OfficialShopifyMappin
     handle: 'black-truffle-extra-virgin-olive-oil', siteSku: '5430004174455',
     image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/07.1_Black_Truffle_Olive_Oil.webp?v=1736517835',
   },
-  'black truffle extra virgin olive oil|1l': {
+  'black truffle extra virgin olive oil|1000ml': {
     handle: 'black-truffle-extra-virgin-olive-oil', siteSku: '5430004174462',
     image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/07.1_Black_Truffle_Olive_Oil.webp?v=1736517835',
   },
-  'black truffle extra virgin olive oil|3l': {
+  'black truffle extra virgin olive oil|3000ml': {
     handle: 'black-truffle-extra-virgin-olive-oil', siteSku: '5430004174042',
     image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/07.1_Black_Truffle_Olive_Oil.webp?v=1736517835',
   },
-  'black truffle extra virgin olive oil|5l': {
+  'black truffle extra virgin olive oil|5000ml': {
     handle: 'black-truffle-extra-virgin-olive-oil', siteSku: '5430004174028',
     image: 'https://cdn.shopify.com/s/files/1/0791/6126/2407/files/07.1_Black_Truffle_Olive_Oil.webp?v=1736517835',
   },
