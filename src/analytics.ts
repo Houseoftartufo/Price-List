@@ -1,4 +1,5 @@
 import './box-terminology';
+import './quote-volume-upsell';
 import './universal-product-search-controller';
 import './product-details';
 import './product-details-sku-guard-v2';
@@ -56,6 +57,31 @@ function bind(): void {
 
     const quoteSku = target.closest<HTMLElement>('[data-add-quote]:not(:disabled)')?.dataset.addQuote;
     if (quoteSku) emit('quote_add_or_update', { sku: quoteSku });
+
+    const quoteQty = target.closest<HTMLElement>('[data-quote-qty-action]');
+    if (quoteQty?.dataset.sku) {
+      emit('quote_quantity_change', {
+        sku: quoteQty.dataset.sku,
+        action: quoteQty.dataset.quoteQtyAction,
+      });
+    }
+
+    const quoteTier = target.closest<HTMLElement>('[data-quote-tier-target]');
+    if (quoteTier) {
+      const sku = quoteTier.closest<HTMLElement>('.quote-line')?.querySelector<HTMLElement>('[data-remove-quote]')?.dataset.removeQuote;
+      emit('quote_volume_tier_jump', {
+        sku,
+        targetBoxes: Number.parseInt(quoteTier.dataset.quoteTierTarget ?? '', 10) || undefined,
+      });
+    }
+
+    const catalogueTier = target.closest<HTMLElement>('[data-catalogue-tier-target]');
+    if (catalogueTier?.dataset.sku) {
+      emit('catalogue_volume_tier_jump', {
+        sku: catalogueTier.dataset.sku,
+        targetBoxes: Number.parseInt(catalogueTier.dataset.catalogueTierTarget ?? '', 10) || undefined,
+      });
+    }
 
     if (target.closest('#quote-trigger')) emit('quote_open');
     if (target.closest('#copy-order')) emit('quote_copy');
