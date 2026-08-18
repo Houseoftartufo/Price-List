@@ -1,0 +1,47 @@
+@media (max-width: 580px) {
+  .tier-hint-action {
+    min-height: 64px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'hint arrow'
+      'reward arrow';
+    column-gap: 8px;
+    row-gap: 3px;
+    padding: 10px 12px;
+    overflow: hidden;
+  }
+
+  .tier-hint-action > span {
+    grid-area: hint;
+    min-width: 0;
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .tier-hint-action > strong {
+    grid-area: reward;
+    min-width: 0;
+    max-width: 100%;
+    font-size: clamp(17px, 4.7vw, 21px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tier-hint-action > i {
+    grid-area: arrow;
+    align-self: center;
+    justify-self: end;
+    font-size: 18px !important;
+    line-height: 1;
+  }
+}
+
+@media (max-width: 340px) {
+  .tier-hint-action > strong {
+    font-size: 16px !important;
+  }
+}
