@@ -21,11 +21,23 @@ function variantByOfficialKey(officialKey: string): OfficialProductVariant {
   throw new Error(`Unknown official key: ${officialKey}`);
 }
 
+async function waitForGroupedCatalogue(page: Page): Promise<Locator> {
+  const rows = page.locator('#product-rows tr[data-format-grouped="true"]');
+  await expect(rows).toHaveCount(OFFICIAL_MASTER_COUNTS.families);
+  return rows;
+}
+
 async function selectOfficialVariant(page: Page, officialKey: string): Promise<Locator> {
   if (!page.url().includes('/preview.html') && !page.url().endsWith('/')) await page.goto('/preview.html');
+  await waitForGroupedCatalogue(page);
+
   const variant = variantByOfficialKey(officialKey);
-  const selector = page.locator(`#product-rows select[data-format-select]:has(option[value="${variant.sku}"])`).first();
-  if (await selector.count()) await selector.selectOption(variant.sku);
+  const currentRow = page.locator(`#product-rows tr[data-sku="${variant.sku}"]`);
+  if (!(await currentRow.count())) {
+    const selector = page.locator(`#product-rows select[data-format-select]:has(option[value="${variant.sku}"])`).first();
+    await expect(selector, `format selector for ${officialKey}`).toBeVisible();
+    await selector.selectOption(variant.sku);
+  }
 
   const row = page.locator(`#product-rows tr[data-sku="${variant.sku}"]`);
   await expect(row, officialKey).toBeVisible();
@@ -50,9 +62,7 @@ test('production homepage presents one row per product family while preserving a
   await expect(page.locator('#metric-products')).toHaveText(String(OFFICIAL_MASTER_COUNTS.families));
   await expect(page.locator('#metric-categories')).toHaveText(OFFICIAL_ACTIVE_CATEGORIES);
 
-  const rows = page.locator('#product-rows tr[data-format-grouped="true"]');
-  await expect(rows).toHaveCount(OFFICIAL_MASTER_COUNTS.families);
-
+  const rows = await waitForGroupedCatalogue(page);
   const representedVariants = await rows.evaluateAll((items) =>
     items.reduce((total, row) => {
       const selector = row.querySelector('select[data-format-select]') as HTMLSelectElement | null;
@@ -68,6 +78,7 @@ test('production homepage presents one row per product family while preserving a
 
 test('jar formats are unified and selecting a format atomically changes the official SKU row', async ({ page }) => {
   await page.goto('/preview.html');
+  await waitForGroupedCatalogue(page);
 
   const familyRow = page.locator('#product-rows tr[data-product-family="Summer Truffle Carpaccio"]');
   await expect(familyRow).toBeVisible();
@@ -92,6 +103,7 @@ test('jar formats are unified and selecting a format atomically changes the offi
 
 test('olive oils use one family row across bottle and bulk formats including 1L, 3L and 5L', async ({ page }) => {
   await page.goto('/preview.html');
+  await waitForGroupedCatalogue(page);
 
   const whiteOil = page.locator('#product-rows tr[data-product-family="White Truffle Extra Virgin Olive Oil"]');
   await expect(whiteOil).toBeVisible();
@@ -180,7 +192,7 @@ test('official SKU, pack and Shopify mappings stay exact after format switching'
     ['tartufata white sauce with bianchetto 2%|500g', '5430004174240', '6'],
     ['butter with bianchetto truffle 6%|80g', '5430004174486', '12'],
     ['white truffle extra virgin olive oil|100ml', '5430004174493', '12'],
-    ['white truffle extra virgin olive oil|5l', '5430004174035', '4'],
+    ['white truffle extra virgin olive oil|5000ml', '5430004174035', '4'],
   ] as const;
 
   for (const [officialKey, expectedSku, expectedCasePack] of checks) {
@@ -216,7 +228,7 @@ test('master-only products remain complete and safe inside grouped catalogue', a
 test('selectors expose every official format and never invent non-master sizes', async ({ page }) => {
   await page.goto('/preview.html');
 
-  const rows = page.locator('#product-rows tr[data-format-grouped="true"]');
+  const rows = await waitForGroupedCatalogue(page);
   const representedVariants = await rows.evaluateAll((items) =>
     items.reduce((total, row) => {
       const selector = row.querySelector('select[data-format-select]') as HTMLSelectElement | null;
@@ -235,7 +247,7 @@ test('selectors expose every official format and never invent non-master sizes',
 test('price-pending formats stay selectable and clickable but cannot enter a quote', async ({ page }) => {
   await page.goto('/preview.html');
 
-  const blackOil1L = await selectOfficialVariant(page, 'black truffle extra virgin olive oil|1l');
+  const blackOil1L = await selectOfficialVariant(page, 'black truffle extra virgin olive oil|1000ml');
   await expect(blackOil1L).toHaveAttribute('data-order-status', 'standby');
   await expect(blackOil1L.locator('[data-add-quote]:not(:disabled)')).toHaveCount(0);
   await expect(blackOil1L.locator('[data-qty-input]')).toHaveCount(0);
@@ -271,6 +283,7 @@ for (const width of [320, 360, 390, 430]) {
   test(`${width}px mobile keeps format selector, languages and quote controls usable`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/preview.html');
+    await waitForGroupedCatalogue(page);
 
     await expect(page.locator('[data-locale="en"]')).toBeVisible();
     await expect(page.locator('[data-locale="fr"]')).toBeVisible();
