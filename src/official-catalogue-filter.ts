@@ -22,10 +22,18 @@ function inferCategory(entry: RemasteredOfficialVariant): string {
   const name = entry.product.toLowerCase();
   if (/olive oil/.test(name)) return 'oils';
   if (/butter/.test(name)) return 'butters';
-  if (/carpaccio/.test(name)) return 'pure-creams-carpaccio';
+  if (/carpaccio/.test(name)) return 'Preserved';
   if (/salt|honey|cashew|almond|walnut/.test(name)) return 'salts-honey';
   if (/risotto|polenta|tarallini/.test(name)) return 'pasta-rice-meals';
   return 'sauces-condiments';
+}
+
+function publicCategory(entry: RemasteredOfficialVariant, source: Product | undefined): string {
+  // Carpaccio is a preserved truffle preparation, not a cream. Keep this
+  // buyer-facing classification canonical even when the legacy price source
+  // still carries the old Pure Creams grouping.
+  if (/carpaccio/.test(entry.product.toLowerCase())) return 'Preserved';
+  return source?.categoryId ?? inferCategory(entry);
 }
 
 function inferTruffleType(name: string): TruffleType {
@@ -69,7 +77,7 @@ export function buildStrictOfficialCatalogue(sourceProducts: readonly Product[])
   const products = official.map((entry): Product => {
     const source = priced.get(entry.officialKey);
     const standby = !source;
-    const categoryId = source?.categoryId ?? inferCategory(entry);
+    const categoryId = publicCategory(entry, source);
     const masterShelfLifeMonths = shelfLifeMonths(entry.shelfLife);
 
     return {
