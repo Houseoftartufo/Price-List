@@ -1,5 +1,6 @@
 import './box-terminology';
 import './quote-volume-upsell';
+import './styles/filter-control-shape.css';
 import './universal-product-search-controller';
 import './product-details';
 import './product-details-sku-guard-v2';
