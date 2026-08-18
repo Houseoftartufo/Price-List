@@ -1,3 +1,4 @@
+import './universal-product-search-controller';
 import './product-details';
 import './product-details-sku-guard-v2';
 import './product-detail-quote-cta';
@@ -30,11 +31,11 @@ function bind(): void {
   emit('catalogue_view');
 
   let searchTimer: number | undefined;
-  const search = document.getElementById('catalogue-search') as HTMLInputElement | null;
-  search?.addEventListener('input', () => {
+  window.addEventListener('hot:universal-search-input', (event) => {
+    const detail = (event as CustomEvent<{ queryLength?: number }>).detail;
     window.clearTimeout(searchTimer);
     searchTimer = window.setTimeout(() => {
-      emit('catalogue_search', { queryLength: search.value.trim().length });
+      emit('catalogue_search', { queryLength: detail?.queryLength ?? 0 });
     }, 350);
   });
 
