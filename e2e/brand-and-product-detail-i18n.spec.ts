@@ -39,18 +39,23 @@ test('French product detail uses translated official master content and never le
   });
 
   await page.goto('/preview.html');
-  const row = page.locator('#product-rows tr[data-official-key="summer truffle carpaccio|80g"]');
-  await expect(row).toBeVisible();
+  const familyRow = page.locator('#product-rows tr[data-product-family="Summer Truffle Carpaccio"]');
+  await expect(familyRow).toBeVisible();
+  await familyRow.locator('[data-format-select]').selectOption('5430004174387');
 
   await page.locator('[data-locale="fr"]').click();
   await expect(page.locator('html')).toHaveAttribute('lang', /^fr/i);
+
+  const row = page.locator('#product-rows tr[data-sku="5430004174387"]');
   await expect(row).toBeVisible();
+  await expect(row.locator('[data-format-select]')).toHaveValue('5430004174387');
   await row.locator('.product-cell').click();
 
   const dialog = page.locator('#product-detail-dialog');
   const sections = dialog.locator('.product-detail-sections');
   await expect(dialog).toBeVisible();
   await expect(dialog.locator('.product-detail-title')).toHaveText('Carpaccio de Truffes d’Été');
+  await expect(dialog.locator('[data-official-sku]')).toHaveText('5430004174387');
   await expect(dialog).toHaveAttribute('data-product-content-locale', 'fr');
   await expect(dialog).toHaveAttribute('data-product-content-translated', 'true');
 
