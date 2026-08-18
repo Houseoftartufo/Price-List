@@ -1,5 +1,5 @@
 import './styles/product-details-guard.css';
-import { findRemasteredOfficialVariant, type RemasteredOfficialVariant } from './official-product-remaster';
+import { findRemasteredOfficialVariantBySku, type RemasteredOfficialVariant } from './official-product-remaster';
 import { OFFICIAL_SHOPIFY_MAP } from './official-shopify-map';
 import { getShopifyLiveProduct, getShopifyLiveVariant, type ShopifyLiveImage } from './shopify-live';
 
@@ -9,10 +9,10 @@ const SHOP_ORIGIN = 'https://houseoftartufo.com';
 let scheduled = false;
 
 const copy = {
-  en: { sku: 'SKU', casePack: 'Case pack', ingredients: 'Ingredients', allergens: 'Allergens', usage: 'How to use', storage: 'Storage', origin: 'Origin', productInfo: 'Product information', nutrition: 'Nutrition / 100g', shelfLife: 'Shelf life', barcode: 'Barcode', website: 'View product on houseoftartufo.com ↗', notOfficial: 'This row is not present in the official master product file.' },
-  it: { sku: 'SKU', casePack: 'Pezzi / scatola', ingredients: 'Ingredienti', allergens: 'Allergeni', usage: 'Utilizzo', storage: 'Conservazione', origin: 'Origine', productInfo: 'Informazioni prodotto', nutrition: 'Valori nutrizionali / 100g', shelfLife: 'Shelf life', barcode: 'Barcode', website: 'Vedi prodotto su houseoftartufo.com ↗', notOfficial: 'Questa riga non è presente nel master prodotti ufficiale.' },
-  fr: { sku: 'SKU', casePack: 'Pièces / carton', ingredients: 'Ingrédients', allergens: 'Allergènes', usage: 'Utilisation', storage: 'Conservation', origin: 'Origine', productInfo: 'Informations produit', nutrition: 'Valeurs nutritionnelles / 100g', shelfLife: 'Durée de conservation', barcode: 'Code-barres', website: 'Voir le produit sur houseoftartufo.com ↗', notOfficial: 'Cette ligne ne figure pas dans le fichier master produit officiel.' },
-  nl: { sku: 'SKU', casePack: 'Stuks / doos', ingredients: 'Ingrediënten', allergens: 'Allergenen', usage: 'Gebruik', storage: 'Bewaring', origin: 'Herkomst', productInfo: 'Productinformatie', nutrition: 'Voedingswaarden / 100g', shelfLife: 'Houdbaarheid', barcode: 'Barcode', website: 'Bekijk product op houseoftartufo.com ↗', notOfficial: 'Deze rij staat niet in het officiële masterproductbestand.' },
+  en: { sku: 'SKU', size: 'Size', casePack: 'Case pack', ingredients: 'Ingredients', allergens: 'Allergens', usage: 'How to use', storage: 'Storage', origin: 'Origin', productInfo: 'Product information', nutrition: 'Nutrition / 100g', shelfLife: 'Shelf life', barcode: 'Barcode', website: 'View product on houseoftartufo.com ↗', notOfficial: 'This row is not present in the official master product file.' },
+  it: { sku: 'SKU', size: 'Formato', casePack: 'Pezzi / scatola', ingredients: 'Ingredienti', allergens: 'Allergeni', usage: 'Utilizzo', storage: 'Conservazione', origin: 'Origine', productInfo: 'Informazioni prodotto', nutrition: 'Valori nutrizionali / 100g', shelfLife: 'Shelf life', barcode: 'Barcode', website: 'Vedi prodotto su houseoftartufo.com ↗', notOfficial: 'Questa riga non è presente nel master prodotti ufficiale.' },
+  fr: { sku: 'SKU', size: 'Format', casePack: 'Pièces / carton', ingredients: 'Ingrédients', allergens: 'Allergènes', usage: 'Utilisation', storage: 'Conservation', origin: 'Origine', productInfo: 'Informations produit', nutrition: 'Valeurs nutritionnelles / 100g', shelfLife: 'Durée de conservation', barcode: 'Code-barres', website: 'Voir le produit sur houseoftartufo.com ↗', notOfficial: 'Cette ligne ne figure pas dans le fichier master produit officiel.' },
+  nl: { sku: 'SKU', size: 'Formaat', casePack: 'Stuks / doos', ingredients: 'Ingrediënten', allergens: 'Allergenen', usage: 'Gebruik', storage: 'Bewaring', origin: 'Herkomst', productInfo: 'Productinformatie', nutrition: 'Voedingswaarden / 100g', shelfLife: 'Houdbaarheid', barcode: 'Barcode', website: 'Bekijk product op houseoftartufo.com ↗', notOfficial: 'Deze rij staat niet in het officiële masterproductbestand.' },
 } as const;
 
 function locale(): Locale {
@@ -31,18 +31,9 @@ function escapeHtml(value: string): string {
   return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
 
-interface RowInfo { sku: string; name: string; size: string; }
-
-function rowInfo(dialog: HTMLDialogElement): RowInfo | undefined {
+function dialogSku(dialog: HTMLDialogElement): string | undefined {
   const sku = dialog.dataset.sku?.trim();
-  if (!sku) return undefined;
-  const row = document.querySelector<HTMLTableRowElement>(`#product-rows tr[data-sku="${CSS.escape(sku)}"]`);
-  if (!row) return undefined;
-  const cells = row.querySelectorAll('td');
-  const name = compact(row.querySelector('.product-name')?.textContent);
-  const size = compact(cells[1]?.textContent);
-  if (!name || !size) return undefined;
-  return { sku, name, size };
+  return sku || undefined;
 }
 
 function specs(dialog: HTMLDialogElement): HTMLElement[] {
@@ -60,6 +51,15 @@ function setOfficialSku(dialog: HTMLDialogElement, sku: string): void {
     value.textContent = sku;
     value.dataset.officialSku = 'true';
   }
+}
+
+function setSize(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant): void {
+  const size = specs(dialog)[1];
+  if (!size) return;
+  const label = size.querySelector<HTMLElement>('span');
+  const value = size.querySelector<HTMLElement>('strong');
+  if (label) label.textContent = copy[locale()].size;
+  if (value) value.textContent = entry.size;
 }
 
 function setCasePack(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant): void {
@@ -169,7 +169,7 @@ async function enrichFromShopify(dialog: HTMLDialogElement, entry: RemasteredOff
 
   const match = await getShopifyLiveVariant(entry.sku);
   if (match) {
-    if (!dialog.open || rowInfo(dialog)?.sku !== entry.sku) return;
+    if (!dialog.open || dialogSku(dialog) !== entry.sku) return;
 
     if (match.variant.barcode && match.variant.barcode !== entry.barcode) {
       console.warn('[HOT Price List] Shopify/master barcode mismatch', {
@@ -190,12 +190,6 @@ async function enrichFromShopify(dialog: HTMLDialogElement, entry: RemasteredOff
     return;
   }
 
-  // Some official wholesale formats deliberately exist only in the Excel master
-  // (currently the 1L/3L oil formats), while the same product family is live in
-  // Shopify under another exact variant. In that case Shopify may enrich only
-  // product-level presentation (image/link/status). SKU, barcode, size, pack and
-  // B2B price remain exclusively master-owned and are never inferred from a
-  // different Shopify variant.
   const reference = entry.shopify;
   const handles = reference
     ? [reference.publicHandle, reference.handle].filter((value): value is string => Boolean(value))
@@ -203,7 +197,7 @@ async function enrichFromShopify(dialog: HTMLDialogElement, entry: RemasteredOff
   if (!handles.length) return;
 
   const product = await getShopifyLiveProduct(handles);
-  if (!product || !dialog.open || rowInfo(dialog)?.sku !== entry.sku) return;
+  if (!product || !dialog.open || dialogSku(dialog) !== entry.sku) return;
 
   const liveImage = product.media[0];
   if (liveImage) setImageUrl(dialog, liveImage);
@@ -217,6 +211,7 @@ async function enrichFromShopify(dialog: HTMLDialogElement, entry: RemasteredOff
 
 function renderOfficial(dialog: HTMLDialogElement, entry: RemasteredOfficialVariant): void {
   setOfficialSku(dialog, entry.sku);
+  setSize(dialog, entry);
   setCasePack(dialog, entry);
   setStaticImage(dialog, entry);
   const sections = ensureSections(dialog);
@@ -261,9 +256,9 @@ function renderNotOfficial(dialog: HTMLDialogElement): void {
 function applyOfficialMaster(): void {
   const dialog = document.getElementById('product-detail-dialog') as HTMLDialogElement | null;
   if (!dialog?.open) return;
-  const info = rowInfo(dialog);
-  if (!info) return;
-  const entry = findRemasteredOfficialVariant(info.name, info.size);
+  const sku = dialogSku(dialog);
+  if (!sku) return;
+  const entry = findRemasteredOfficialVariantBySku(sku);
   const key = entry?.officialKey;
   if (dialog.dataset.officialMaster === (entry ? 'matched' : 'none') && dialog.querySelector<HTMLElement>('.product-detail-sections')?.dataset.officialMasterKey === key) return;
   delete dialog.dataset.shopifyLiveRequested;
