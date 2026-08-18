@@ -237,10 +237,10 @@ test('selectors expose every official format and never invent non-master sizes',
   );
   expect(representedVariants).toBe(55);
 
-  const whiteOilOptions = page.locator('#product-rows tr[data-product-family="White Truffle Extra Virgin Olive Oil"] [data-format-select] option');
-  await expect(whiteOilOptions).not.toContainText('500ml');
-  const honeyOptions = page.locator('#product-rows tr[data-product-family="Acacia Honey with Truffle"] [data-format-select] option');
-  await expect(honeyOptions).not.toContainText('450g');
+  const whiteOilSelect = page.locator('#product-rows tr[data-product-family="White Truffle Extra Virgin Olive Oil"] [data-format-select]');
+  await expect(whiteOilSelect.locator('option')).toHaveText(['100ml', '250ml', '1L', '3L', '5L']);
+  const honeySelect = page.locator('#product-rows tr[data-product-family="Acacia Honey with Truffle"] [data-format-select]');
+  await expect(honeySelect.locator('option')).toHaveText(['110g', '220g', '650g']);
   await expect(page.locator('#product-rows')).not.toContainText(/Pure White Truffle Cream/i);
 });
 
