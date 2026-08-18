@@ -86,21 +86,20 @@ function levenshtein(left: string, right: string): number {
   if (!left.length) return right.length;
   if (!right.length) return left.length;
 
-  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  const previous: number[] = Array.from({ length: right.length + 1 }, (_, index) => index);
   for (let i = 1; i <= left.length; i += 1) {
-    let diagonal = previous[0];
+    let diagonal = previous[0] ?? 0;
     previous[0] = i;
     for (let j = 1; j <= right.length; j += 1) {
-      const old = previous[j];
-      previous[j] = Math.min(
-        previous[j] + 1,
-        previous[j - 1] + 1,
-        diagonal + (left[i - 1] === right[j - 1] ? 0 : 1),
-      );
+      const old = previous[j] ?? j;
+      const deletion = (previous[j] ?? j) + 1;
+      const insertion = (previous[j - 1] ?? j - 1) + 1;
+      const substitution = diagonal + (left[i - 1] === right[j - 1] ? 0 : 1);
+      previous[j] = Math.min(deletion, insertion, substitution);
       diagonal = old;
     }
   }
-  return previous[right.length];
+  return previous[right.length] ?? right.length;
 }
 
 function fuzzyThreshold(token: string): number {
