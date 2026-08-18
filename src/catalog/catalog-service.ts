@@ -1,4 +1,5 @@
 import { buildStrictOfficialCatalogue } from '../official-catalogue-filter';
+import { applyShopifyExVatPrices, loadShopifyLiveCatalogue } from '../shopify-live';
 import { parseCatalogueSourceCsv, reconcileSourceProduct, sourceRowToProduct } from './price-source';
 import { DEFAULT_DISCOUNT_POLICY } from './pricing';
 import type { Catalogue } from './types';
@@ -61,6 +62,34 @@ function applyOfficialExcelMaster(catalogue: Catalogue): Catalogue {
         }
       : catalogue.sourceMeta,
   });
+}
+
+async function applyShopifyPricing(catalogue: Catalogue): Promise<CatalogueLoadResult> {
+  const payload = await loadShopifyLiveCatalogue();
+  const overlay = applyShopifyExVatPrices(catalogue, payload);
+
+  if (!overlay.sourceAvailable) {
+    return {
+      catalogue,
+      warning: 'Shopify price feed is temporarily unavailable; verified fallback prices are being shown.',
+    };
+  }
+
+  const unavailable = [...overlay.missingSkus, ...overlay.invalidPriceSkus];
+  if (unavailable.length > 0) {
+    console.warn('[HOT Price List] Shopify price overlay incomplete', {
+      applied: overlay.appliedSkus.length,
+      missing: overlay.missingSkus,
+      invalid: overlay.invalidPriceSkus,
+      vatRate: overlay.vatRate,
+    });
+    return {
+      catalogue: overlay.catalogue,
+      warning: `${unavailable.length} SKU(s) have no valid Shopify price and are on standby.`,
+    };
+  }
+
+  return { catalogue: overlay.catalogue };
 }
 
 function assertContainsBaseline(candidate: Catalogue, baseline: Catalogue): void {
@@ -190,6 +219,10 @@ async function loadBuildSnapshot(): Promise<Catalogue> {
 }
 
 export async function loadCatalogue(): Promise<CatalogueLoadResult> {
+  // Start the Shopify request immediately so live prices are ready by the time
+  // the technical catalogue has been reconciled.
+  void loadShopifyLiveCatalogue();
+
   let baseline: Catalogue | undefined;
   let baselineError: unknown;
   try {
@@ -202,17 +235,17 @@ export async function loadCatalogue(): Promise<CatalogueLoadResult> {
   try {
     const live = await loadLiveCatalogue(baseline);
     cacheVerifiedCatalogue(live);
-    return { catalogue: live };
+    return await applyShopifyPricing(live);
   } catch (liveError) {
     emitCatalogueError('live-source', liveError);
 
     const stale = readStaleCatalogue(baseline);
     if (stale) {
-      return { catalogue: stale };
+      return await applyShopifyPricing(stale);
     }
 
     if (baseline) {
-      return { catalogue: baseline };
+      return await applyShopifyPricing(baseline);
     }
 
     const liveMessage = liveError instanceof Error ? liveError.message : String(liveError);

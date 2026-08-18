@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { matchShopifyLiveProduct, matchShopifyLiveVariant, type ShopifyLivePayload } from '../src/shopify-live';
+import type { Catalogue } from '../src/catalog/types';
+import {
+  applyShopifyExVatPrices,
+  matchShopifyLiveProduct,
+  matchShopifyLiveVariant,
+  shopifyGrossPriceToExVat,
+  type ShopifyLivePayload,
+} from '../src/shopify-live';
 
 const payload: ShopifyLivePayload = {
   available: true,
   source: 'shopify-admin-graphql',
   apiVersion: '2026-07',
+  fetchedAt: '2026-08-18T06:45:00Z',
   products: [
     {
       id: 'gid://shopify/Product/1',
@@ -65,6 +73,42 @@ const payload: ShopifyLivePayload = {
   ],
 };
 
+const catalogue: Catalogue = {
+  schemaVersion: 1,
+  catalogueVersion: 'test',
+  currency: 'EUR',
+  updatedAt: '2026-08-15T00:00:00Z',
+  verifiedAt: '2026-08-15T00:00:00Z',
+  source: 'snapshot',
+  freshness: 'fallback',
+  discountPolicy: [{ minCases: 1, discountRate: 0 }],
+  products: [
+    {
+      sku: '5430004174103',
+      categoryId: 'sauces-condiments',
+      groupId: 'sauces-condiments',
+      name: 'Black Truffle Sauce',
+      sizeLabel: '80g',
+      baseUnitPrice: 99,
+      unitsPerCase: 12,
+      currency: 'EUR',
+      orderStatus: 'standby',
+      standbyReasons: ['price'],
+    },
+    {
+      sku: '5430004179999',
+      categoryId: 'sauces-condiments',
+      groupId: 'sauces-condiments',
+      name: 'Missing Shopify Variant',
+      sizeLabel: '80g',
+      baseUnitPrice: 8,
+      unitsPerCase: 12,
+      currency: 'EUR',
+      orderStatus: 'orderable',
+    },
+  ],
+};
+
 describe('Shopify live SKU matcher', () => {
   it('matches one Admin API variant by exact official SKU', () => {
     const match = matchShopifyLiveVariant(payload, '5430004174103');
@@ -100,5 +144,42 @@ describe('Shopify live SKU matcher', () => {
   it('uses handle priority for a family fallback', () => {
     const product = matchShopifyLiveProduct(payload, ['missing-handle', 'black-truffle-extra-virgin-olive-oil']);
     expect(product?.handle).toBe('black-truffle-extra-virgin-olive-oil');
+  });
+});
+
+describe('Shopify ex-VAT pricing', () => {
+  it('removes included 6% VAT with division and commercial rounding', () => {
+    expect(shopifyGrossPriceToExVat('10.60')).toBe(10);
+    expect(shopifyGrossPriceToExVat('6.40')).toBe(6.04);
+    expect(shopifyGrossPriceToExVat('0')).toBeUndefined();
+  });
+
+  it('overrides the legacy catalogue price by exact Shopify SKU and clears price standby', () => {
+    const overlay = applyShopifyExVatPrices(catalogue, payload);
+    const priced = overlay.catalogue.products[0];
+
+    expect(overlay.sourceAvailable).toBe(true);
+    expect(priced?.baseUnitPrice).toBe(9.43);
+    expect(priced?.orderStatus).toBe('orderable');
+    expect(priced?.standbyReasons).toBeUndefined();
+    expect(overlay.appliedSkus).toContain('5430004174103');
+    expect(overlay.catalogue.verifiedAt).toBe('2026-08-18T06:45:00Z');
+  });
+
+  it('never keeps a legacy price when Shopify is available but the SKU price is missing', () => {
+    const overlay = applyShopifyExVatPrices(catalogue, payload);
+    const missing = overlay.catalogue.products[1];
+
+    expect(missing?.baseUnitPrice).toBe(0);
+    expect(missing?.orderStatus).toBe('standby');
+    expect(missing?.standbyReasons).toContain('price');
+    expect(overlay.missingSkus).toContain('5430004179999');
+  });
+
+  it('keeps the verified catalogue fallback untouched only when Shopify itself is unavailable', () => {
+    const overlay = applyShopifyExVatPrices(catalogue, undefined);
+    expect(overlay.sourceAvailable).toBe(false);
+    expect(overlay.catalogue).toBe(catalogue);
+    expect(overlay.catalogue.products[0]?.baseUnitPrice).toBe(99);
   });
 });
