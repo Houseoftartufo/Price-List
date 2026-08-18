@@ -2,6 +2,7 @@ import './product-details';
 import './product-details-sku-guard-v2';
 import './product-detail-quote-cta';
 import './official-runtime-guard';
+import './product-format-groups';
 
 type AnalyticsPayload = Record<string, string | number | boolean | undefined>;
 
