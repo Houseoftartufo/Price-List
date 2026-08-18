@@ -1,6 +1,13 @@
 /* Public catalogue polish.
    Keep internal catalogue mechanics intact while simplifying the buyer-facing UI. */
 
+/* Shopify/catalogue reconciliation warnings are operational diagnostics only.
+   Keep the runtime element available for internal logic/logging, but never expose
+   it on the buyer-facing Price List. */
+#catalogue-notice {
+  display: none !important;
+}
+
 /* Product Line is an internal merchandising dimension. Keep the select in the DOM
    for compatibility with the existing filtering/runtime code, but never expose it
    on the public buyer surface. */
