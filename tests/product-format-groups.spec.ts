@@ -22,12 +22,12 @@ describe('product format families', () => {
 
   it('groups oil bottle and bulk formats in the same product family', () => {
     const whiteOil = buildProductFormatFamilies().find((entry) => entry.product === 'White Truffle Extra Virgin Olive Oil');
-    const blackOil = buildProductFormatFamilies().find((entry) => entry.product === 'Black Truffle Extra Virgin Olive Oil');
+    const blackOil = buildProductFormatFamilies().find((entry) => entry.product === 'Black Truffle Extra-Virgin Olive Oil');
 
     expect(whiteOil?.variants.some((variant) => variant.size === '100ml')).toBe(true);
-    expect(whiteOil?.variants.some((variant) => variant.size === '3000ml')).toBe(true);
-    expect(blackOil?.variants.some((variant) => variant.size === '1000ml')).toBe(true);
-    expect(blackOil?.variants.some((variant) => variant.size === '3000ml')).toBe(true);
+    expect(whiteOil?.variants.some((variant) => variant.size === '3L')).toBe(true);
+    expect(blackOil?.variants.some((variant) => variant.size === '1L')).toBe(true);
+    expect(blackOil?.variants.some((variant) => variant.size === '3L')).toBe(true);
   });
 
   it('shows litre and kilogram formats in buyer-friendly labels without changing master data', () => {
