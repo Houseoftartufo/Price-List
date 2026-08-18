@@ -1,17 +1,16 @@
 import './styles/quote-format-manager.css';
 
-import type { Product } from './catalog/types';
 import { OFFICIAL_PRODUCT_VARIANTS } from './official-product-master';
 
 export type QuoteFormatLocale = 'en' | 'it' | 'fr' | 'nl';
 
-interface QuoteFormatVariant {
+export interface QuoteFormatVariant {
   product: string;
   size: string;
   sku: string;
 }
 
-interface QuoteFormatFamily {
+export interface QuoteFormatFamily {
   product: string;
   variants: QuoteFormatVariant[];
 }
@@ -100,31 +99,18 @@ export function quoteFormatFamilyForSku(sku: string): QuoteFormatFamily | undefi
   return familyBySku.get(sku);
 }
 
-function isOrderable(product: Product | undefined): boolean {
-  return Boolean(
-    product
-    && product.active !== false
-    && product.orderStatus !== 'standby'
-    && Number.isFinite(product.baseUnitPrice)
-    && product.baseUnitPrice > 0
-    && Number.isInteger(product.unitsPerCase)
-    && product.unitsPerCase > 0,
-  );
-}
-
 export function renderQuoteFormatTools(input: {
   sku: string;
   locale: QuoteFormatLocale;
-  products: readonly Product[];
   quoteSkus: ReadonlySet<string>;
+  isOrderableSku?: (sku: string) => boolean;
 }): string {
-  const { sku, locale, products, quoteSkus } = input;
-  const currentProduct = products.find((product) => product.sku === sku);
-  if (!currentProduct) return '';
-
+  const { sku, locale, quoteSkus, isOrderableSku = () => true } = input;
   const t = COPY[locale];
   const family = familyBySku.get(sku);
-  const currentLabel = quoteFormatDisplayLabel(currentProduct.sizeLabel);
+  const currentVariant = family?.variants.find((variant) => variant.sku === sku);
+  const currentLabel = quoteFormatDisplayLabel(currentVariant?.size ?? '—');
+
   if (!family || family.variants.length <= 1) {
     return `<div class="quote-format-tools" data-quote-format-tools="${escapeHtml(sku)}">
       <div class="quote-format-field quote-format-field-static">
@@ -134,13 +120,11 @@ export function renderQuoteFormatTools(input: {
     </div>`;
   }
 
-  const productBySku = new Map(products.map((product) => [product.sku, product] as const));
   const optionMarkup = family.variants
     .map((variant) => {
-      const product = productBySku.get(variant.sku);
       const selected = variant.sku === sku;
       const alreadyAdded = !selected && quoteSkus.has(variant.sku);
-      const unavailable = !selected && !isOrderable(product);
+      const unavailable = !selected && !isOrderableSku(variant.sku);
       const disabled = alreadyAdded || unavailable;
       const suffix = alreadyAdded ? ` · ${t.added}` : unavailable ? ` · ${t.unavailable}` : '';
       return `<option value="${escapeHtml(variant.sku)}"${selected ? ' selected' : ''}${disabled ? ' disabled' : ''}>${escapeHtml(quoteFormatDisplayLabel(variant.size))}${escapeHtml(suffix)}</option>`;
@@ -149,7 +133,7 @@ export function renderQuoteFormatTools(input: {
 
   const addable = family.variants.filter((variant) => {
     if (variant.sku === sku || quoteSkus.has(variant.sku)) return false;
-    return isOrderable(productBySku.get(variant.sku));
+    return isOrderableSku(variant.sku);
   });
 
   const addAnotherMarkup = addable.length > 0
