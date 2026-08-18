@@ -6,7 +6,7 @@ import { findRemasteredOfficialVariant } from '../src/official-product-remaster'
 
 mkdirSync('qa-screenshots', { recursive: true });
 
-const OFFICIAL_ACTIVE_CATEGORIES = '6';
+const OFFICIAL_ACTIVE_CATEGORIES = '7';
 
 async function expectLoadedProductImage(image: Locator): Promise<void> {
   await expect(image).toBeVisible();
