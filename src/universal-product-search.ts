@@ -343,7 +343,12 @@ let scheduled = 0;
 
 function scheduleApply(): void {
   window.cancelAnimationFrame(scheduled);
-  scheduled = window.requestAnimationFrame(() => applyUniversalSearch(currentQuery));
+  scheduled = window.requestAnimationFrame(() => {
+    // Product-format grouping also runs on requestAnimationFrame after a catalogue
+    // render. Apply search one frame later so each family already exposes every
+    // official SKU through its selector and no hidden raw variant can be picked.
+    scheduled = window.requestAnimationFrame(() => applyUniversalSearch(currentQuery));
+  });
 }
 
 const initialUrl = new URL(window.location.href);
