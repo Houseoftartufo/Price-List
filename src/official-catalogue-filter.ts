@@ -23,16 +23,19 @@ function inferCategory(entry: RemasteredOfficialVariant): string {
   if (/olive oil/.test(name)) return 'oils';
   if (/butter/.test(name)) return 'butters';
   if (/carpaccio/.test(name)) return 'Preserved';
-  if (/salt|honey|cashew|almond|walnut/.test(name)) return 'salts-honey';
-  if (/risotto|polenta|tarallini/.test(name)) return 'pasta-rice-meals';
+  if (/tarallini|cashew|almond|walnut/.test(name)) return 'Snacks';
+  if (/salt|honey/.test(name)) return 'salts-honey';
+  if (/risotto|polenta/.test(name)) return 'pasta-rice-meals';
   return 'sauces-condiments';
 }
 
 function publicCategory(entry: RemasteredOfficialVariant, source: Product | undefined): string {
-  // Carpaccio is a preserved truffle preparation, not a cream. Keep this
-  // buyer-facing classification canonical even when the legacy price source
-  // still carries the old Pure Creams grouping.
-  if (/carpaccio/.test(entry.product.toLowerCase())) return 'Preserved';
+  const name = entry.product.toLowerCase();
+
+  // Keep buyer-facing merchandising canonical even when a legacy source row
+  // carries an older grouping. Product identity, SKU and pricing remain untouched.
+  if (/carpaccio/.test(name)) return 'Preserved';
+  if (/tarallini|cashew|almond|walnut/.test(name)) return 'Snacks';
   return source?.categoryId ?? inferCategory(entry);
 }
 
