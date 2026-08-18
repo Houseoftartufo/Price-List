@@ -1,3 +1,5 @@
+@import './public-catalogue-polish.css';
+
 .filter-select {
   position: relative !important;
   min-height: 50px !important;
