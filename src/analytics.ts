@@ -1,4 +1,5 @@
 import './box-terminology';
+import './quote-format-controls';
 import './quote-volume-upsell';
 import './styles/filter-control-shape.css';
 import './universal-product-search-controller';
@@ -40,6 +41,21 @@ function bind(): void {
     searchTimer = window.setTimeout(() => {
       emit('catalogue_search', { queryLength: detail?.queryLength ?? 0 });
     }, 350);
+  });
+
+  window.addEventListener('hot:quote-format-updated', (event) => {
+    const detail = (event as CustomEvent<{
+      action?: string;
+      fromSku?: string;
+      toSku?: string;
+      quantity?: number;
+    }>).detail;
+    emit('quote_format_change', {
+      action: detail?.action,
+      fromSku: detail?.fromSku,
+      toSku: detail?.toSku,
+      quantity: detail?.quantity,
+    });
   });
 
   for (const id of ['line-filter', 'truffle-filter']) {
