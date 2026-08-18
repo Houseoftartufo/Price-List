@@ -67,8 +67,8 @@ function localeFormatLabel(): string {
 
 function rowFromHtml(html: string): HTMLTableRowElement | undefined {
   const template = document.createElement('template');
-  template.innerHTML = html.trim();
-  const row = template.content.firstElementChild;
+  template.innerHTML = `<table><tbody>${html.trim()}</tbody></table>`;
+  const row = template.content.querySelector('tr');
   return row instanceof HTMLTableRowElement ? row : undefined;
 }
 
