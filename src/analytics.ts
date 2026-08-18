@@ -1,3 +1,4 @@
+import './box-terminology';
 import './universal-product-search-controller';
 import './product-details';
 import './product-details-sku-guard-v2';
