@@ -74,15 +74,15 @@ describe('commercial quote messages', () => {
   });
 
   it('uses the requested box terminology and localized commercial labels', () => {
-    expect(messages('it').whatsapp).toContain('5 box');
+    expect(messages('it').whatsapp).toContain('4 box');
     expect(messages('it').whatsapp).toContain('Sconto volume: *−10%*');
     expect(messages('it').whatsapp).toContain('*RIEPILOGO*');
 
-    expect(messages('fr').whatsapp).toContain('5 box');
+    expect(messages('fr').whatsapp).toContain('4 box');
     expect(messages('fr').whatsapp).toContain('Remise volume: *−10%*');
     expect(messages('fr').whatsapp).toContain('*RÉCAPITULATIF*');
 
-    expect(messages('nl').whatsapp).toContain('5 boxen');
+    expect(messages('nl').whatsapp).toContain('4 boxen');
     expect(messages('nl').whatsapp).toContain('Volumekorting: *−10%*');
     expect(messages('nl').whatsapp).toContain('*OVERZICHT*');
   });
