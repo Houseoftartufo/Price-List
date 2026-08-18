@@ -14,6 +14,7 @@ import {
   type Locale,
   type TranslationBundle,
 } from './i18n/i18n';
+import { searchOfficialProducts } from './universal-product-search';
 
 const QUOTE_KEY = 'hot-price-list:quote:v1';
 const WHATSAPP_NUMBER = '32480205715';
@@ -242,24 +243,53 @@ function renderCategories(): void {
 }
 
 function filteredProducts(): Product[] {
-  const query = filters.query.toLocaleLowerCase(localeCode(locale));
-  return catalogue.products.filter((product) => {
+  const rawQuery = filters.query.trim();
+  const query = rawQuery.toLocaleLowerCase(localeCode(locale));
+  const scoreBySku = new Map<string, number>();
+
+  if (rawQuery) {
+    for (const hit of searchOfficialProducts(rawQuery)) scoreBySku.set(hit.sku, hit.score);
+  }
+
+  const products = catalogue.products.filter((product) => {
     if (product.active === false) return false;
     if (filters.category !== 'all' && product.categoryId !== filters.category) return false;
     if (filters.line !== 'all' && product.line !== filters.line) return false;
     if (filters.truffle !== 'all' && product.truffleType !== filters.truffle) return false;
-    if (!query) return true;
+    if (!rawQuery) return true;
 
     const searchable = [
       product.sku,
+      product.officialSku,
       product.name,
       product.sizeLabel,
       product.categoryId,
       categoryText(translations, locale, product.categoryId),
     ]
+      .filter(Boolean)
       .join(' ')
       .toLocaleLowerCase(localeCode(locale));
-    return searchable.includes(query);
+
+    const universalScore = Math.max(
+      scoreBySku.get(product.sku) ?? 0,
+      product.officialSku ? scoreBySku.get(product.officialSku) ?? 0 : 0,
+    );
+
+    return searchable.includes(query) || universalScore > 0;
+  });
+
+  if (!rawQuery) return products;
+
+  return products.sort((left, right) => {
+    const rightScore = Math.max(
+      scoreBySku.get(right.sku) ?? 0,
+      right.officialSku ? scoreBySku.get(right.officialSku) ?? 0 : 0,
+    );
+    const leftScore = Math.max(
+      scoreBySku.get(left.sku) ?? 0,
+      left.officialSku ? scoreBySku.get(left.officialSku) ?? 0 : 0,
+    );
+    return rightScore - leftScore;
   });
 }
 
