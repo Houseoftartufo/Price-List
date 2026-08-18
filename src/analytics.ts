@@ -1,6 +1,7 @@
 import './box-terminology';
 import './quote-format-controls';
 import './quote-volume-upsell';
+import './commercial-quote-message-controller';
 import './styles/filter-control-shape.css';
 import './universal-product-search-controller';
 import './product-details';
