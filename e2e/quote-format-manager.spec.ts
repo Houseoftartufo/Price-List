@@ -72,6 +72,7 @@ test('quote can add another format of the same product as an independent SKU lin
   await expect(line80.locator('[data-quote-qty-value]')).toHaveText('2');
   await expect(line170.locator('[data-quote-qty-value]')).toHaveText('2');
   await expect(line80.locator('[data-quote-tier-target]')).toContainText('−10%');
+  await page.screenshot({ path: 'qa-screenshots/quote-format-manager-desktop.png' });
 });
 
 test('quote format manager follows buyer language and stays compact on 320px mobile', async ({ page }) => {
@@ -89,4 +90,5 @@ test('quote format manager follows buyer language and stays compact on 320px mob
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
+  await page.screenshot({ path: 'qa-screenshots/quote-format-manager-mobile-320.png' });
 });
