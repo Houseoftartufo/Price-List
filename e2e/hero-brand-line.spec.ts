@@ -9,7 +9,17 @@ const TITLES = {
 
 const LOCALE_KEY = 'hot-price-list:locale:v1';
 
-async function expectSingleLineHero(page: Page, locale: keyof typeof TITLES): Promise<void> {
+type HeroLocale = keyof typeof TITLES;
+
+async function loadLocale(page: Page, locale: HeroLocale): Promise<void> {
+  await page.evaluate(
+    ({ key, value }) => window.localStorage.setItem(key, value),
+    { key: LOCALE_KEY, value: locale },
+  );
+  await page.reload();
+}
+
+async function expectSingleLineHero(page: Page, locale: HeroLocale): Promise<void> {
   const title = page.locator('#hero-title');
   const motto = page.locator('.hero-motto');
   const eyebrow = page.locator('.hero .hero-brand-eyebrow');
@@ -61,7 +71,7 @@ test('hero uses the new price-catalog eyebrow and one-line H1/H2 in every langua
   await page.goto('/');
 
   for (const locale of ['en', 'it', 'fr', 'nl'] as const) {
-    await page.locator(`[data-locale="${locale}"]`).click();
+    await loadLocale(page, locale);
     await expectSingleLineHero(page, locale);
   }
 });
@@ -71,11 +81,7 @@ test('hero H1 and H2 remain single-line and overflow-free at 320px', async ({ pa
   await page.goto('/');
 
   for (const locale of ['en', 'it', 'fr', 'nl'] as const) {
-    await page.evaluate(
-      ({ key, value }) => window.localStorage.setItem(key, value),
-      { key: LOCALE_KEY, value: locale },
-    );
-    await page.reload();
+    await loadLocale(page, locale);
     await expectSingleLineHero(page, locale);
   }
 });
