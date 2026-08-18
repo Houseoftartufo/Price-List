@@ -13,18 +13,24 @@ async function assertUnlockLayout(page: import('@playwright/test').Page, width: 
   const hint = row.locator('.tier-hint-action');
   await expect(hint).toBeVisible();
   await expect(hint).toContainText(/Débloquez\s*[−-]10%/i);
+  await hint.scrollIntoViewIfNeeded();
 
   const metrics = await hint.evaluate((element) => {
     const button = element as HTMLElement;
     const buttonRect = button.getBoundingClientRect();
     const children = Array.from(button.querySelectorAll<HTMLElement>(':scope > span, :scope > strong, :scope > i'));
-    const childRects = children.map((child) => ({
-      tag: child.tagName,
-      left: child.getBoundingClientRect().left,
-      right: child.getBoundingClientRect().right,
-      top: child.getBoundingClientRect().top,
-      bottom: child.getBoundingClientRect().bottom,
-    }));
+    const childRects = children.flatMap((child) => {
+      const rect = child.getBoundingClientRect();
+      const style = getComputedStyle(child);
+      if (style.display === 'none' || rect.width === 0 || rect.height === 0) return [];
+      return [{
+        tag: child.tagName,
+        left: rect.left,
+        right: rect.right,
+        top: rect.top,
+        bottom: rect.bottom,
+      }];
+    });
 
     return {
       clientWidth: button.clientWidth,
