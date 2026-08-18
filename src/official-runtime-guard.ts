@@ -1,5 +1,5 @@
 import './styles/official-standby.css';
-import { findRemasteredOfficialVariant } from './official-product-remaster';
+import { findRemasteredOfficialVariant, findRemasteredOfficialVariantBySku } from './official-product-remaster';
 
 const QUOTE_KEY = 'hot-price-list:quote:v1';
 let scheduled = false;
@@ -31,12 +31,14 @@ function parseVisibleMoney(value: string): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function rowInfo(row: HTMLTableRowElement): { name: string; size: string } | undefined {
+function rowInfo(row: HTMLTableRowElement): { sku: string; name: string; size: string } | undefined {
+  const sku = compact(row.dataset.sku);
   const name = compact(row.querySelector('.product-name')?.textContent);
   const cells = row.querySelectorAll('td');
-  const size = compact(cells[1]?.textContent);
-  if (!name || !size) return undefined;
-  return { name, size };
+  const select = cells[1]?.querySelector<HTMLSelectElement>('[data-format-select]');
+  const size = compact(select?.selectedOptions[0]?.textContent ?? cells[1]?.textContent);
+  if (!sku || !name || !size) return undefined;
+  return { sku, name, size };
 }
 
 function removeStandbyFromQuote(sku: string): void {
@@ -66,7 +68,7 @@ function decorateRow(row: HTMLTableRowElement): void {
 
   const info = rowInfo(row);
   if (!info) return;
-  const official = findRemasteredOfficialVariant(info.name, info.size);
+  const official = findRemasteredOfficialVariantBySku(info.sku) ?? findRemasteredOfficialVariant(info.name, info.size);
   if (!official) {
     row.dataset.officialMaster = 'none';
     row.dataset.runtimeGuardApplied = 'true';
@@ -79,7 +81,6 @@ function decorateRow(row: HTMLTableRowElement): void {
   const packPending = official.packStatus !== 'resolved' || !official.unitsPerCase;
   const standby = pricePending || packPending;
 
-  // Mark before touching descendants so our own DOM mutations cannot re-enter.
   row.dataset.runtimeGuardApplied = 'true';
   row.dataset.officialMaster = 'matched';
   row.dataset.officialKey = official.officialKey;
