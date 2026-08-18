@@ -1,3 +1,4 @@
+import './universal-product-search';
 import './product-details';
 import './product-details-sku-guard-v2';
 import './product-detail-quote-cta';
