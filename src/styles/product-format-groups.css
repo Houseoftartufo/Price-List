@@ -1,0 +1,62 @@
+.product-format-selector {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 82px;
+}
+
+.product-format-selector::after {
+  content: '⌄';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-56%);
+  color: var(--gold, #a8754e);
+  font-size: 11px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.product-format-selector select {
+  width: 100%;
+  min-width: 82px;
+  min-height: 36px;
+  appearance: none;
+  border: 1px solid var(--line-strong, rgba(123, 82, 55, 0.28));
+  border-radius: 999px;
+  padding: 0 28px 0 11px;
+  background: var(--panel-soft, rgba(255, 255, 255, 0.42));
+  color: var(--ink, #39261c);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  outline: none;
+}
+
+.product-format-selector select:hover {
+  border-color: var(--gold, #a8754e);
+}
+
+.product-format-selector select:focus-visible {
+  border-color: var(--gold, #a8754e);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold, #a8754e) 20%, transparent);
+}
+
+.catalogue-table tbody tr[data-format-grouped='true'] {
+  transition: background 160ms ease, box-shadow 160ms ease;
+}
+
+@media (max-width: 820px) {
+  .product-format-selector,
+  .product-format-selector select {
+    min-width: 96px;
+  }
+
+  .product-format-selector select {
+    min-height: 44px;
+    padding-inline: 13px 31px;
+    font-size: 11px;
+  }
+}
