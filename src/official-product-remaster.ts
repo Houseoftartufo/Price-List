@@ -57,6 +57,13 @@ function remastered(entry: OfficialProductVariant): RemasteredOfficialVariant {
   };
 }
 
+export function findRemasteredOfficialVariantBySku(sku: string): RemasteredOfficialVariant | undefined {
+  const wantedSku = compact(sku);
+  if (!wantedSku) return undefined;
+  const entry = OFFICIAL_PRODUCT_VARIANTS.find((variant) => variant.sku === wantedSku);
+  return entry ? remastered(entry) : undefined;
+}
+
 export function findRemasteredOfficialVariant(name: string, size: string): RemasteredOfficialVariant | undefined {
   const wantedName = normalise(name);
   const wantedSize = measureKey(size);
