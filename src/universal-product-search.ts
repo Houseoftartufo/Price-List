@@ -63,7 +63,7 @@ function normalizeUnits(value: string): string {
     .replace(/(\d+)\s*(?:gr|grammi|grammes|grams?)\b/gu, '$1g')
     .replace(/(\d+)\s*g\b/gu, '$1g')
     .replace(/(\d+)\s*ml\b/gu, '$1ml')
-    .replace(/(\d+)\s*(?:litri|litres|liters?|ltr|lt)\b/gu, '$1l')
+    .replace(/(\d+)\s*(?:litri|litres?|liters?|ltr|lt)\b/gu, '$1l')
     .replace(/(\d+)\s*l\b/gu, '$1l');
 }
 
