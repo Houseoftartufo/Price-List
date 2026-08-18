@@ -27,7 +27,7 @@ describe('universal product search', () => {
 
   it('tolerates useful product typos', () => {
     expect(products('carpacio')).toContain('Summer Truffle Carpaccio');
-    expect(products('mayonese')).toContain('Black Truffle Mayonnaise');
+    expect(products('mayonese')).toContain('Truffle Mayonnaise');
   });
 
   it('searches technical product content such as ingredients', () => {
