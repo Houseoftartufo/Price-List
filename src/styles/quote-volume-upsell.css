@@ -1,6 +1,8 @@
 .tier-hint-action,
 .tier-hint-best {
   width: min(100%, 220px);
+  min-width: 0;
+  max-width: 100%;
   min-height: 42px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -28,6 +30,7 @@
 
 .tier-hint-action span,
 .tier-hint-best span {
+  min-width: 0;
   font-size: 8px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -54,6 +57,7 @@
 }
 
 .quote-volume-tools {
+  min-width: 0;
   display: grid;
   grid-template-columns: auto minmax(150px, 1fr);
   align-items: stretch;
@@ -62,6 +66,7 @@
 }
 
 .quote-quantity-editor {
+  min-width: 0;
   display: grid;
   align-content: center;
   gap: 5px;
@@ -77,6 +82,7 @@
 
 .quote-quantity-control {
   width: fit-content;
+  max-width: 100%;
   display: grid;
   grid-template-columns: 31px 34px 31px;
   align-items: center;
@@ -112,7 +118,9 @@
 }
 
 .quote-tier-card {
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
   min-height: 47px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -143,6 +151,7 @@ button.quote-tier-card:hover {
 }
 
 .quote-tier-card strong {
+  min-width: 0;
   color: #5b4030;
   font-size: 10px;
   font-weight: 700;
@@ -163,6 +172,7 @@ button.quote-tier-card:hover {
 }
 
 .quote-line:has(.quote-volume-tools) {
+  min-width: 0;
   gap: 16px;
 }
 
@@ -198,6 +208,36 @@ button.quote-tier-card:hover {
 
   .quote-tier-card i {
     display: none;
+  }
+}
+
+@media (max-width: 340px) {
+  .tier-hint-action,
+  .tier-hint-best {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+    padding: 7px;
+    overflow: hidden;
+  }
+
+  .tier-hint-action strong,
+  .tier-hint-best strong {
+    white-space: normal;
+  }
+
+  .tier-hint-action i {
+    display: none;
+  }
+
+  .quote-tier-card,
+  .quote-tier-card[data-best='true'] {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+    overflow: hidden;
+  }
+
+  .quote-tier-card strong {
+    white-space: normal;
   }
 }
 
