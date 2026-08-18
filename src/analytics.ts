@@ -1,3 +1,4 @@
+import './hero-brand-line';
 import './box-terminology';
 import './quote-format-controls';
 import './quote-volume-upsell';
