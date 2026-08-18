@@ -1,6 +1,0 @@
-/* Buyer-facing safeguard: Shopify/catalogue reconciliation warnings stay internal.
-   The runtime can continue to populate #catalogue-notice for diagnostics, but it
-   must never be exposed on the public Price List surface. */
-#catalogue-notice {
-  display: none !important;
-}
