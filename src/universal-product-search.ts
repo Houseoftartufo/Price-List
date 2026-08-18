@@ -19,39 +19,37 @@ const STOP_WORDS = new Set([
 
 const CONCEPT_ALIASES: Record<string, readonly string[]> = {
   truffle: [
-    'truffle', 'truffles', 'tartufo', 'tartufi', 'truffe', 'truffes', 'truffel', 'truffels', 'trüffel', 'truffel',
-    'trufa', 'trufas', 'trufa', 'trufla', 'trufle', 'трюфель', 'трюфели', 'كمأة', 'كماة', '松露', 'トリュフ',
+    'truffle', 'truffles', 'tartufo', 'tartufi', 'truffe', 'truffes', 'truffel', 'truffels', 'trüffel',
+    'trufa', 'trufas', 'trufla', 'trufle', 'трюфель', 'трюфели', 'كمأة', 'كماة', '松露', 'トリュフ',
   ],
   sauce: [
     'sauce', 'sauces', 'salsa', 'salse', 'saus', 'sauzen', 'soße', 'sosse', 'saucen', 'salsas', 'molho', 'molhos',
     'sos', 'sosy', 'соус', 'соусы', 'صلصة', 'صوص', '酱', '醬', 'ソース',
   ],
-  cream: [
-    'cream', 'crema', 'crème', 'creme', 'room', 'creme', 'crema', 'krem', 'крем', 'كريمة', 'クリーム', '奶油酱',
-  ],
+  cream: ['cream', 'crema', 'crème', 'creme', 'room', 'krem', 'крем', 'كريمة', 'クリーム', '奶油酱'],
   oil: [
     'oil', 'olive oil', 'olio', 'olio di oliva', 'huile', 'huile olive', 'olie', 'olijfolie', 'öl', 'olivenöl', 'olivenol',
     'aceite', 'aceite de oliva', 'azeite', 'olej', 'oliwa', 'масло', 'زيت', 'زيت زيتون', 'オイル', 'オリーブオイル', '油', '橄榄油',
   ],
-  butter: ['butter', 'burro', 'beurre', 'boter', 'butter', 'mantequilla', 'manteiga', 'masło', 'maslo', 'масло сливочное', 'زبدة', 'バター', '黄油'],
+  butter: ['butter', 'burro', 'beurre', 'boter', 'mantequilla', 'manteiga', 'masło', 'maslo', 'масло сливочное', 'زبدة', 'バター', '黄油'],
   honey: ['honey', 'miele', 'miel', 'honing', 'honig', 'mel', 'miód', 'miod', 'мед', 'عسل', 'はちみつ', '蜂蜜'],
   salt: ['salt', 'sale', 'sel', 'zout', 'salz', 'sal', 'sól', 'sol', 'соль', 'ملح', '塩', '盐'],
   vinegar: ['vinegar', 'aceto', 'vinaigre', 'azijn', 'essig', 'vinagre', 'ocet', 'уксус', 'خل', '酢', '醋'],
-  balsamic: ['balsamic', 'balsamico', 'balsamique', 'balsamico', 'balsamico', 'balsamico', 'balsamiczny', 'бальзамический', 'بلسمي', 'バルサミコ', '香醋'],
+  balsamic: ['balsamic', 'balsamico', 'balsamique', 'balsamiczny', 'бальзамический', 'بلسمي', 'バルサミコ', '香醋'],
   carpaccio: ['carpaccio', 'carpacio', 'карпаччо', 'カルパッチョ', '卡帕乔'],
   mushroom: ['mushroom', 'mushrooms', 'fungo', 'funghi', 'champignon', 'champignons', 'paddenstoel', 'paddenstoelen', 'pilz', 'pilze', 'seta', 'setas', 'cogumelo', 'cogumelos', 'grzyb', 'grzyby', 'гриб', 'грибы', 'فطر', 'きのこ', '蘑菇'],
   porcini: ['porcini', 'porcino', 'cèpes', 'cepes', 'eekhoorntjesbrood', 'steinpilz', 'boletus', 'prawdziwek', 'боровик', 'ポルチーニ', '牛肝菌'],
-  mayonnaise: ['mayonnaise', 'mayo', 'maionese', 'mayonnaise', 'mayonaise', 'mayonnaisesaus', 'mayonesa', 'majonez', 'майонез', 'مايونيز', 'マヨネーズ', '蛋黄酱'],
-  ketchup: ['ketchup', ' кетчуп', 'كاتشب', 'ケチャップ', '番茄酱'],
+  mayonnaise: ['mayonnaise', 'mayo', 'maionese', 'mayonaise', 'mayonnaisesaus', 'mayonesa', 'majonez', 'майонез', 'مايونيز', 'マヨネーズ', '蛋黄酱'],
+  ketchup: ['ketchup', 'кетчуп', 'كاتشب', 'ケチャップ', '番茄酱'],
   pesto: ['pesto', 'песто', 'بيستو', 'ペスト', '青酱'],
   risotto: ['risotto', 'ризотто', 'ريزوتو', 'リゾット', '意式烩饭'],
   polenta: ['polenta', 'полента', 'بولينتا', 'ポレンタ', '玉米糊'],
-  cashew: ['cashew', 'cashews', 'anacardo', 'anacardi', 'noix de cajou', 'cashewnoot', 'cashewnoten', 'cashewkerne', 'anacardo', 'caju', 'nerkowiec', 'орех кешью', 'كاجو', 'カシューナッツ', '腰果'],
+  cashew: ['cashew', 'cashews', 'anacardo', 'anacardi', 'noix de cajou', 'cashewnoot', 'cashewnoten', 'cashewkerne', 'caju', 'nerkowiec', 'орех кешью', 'كاجو', 'カシューナッツ', '腰果'],
   almond: ['almond', 'almonds', 'mandorla', 'mandorle', 'amande', 'amandes', 'amandel', 'amandelen', 'mandel', 'mandeln', 'almendra', 'amêndoa', 'amendoa', 'migdał', 'migdal', 'миндаль', 'لوز', 'アーモンド', '杏仁'],
   walnut: ['walnut', 'walnuts', 'noce', 'noci', 'noix', 'walnoot', 'walnoten', 'walnuss', 'walnüsse', 'nuez', 'noz', 'orzech włoski', 'orzech wloski', 'грецкий орех', 'جوز', 'くるみ', '核桃'],
   spicy: ['spicy', 'hot', 'piccante', 'épicé', 'epice', 'pittig', 'scharf', 'picante', 'pikantny', 'острый', 'حار', '辛い', '辣'],
   pearls: ['pearls', 'perle', 'perles', 'parels', 'perlen', 'perlas', 'pérolas', 'perolas', 'perły', 'perly', 'жемчужины', 'لؤلؤ', 'パール', '珍珠'],
-  spray: ['spray', 'spruzzo', 'spray', 'spray', 'sprüh', 'spray', 'spray', 'спрей', 'رذاذ', 'スプレー', '喷雾'],
+  spray: ['spray', 'spruzzo', 'sprüh', 'спрей', 'رذاذ', 'スプレー', '喷雾'],
   white: ['white', 'bianco', 'bianca', 'blanc', 'blanche', 'wit', 'witte', 'weiß', 'weiss', 'weiße', 'blanco', 'blanca', 'branco', 'branca', 'biały', 'bialy', 'biała', 'biala', 'белый', 'белая', 'أبيض', 'بيضاء', '白', '白い'],
   black: ['black', 'nero', 'nera', 'noir', 'noire', 'zwart', 'zwarte', 'schwarz', 'schwarze', 'negro', 'negra', 'preto', 'preta', 'czarny', 'czarna', 'черный', 'чёрный', 'أسود', 'سوداء', '黒', '黑'],
   summer: ['summer', 'estivo', 'estiva', 'estate', 'été', 'ete', 'zomer', 'sommer', 'verano', 'verão', 'verao', 'letni', 'летний', 'صيفي', '夏', 'サマー'],
@@ -169,10 +167,9 @@ function queryConcepts(query: string): { concepts: Set<string>; recognisedTokens
 
   for (const { concept, aliases } of NORMALIZED_CONCEPT_ALIASES) {
     for (const alias of aliases) {
-      if (hasPhrase(query, alias)) {
-        concepts.add(concept);
-        for (const part of alias.split(' ')) recognisedTokens.add(part);
-      }
+      if (!hasPhrase(query, alias)) continue;
+      concepts.add(concept);
+      for (const part of alias.split(' ')) recognisedTokens.add(part);
     }
   }
 
@@ -201,6 +198,7 @@ function buildDocument(variant: OfficialProductVariant): SearchDocument {
     variant.allergens,
     ...variant.aliases,
   ].join(' '));
+
   return {
     variant,
     normalized,
@@ -264,140 +262,4 @@ export function searchOfficialProducts(query: string): UniversalSearchHit[] {
     }))
     .filter((hit) => hit.score > 0)
     .sort((left, right) => right.score - left.score || left.product.localeCompare(right.product));
-}
-
-function exactVariantForQuery(query: string): OfficialProductVariant | undefined {
-  const normalized = normalizeSearchText(query);
-  return OFFICIAL_PRODUCT_VARIANTS.find(
-    (variant) => normalized === normalizeSearchText(variant.sku) || normalized === normalizeSearchText(variant.barcode),
-  );
-}
-
-function restoreQueryInUrl(query: string): void {
-  const url = new URL(window.location.href);
-  if (query.trim()) url.searchParams.set('q', query.trim());
-  else url.searchParams.delete('q');
-  window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
-}
-
-function rowSkus(row: HTMLTableRowElement): string[] {
-  const values = new Set<string>();
-  if (row.dataset.sku) values.add(row.dataset.sku);
-  row.querySelectorAll<HTMLOptionElement>('select[data-format-select] option[value]').forEach((option) => values.add(option.value));
-  return [...values];
-}
-
-function applyUniversalSearch(query: string): void {
-  const rowsElement = document.getElementById('product-rows');
-  const table = document.getElementById('catalogue-table') as HTMLTableElement | null;
-  const empty = document.getElementById('empty-state');
-  if (!rowsElement || !table || !empty) return;
-
-  const rows = [...rowsElement.querySelectorAll<HTMLTableRowElement>('tr[data-sku], tr[data-product-family]')];
-  if (!query.trim()) {
-    rows.forEach((row) => {
-      row.hidden = false;
-      delete row.dataset.searchScore;
-    });
-    return;
-  }
-
-  const hits = searchOfficialProducts(query);
-  const scoreBySku = new Map(hits.map((hit) => [hit.sku, hit.score]));
-  let visible = 0;
-
-  for (const row of rows) {
-    const score = Math.max(0, ...rowSkus(row).map((sku) => scoreBySku.get(sku) ?? 0));
-    row.hidden = score <= 0;
-    if (score > 0) {
-      visible += 1;
-      row.dataset.searchScore = String(score);
-    } else {
-      delete row.dataset.searchScore;
-    }
-  }
-
-  table.hidden = visible === 0;
-  empty.hidden = visible !== 0;
-
-  const result = document.getElementById('catalogue-result');
-  if (result) {
-    const suffix = result.textContent?.replace(/^\s*\d+\s*\/\s*\d+\s*/, '').trim() || 'products';
-    result.textContent = `${visible} / ${rows.length} ${suffix}`;
-  }
-
-  const exact = exactVariantForQuery(query);
-  if (exact) {
-    const selector = [...rowsElement.querySelectorAll<HTMLSelectElement>('select[data-format-select]')].find((candidate) =>
-      [...candidate.options].some((option) => option.value === exact.sku),
-    );
-    if (selector && selector.value !== exact.sku) {
-      selector.value = exact.sku;
-      selector.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-  }
-}
-
-let currentQuery = '';
-let scheduled = 0;
-
-function scheduleApply(): void {
-  window.cancelAnimationFrame(scheduled);
-  scheduled = window.requestAnimationFrame(() => {
-    // Product-format grouping also runs on requestAnimationFrame after a catalogue
-    // render. Apply search one frame later so each family already exposes every
-    // official SKU through its selector and no hidden raw variant can be picked.
-    scheduled = window.requestAnimationFrame(() => applyUniversalSearch(currentQuery));
-  });
-}
-
-const initialUrl = new URL(window.location.href);
-const initialQuery = initialUrl.searchParams.get('q')?.trim() || '';
-if (initialQuery) {
-  currentQuery = initialQuery;
-  initialUrl.searchParams.delete('q');
-  window.history.replaceState(null, '', `${initialUrl.pathname}${initialUrl.search}${initialUrl.hash}`);
-}
-
-document.addEventListener(
-  'input',
-  (event) => {
-    const input = event.target as HTMLInputElement | null;
-    if (!input || input.id !== 'catalogue-search') return;
-
-    const visibleQuery = input.value;
-    currentQuery = visibleQuery;
-
-    if (!visibleQuery.trim()) {
-      queueMicrotask(() => scheduleApply());
-      return;
-    }
-
-    input.value = '';
-    queueMicrotask(() => {
-      input.value = visibleQuery;
-      restoreQueryInUrl(visibleQuery);
-      scheduleApply();
-    });
-  },
-  true,
-);
-
-const rowsElement = document.getElementById('product-rows');
-if (rowsElement) {
-  const observer = new MutationObserver(() => {
-    if (!currentQuery.trim()) return;
-    const input = document.getElementById('catalogue-search') as HTMLInputElement | null;
-    if (input && input.value !== currentQuery) input.value = currentQuery;
-    restoreQueryInUrl(currentQuery);
-    scheduleApply();
-  });
-  observer.observe(rowsElement, { childList: true });
-}
-
-if (initialQuery) {
-  const input = document.getElementById('catalogue-search') as HTMLInputElement | null;
-  if (input) input.value = initialQuery;
-  restoreQueryInUrl(initialQuery);
-  scheduleApply();
 }
