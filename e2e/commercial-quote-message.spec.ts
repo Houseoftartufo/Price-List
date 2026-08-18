@@ -20,6 +20,15 @@ async function expectCommercialLinks(page: Page): Promise<{ whatsapp: string; em
   };
 }
 
+async function switchLocaleAndReopenQuote(page: Page, locale: 'it' | 'fr' | 'nl'): Promise<void> {
+  await page.locator('#quote-close').click();
+  await expect(page.locator('#quote-dialog')).not.toBeVisible();
+  await page.locator(`[data-locale="${locale}"]`).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', locale);
+  await page.locator('#quote-trigger').click();
+  await expect(page.locator('#quote-dialog')).toBeVisible();
+}
+
 test('quote sends a detailed and consistently localized commercial message', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/');
@@ -51,8 +60,7 @@ test('quote sends a detailed and consistently localized commercial message', asy
   expect(messages.email).toContain('Volume discount: −10%');
   expect(messages.email).not.toContain('*');
 
-  await page.locator('[data-locale="it"]').click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'it');
+  await switchLocaleAndReopenQuote(page, 'it');
   messages = await expectCommercialLinks(page);
   expect(messages.whatsapp).toContain('*HOUSE OF TARTUFO — RICHIESTA PREVENTIVO B2B*');
   expect(messages.whatsapp).toContain('Quantità: 3 box × 12 unità = 36 unità');
@@ -60,8 +68,7 @@ test('quote sends a detailed and consistently localized commercial message', asy
   expect(messages.whatsapp).toContain('*RIEPILOGO*');
   expect(messages.email).toContain('Sconto volume: −10%');
 
-  await page.locator('[data-locale="fr"]').click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+  await switchLocaleAndReopenQuote(page, 'fr');
   messages = await expectCommercialLinks(page);
   expect(messages.whatsapp).toContain('*HOUSE OF TARTUFO — DEMANDE DE DEVIS B2B*');
   expect(messages.whatsapp).toContain('Quantité: 3 box × 12 unités = 36 unités');
@@ -69,8 +76,7 @@ test('quote sends a detailed and consistently localized commercial message', asy
   expect(messages.whatsapp).toContain('*RÉCAPITULATIF*');
   expect(messages.email).toContain('Remise volume: −10%');
 
-  await page.locator('[data-locale="nl"]').click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'nl');
+  await switchLocaleAndReopenQuote(page, 'nl');
   messages = await expectCommercialLinks(page);
   expect(messages.whatsapp).toContain('*HOUSE OF TARTUFO — B2B OFFERTEAANVRAAG*');
   expect(messages.whatsapp).toContain('Aantal: 3 boxen × 12 eenheden = 36 eenheden');
