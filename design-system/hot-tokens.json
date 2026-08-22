@@ -1,0 +1,76 @@
+{
+  "meta": {
+    "name": "House of Tartufo Design System",
+    "version": "1.0.0",
+    "source": "Price List light editorial visual language"
+  },
+  "color": {
+    "background": "#f6f2ea",
+    "backgroundTop": "#fbf8f2",
+    "backgroundBottom": "#f4efe7",
+    "surface": "#fffdf9",
+    "surfaceStrong": "#fffdf8",
+    "surfaceSoft": "#eee6da",
+    "surfaceMuted": "#e9dfd2",
+    "ink": "#2b211b",
+    "inkStrong": "#30231c",
+    "inkBrand": "#382a22",
+    "inkMuted": "#75685f",
+    "inkDim": "#9a8b80",
+    "truffle": "#5b4030",
+    "truffleHover": "#493226",
+    "truffleSoft": "#725039",
+    "bronze": "#9b7446",
+    "bronzeStrong": "#765131",
+    "bronzeLabel": "#8b633c",
+    "success": "#75815c",
+    "warning": "#b28346",
+    "danger": "#a45f4d"
+  },
+  "alpha": {
+    "line": "rgba(72, 52, 40, 0.12)",
+    "lineSoft": "rgba(72, 52, 40, 0.10)",
+    "lineStrong": "rgba(72, 52, 40, 0.23)",
+    "bronzeSoft": "rgba(155, 116, 70, 0.10)",
+    "glass": "rgba(255, 253, 249, 0.72)",
+    "glassStrong": "rgba(255, 253, 249, 0.90)",
+    "glassHeader": "rgba(251, 248, 242, 0.90)"
+  },
+  "typography": {
+    "ui": "Manrope, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+    "display": "Cormorant Garamond, Georgia, Times New Roman, serif",
+    "displayWeight": 500,
+    "uiWeightRegular": 400,
+    "uiWeightMedium": 500,
+    "uiWeightSemibold": 600,
+    "eyebrowTracking": "0.22em"
+  },
+  "radius": {
+    "xs": 6,
+    "sm": 10,
+    "md": 12,
+    "lg": 14,
+    "xl": 18,
+    "2xl": 24,
+    "pill": 999
+  },
+  "shadow": {
+    "xs": "0 5px 18px rgba(72, 52, 40, 0.025)",
+    "sm": "0 8px 28px rgba(72, 52, 40, 0.035)",
+    "md": "0 14px 34px rgba(72, 52, 40, 0.055)",
+    "lg": "0 24px 70px rgba(72, 52, 40, 0.08)",
+    "xl": "0 24px 72px rgba(74, 54, 41, 0.10)",
+    "action": "0 8px 22px rgba(91, 64, 48, 0.14)"
+  },
+  "layout": {
+    "containerMax": 1500,
+    "touchMin": 44,
+    "headerBlur": 18
+  },
+  "motion": {
+    "fastMs": 140,
+    "defaultMs": 180,
+    "slowMs": 320,
+    "ease": "cubic-bezier(0.2, 0.75, 0.25, 1)"
+  }
+}
