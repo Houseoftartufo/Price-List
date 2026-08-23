@@ -5,9 +5,7 @@ test.describe('guarded quote engine wizard', () => {
 
   async function seedQuote(page: Page): Promise<void> {
     await page.addInitScript(() => {
-      window.localStorage.setItem('hot-price-list:quote:v1', JSON.stringify([
-        ['5430004174417', 2],
-      ]));
+      window.localStorage.removeItem('hot-price-list:quote:v1');
       window.localStorage.setItem('hot-price-list:locale:v1', 'de');
       (window as typeof window & { __hotAccepted?: unknown }).__hotAccepted = undefined;
       window.addEventListener('hot:quote-engine-accepted', (event) => {
@@ -73,12 +71,16 @@ test.describe('guarded quote engine wizard', () => {
     });
 
     await page.goto('/preview.html');
+    await page.locator('[data-add-quote]').first().click();
     await page.locator('#quote-trigger').click();
-    await expect(page.locator('#quote-dialog')).toHaveAttribute('open', '');
+    await expect(page.locator('#quote-dialog')).toBeVisible();
+    await expect.poll(() => page.locator('#quote-dialog').evaluate((element: HTMLDialogElement) => element.open)).toBe(true);
+    await expect(page.locator('#quote-actions')).toBeVisible();
     await page.locator('#whatsapp-order').click();
 
     const wizard = page.locator('#hot-quote-wizard');
-    await expect(wizard).toHaveAttribute('open', '');
+    await expect(wizard).toBeVisible();
+    await expect.poll(() => wizard.evaluate((element: HTMLDialogElement) => element.open)).toBe(true);
     await expect(page.locator('#hot-quote-turnstile')).toHaveAttribute('data-turnstile-mock', 'ready');
 
     const turnstileAction = await page.evaluate(() => (
@@ -155,7 +157,9 @@ test.describe('guarded quote engine wizard', () => {
     });
 
     await page.goto('/preview.html');
+    await page.locator('[data-add-quote]').first().click();
     await page.locator('#quote-trigger').click();
+    await expect(page.locator('#quote-actions')).toBeVisible();
     await page.locator('#email-order').click();
     await expect(page.locator('#hot-quote-turnstile')).toHaveAttribute('data-turnstile-mock', 'ready');
 
