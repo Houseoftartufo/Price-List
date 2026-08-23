@@ -4,7 +4,7 @@ import type { BillitCommercialProduct, ShopifyProductEnrichment } from '../src/t
 
 const billit: BillitCommercialProduct = {
   productId: 419999,
-  sku: '0048',
+  sku: '5430004174103',
   name: 'Black Truffle Sauce',
   amountExcl: 8.5,
   vatRate: 6,
@@ -14,13 +14,13 @@ const billit: BillitCommercialProduct = {
 const shopify: ShopifyProductEnrichment = {
   productId: 'gid://shopify/Product/1',
   variantId: 'gid://shopify/ProductVariant/1',
-  sku: '0048',
+  sku: '5430004174103',
   handle: 'black-truffle-sauce',
   title: 'Retail title can differ',
   availableForSale: true,
   inventoryQuantity: 4,
   imageUrl: 'https://cdn.shopify.com/example.webp',
-  sizeLabel: '180 g',
+  sizeLabel: '80 g',
   unitsPerCase: 12,
 };
 
@@ -34,6 +34,18 @@ describe('canonical catalogue merge', () => {
     expect(product.imageUrl).toContain('shopify');
     expect(product.availability).toBe('LOW_STOCK');
     expect(product.health).toBe('READY');
+  });
+
+  it('keeps provider ids out of the browser-safe public projection', () => {
+    const { product, internal } = mergeCanonicalProduct(billit, shopify, false);
+    expect(product).not.toHaveProperty('billitProductId');
+    expect(product).not.toHaveProperty('shopifyProductId');
+    expect(product).not.toHaveProperty('shopifyVariantId');
+    expect(internal).toMatchObject({
+      billitProductId: billit.productId,
+      shopifyProductId: shopify.productId,
+      shopifyVariantId: shopify.variantId,
+    });
   });
 
   it('blocks a Billit product that has no matching Shopify SKU', () => {
