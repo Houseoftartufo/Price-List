@@ -2,44 +2,34 @@ import { PREVIEW_COPY, type Locale } from './i18n/i18n';
 
 const BOX_COPY: Record<Locale, Partial<Record<string, string>>> = {
   en: {
-    casePack: 'Units / box',
-    cases: 'Boxes',
-    perCase: '/ box',
+    casePack: 'Units / box', cases: 'Boxes', perCase: '/ box',
     volumePricingBody: 'Discounts apply per product according to the number of boxes ordered.',
-    fromCases: 'from {cases} boxes',
-    nextTier: 'Add {cases} more boxes for −{discount}%',
-    increaseCases: 'Increase boxes',
-    decreaseCases: 'Decrease boxes',
+    fromCases: 'from {cases} boxes', nextTier: 'Add {cases} more boxes for −{discount}%',
+    increaseCases: 'Increase boxes', decreaseCases: 'Decrease boxes',
   },
   it: {
-    casePack: 'Pz / box',
-    cases: 'Box',
-    perCase: '/ box',
+    casePack: 'Pz / box', cases: 'Box', perCase: '/ box',
     volumePricingBody: 'Gli sconti si applicano per singolo prodotto in base al numero di box ordinati.',
-    fromCases: 'da {cases} box',
-    nextTier: 'Aggiungi {cases} box per arrivare a −{discount}%',
-    increaseCases: 'Aumenta box',
-    decreaseCases: 'Diminuisci box',
+    fromCases: 'da {cases} box', nextTier: 'Aggiungi {cases} box per arrivare a −{discount}%',
+    increaseCases: 'Aumenta box', decreaseCases: 'Diminuisci box',
   },
   fr: {
-    casePack: 'Unités / box',
-    cases: 'Box',
-    perCase: '/ box',
+    casePack: 'Unités / box', cases: 'Box', perCase: '/ box',
     volumePricingBody: 'Les remises s’appliquent par produit selon le nombre de box commandées.',
-    fromCases: 'dès {cases} box',
-    nextTier: 'Ajoutez {cases} box pour atteindre −{discount}%',
-    increaseCases: 'Augmenter les box',
-    decreaseCases: 'Réduire les box',
+    fromCases: 'dès {cases} box', nextTier: 'Ajoutez {cases} box pour atteindre −{discount}%',
+    increaseCases: 'Augmenter les box', decreaseCases: 'Réduire les box',
   },
   nl: {
-    casePack: 'Stuks / box',
-    cases: 'Boxen',
-    perCase: '/ box',
+    casePack: 'Stuks / box', cases: 'Boxen', perCase: '/ box',
     volumePricingBody: 'Kortingen gelden per product op basis van het aantal bestelde boxen.',
-    fromCases: 'vanaf {cases} boxen',
-    nextTier: 'Voeg {cases} boxen toe voor −{discount}%',
-    increaseCases: 'Meer boxen',
-    decreaseCases: 'Minder boxen',
+    fromCases: 'vanaf {cases} boxen', nextTier: 'Voeg {cases} boxen toe voor −{discount}%',
+    increaseCases: 'Meer boxen', decreaseCases: 'Minder boxen',
+  },
+  de: {
+    casePack: 'Einheiten / Box', cases: 'Boxen', perCase: '/ Box',
+    volumePricingBody: 'Rabatte gelten pro Produkt abhängig von der Anzahl bestellter Boxen.',
+    fromCases: 'ab {cases} Boxen', nextTier: 'Noch {cases} Boxen für −{discount}%',
+    increaseCases: 'Mehr Boxen', decreaseCases: 'Weniger Boxen',
   },
 };
 
@@ -48,18 +38,12 @@ for (const locale of Object.keys(BOX_COPY) as Locale[]) {
 }
 
 const LEGACY_EXACT_TEXT = new Map<string, string>([
-  ['Case pack', 'Units / box'],
-  ['Cases', 'Boxes'],
+  ['Case pack', 'Units / box'], ['Cases', 'Boxes'],
   ['Discounts apply per product according to the number of cases ordered.', 'Discounts apply per product according to the number of boxes ordered.'],
-  ['Pezzi / scatola', 'Pz / box'],
-  ['Pz/scatola', 'Pz / box'],
-  ['Scatole', 'Box'],
-  ['Pièces / carton', 'Unités / box'],
-  ['Unités/boîte', 'Unités / box'],
-  ['Boîtes', 'Box'],
-  ['Stuks / doos', 'Stuks / box'],
-  ['Stuks/doos', 'Stuks / box'],
-  ['Dozen', 'Boxen'],
+  ['Pezzi / scatola', 'Pz / box'], ['Pz/scatola', 'Pz / box'], ['Scatole', 'Box'],
+  ['Pièces / carton', 'Unités / box'], ['Unités/boîte', 'Unités / box'], ['Boîtes', 'Box'],
+  ['Stuks / doos', 'Stuks / box'], ['Stuks/doos', 'Stuks / box'], ['Dozen', 'Boxen'],
+  ['Einheiten/Karton', 'Einheiten / Box'], ['Kartons', 'Boxen'],
 ]);
 
 function patchTextNode(node: Text): void {
