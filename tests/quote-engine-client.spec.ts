@@ -1,10 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   buildChannelMessage,
   normalizeEmail,
   normalizePhone,
   quoteFingerprint,
+  submitQuote,
   type AcceptedQuote,
   type QuoteCustomerInput,
 } from '../src/quote-engine-client';
@@ -40,6 +41,10 @@ const quote: AcceptedQuote = {
     subtotalExVat: 102,
   }],
 };
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('quote engine browser contract', () => {
   it('normalizes transactional contact data without adding marketing state', () => {
@@ -77,5 +82,30 @@ describe('quote engine browser contract', () => {
     expect(message).toContain('€102.00');
     expect(message).toContain('Truffle Sauce');
     expect(message).toContain('HOT-Q-2026-000123');
+  });
+
+  it('carries the single-use Turnstile token in the quote request body', async () => {
+    const requests: RequestInit[] = [];
+    vi.stubGlobal('fetch', async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init) requests.push(init);
+      return new Response(JSON.stringify({ ok: true, duplicate: false, quote }), {
+        status: 202,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
+
+    await submitQuote('https://quotes.example.test', {
+      idempotencyKey: 'hot-pl-test-123456789',
+      locale: 'de',
+      preferredChannel: 'whatsapp',
+      customer,
+      lines: [{ sku: '5430004174417', cases: 2 }],
+      turnstileToken: 'turnstile-test-token',
+    });
+
+    expect(requests).toHaveLength(1);
+    const payload = JSON.parse(String(requests[0]?.body)) as Record<string, unknown>;
+    expect(payload.turnstileToken).toBe('turnstile-test-token');
+    expect(payload).not.toHaveProperty('price');
   });
 });
