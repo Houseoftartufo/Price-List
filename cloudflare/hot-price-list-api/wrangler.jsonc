@@ -4,7 +4,8 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-08-23",
   "account_id": "ec7956c98d058dadc2c8bcd42fb0fbd7",
-  "workers_dev": true,
+  "workers_dev": false,
+  "preview_urls": true,
   "vars": {
     "QUOTE_ENGINE_ENABLED": "false",
     "SHOPIFY_API_VERSION": "2026-07",
@@ -28,20 +29,6 @@
         "binding": "QUOTE_JOBS",
         "queue": "hot-price-list-jobs"
       }
-    ],
-    "consumers": [
-      {
-        "queue": "hot-price-list-jobs",
-        "max_batch_size": 10,
-        "max_batch_timeout": 5,
-        "max_retries": 8,
-        "dead_letter_queue": "hot-price-list-dlq",
-        "max_concurrency": 5,
-        "retry_delay": 30
-      }
     ]
-  },
-  "triggers": {
-    "crons": ["0 * * * *"]
   }
 }
