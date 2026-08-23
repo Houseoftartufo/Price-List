@@ -1,18 +1,21 @@
 import type { Env } from './env';
 import { upsertCatalogueProduct } from './db';
-import { listBillitProducts } from './providers/billit';
+import { listSheetCommercialProducts } from './providers/sheet';
 import { availabilityState, listShopifyEnrichment } from './providers/shopify';
-import type { BillitCommercialProduct, CanonicalProduct, Locale, ShopifyProductEnrichment } from './types';
+import type { BillitCommercialProduct, CanonicalProduct, Locale, SheetCommercialProduct, ShopifyProductEnrichment } from './types';
 
 interface InternalCatalogueProduct {
-  billitProductId: number;
+  sheetSourceCode?: string;
+  sheetUnitsPerCase?: number;
+  billitProductId?: number;
   billitModifiedAt?: string;
   shopifyProductId?: string;
   shopifyVariantId?: string;
   shopifyModifiedAt?: string;
   rawInventoryQuantity?: number;
   sourceStatus: {
-    billit: 'ok';
+    sheet?: 'ok';
+    billit?: 'ok';
     shopify: 'ok' | 'missing' | 'duplicate';
   };
 }
@@ -34,7 +37,7 @@ function indexUnique<T extends { sku: string }>(items: T[]): { unique: Map<strin
 }
 
 export function mergeCanonicalProduct(
-  billit: BillitCommercialProduct,
+  commercial: BillitCommercialProduct | SheetCommercialProduct,
   shopify: ShopifyProductEnrichment | undefined,
   shopifyDuplicate: boolean,
   verifiedAt = new Date().toISOString(),
@@ -50,9 +53,14 @@ export function mergeCanonicalProduct(
     health = 'BLOCKED';
   }
 
-  if (shopify && !shopify.unitsPerCase) {
+  const officialUnitsPerCase = 'unitsPerCase' in commercial ? commercial.unitsPerCase : undefined;
+  if (!officialUnitsPerCase && shopify && !shopify.unitsPerCase) {
     reasons.push('missing-units-per-case');
     health = 'BLOCKED';
+  }
+  if (officialUnitsPerCase && shopify?.unitsPerCase && officialUnitsPerCase !== shopify.unitsPerCase) {
+    reasons.push('shopify-pack-mismatch');
+    if (health === 'READY') health = 'WARNING';
   }
   if (shopify && !shopify.imageUrl) {
     reasons.push('missing-image');
@@ -70,19 +78,19 @@ export function mergeCanonicalProduct(
     }
   }
 
-  const unitsPerCase = shopify?.unitsPerCase ?? 0;
+  const unitsPerCase = officialUnitsPerCase ?? shopify?.unitsPerCase ?? 0;
   const availability = shopify
     ? availabilityState(shopify.availableForSale, shopify.inventoryQuantity)
     : 'UNAVAILABLE';
 
   const product: CanonicalProduct = {
-    sku: billit.sku,
-    name: billit.name,
+    sku: commercial.sku,
+    name: commercial.name,
     currency: 'EUR',
-    basePriceExVat: billit.amountExcl,
-    vatRate: billit.vatRate,
-    unit: billit.unit,
-    ...(shopify?.sizeLabel ? { sizeLabel: shopify.sizeLabel } : {}),
+    basePriceExVat: commercial.amountExcl,
+    vatRate: commercial.vatRate,
+    unit: commercial.unit,
+    ...('sizeLabel' in commercial ? { sizeLabel: commercial.sizeLabel } : shopify?.sizeLabel ? { sizeLabel: shopify.sizeLabel } : {}),
     unitsPerCase,
     availability,
     ...(shopify?.imageUrl ? { imageUrl: shopify.imageUrl } : {}),
@@ -92,15 +100,21 @@ export function mergeCanonicalProduct(
     verifiedAt,
   };
 
+  const isSheet = 'sourceCode' in commercial;
   const internal: InternalCatalogueProduct = {
-    billitProductId: billit.productId,
-    ...(billit.lastModified ? { billitModifiedAt: billit.lastModified } : {}),
+    ...(isSheet ? {
+      sheetSourceCode: commercial.sourceCode,
+      sheetUnitsPerCase: commercial.sheetUnitsPerCase,
+    } : {
+      billitProductId: commercial.productId,
+      ...(commercial.lastModified ? { billitModifiedAt: commercial.lastModified } : {}),
+    }),
     ...(shopify?.productId ? { shopifyProductId: shopify.productId } : {}),
     ...(shopify?.variantId ? { shopifyVariantId: shopify.variantId } : {}),
     ...(shopify?.updatedAt ? { shopifyModifiedAt: shopify.updatedAt } : {}),
     ...(typeof shopify?.inventoryQuantity === 'number' ? { rawInventoryQuantity: shopify.inventoryQuantity } : {}),
     sourceStatus: {
-      billit: 'ok',
+      ...(isSheet ? { sheet: 'ok' as const } : { billit: 'ok' as const }),
       shopify: shopifyDuplicate ? 'duplicate' : shopify ? 'ok' : 'missing',
     },
   };
@@ -123,14 +137,15 @@ export async function syncCanonicalCatalogue(env: Env, requestId: string): Promi
   `).bind(syncId, startedAt).run();
 
   try {
-    const [billitProducts, shopifyProducts] = await Promise.all([
-      listBillitProducts(env, requestId),
+    void requestId;
+    const [sheetProducts, shopifyProducts] = await Promise.all([
+      listSheetCommercialProducts(),
       listShopifyEnrichment(env),
     ]);
 
-    const billitIndex = indexUnique(billitProducts);
-    if (billitIndex.duplicates.size > 0) {
-      throw new Error(`Duplicate Billit references detected: ${[...billitIndex.duplicates].slice(0, 20).join(', ')}`);
+    const sheetIndex = indexUnique(sheetProducts);
+    if (sheetIndex.duplicates.size > 0) {
+      throw new Error(`Duplicate official SKUs from Price List Sheet: ${[...sheetIndex.duplicates].slice(0, 20).join(', ')}`);
     }
     const shopifyIndex = indexUnique(shopifyProducts);
     const verifiedAt = new Date().toISOString();
@@ -139,11 +154,11 @@ export async function syncCanonicalCatalogue(env: Env, requestId: string): Promi
     let warning = 0;
     let blocked = 0;
 
-    for (const billit of billitProducts) {
+    for (const commercial of sheetProducts) {
       const merged = mergeCanonicalProduct(
-        billit,
-        shopifyIndex.unique.get(billit.sku),
-        shopifyIndex.duplicates.has(billit.sku),
+        commercial,
+        shopifyIndex.unique.get(commercial.sku),
+        shopifyIndex.duplicates.has(commercial.sku),
         verifiedAt,
       );
       if (merged.product.health === 'READY') ready += 1;
@@ -152,14 +167,14 @@ export async function syncCanonicalCatalogue(env: Env, requestId: string): Promi
       await upsertCatalogueProduct(env, merged.product, merged.internal);
     }
 
-    const shopifyOrphans = [...shopifyIndex.unique.keys()].filter((sku) => !billitIndex.unique.has(sku)).sort();
+    const shopifyOrphans = [...shopifyIndex.unique.keys()].filter((sku) => !sheetIndex.unique.has(sku)).sort();
     await env.DB.prepare(`
       UPDATE catalogue_syncs
       SET status = 'success', completed_at = ?, item_count = ?, error_count = 0
       WHERE sync_id = ?
-    `).bind(new Date().toISOString(), billitProducts.length, syncId).run();
+    `).bind(new Date().toISOString(), sheetProducts.length, syncId).run();
 
-    return { total: billitProducts.length, ready, warning, blocked, shopifyOrphans };
+    return { total: sheetProducts.length, ready, warning, blocked, shopifyOrphans };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await env.DB.prepare(`

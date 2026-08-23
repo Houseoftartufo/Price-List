@@ -20,7 +20,7 @@ export function discountRateForCases(cases: number): number {
 export function priceQuoteLine(product: CanonicalProduct, cases: number): CanonicalQuoteLine {
   if (!Number.isInteger(cases) || cases < 1) throw new Error(`Invalid case quantity for SKU ${product.sku}.`);
   if (!Number.isFinite(product.basePriceExVat) || product.basePriceExVat <= 0) {
-    throw new Error(`Billit price is unavailable for SKU ${product.sku}.`);
+    throw new Error(`Commercial price is unavailable for SKU ${product.sku}.`);
   }
   if (!Number.isInteger(product.unitsPerCase) || product.unitsPerCase < 1) {
     throw new Error(`Units per case are unavailable for SKU ${product.sku}.`);
