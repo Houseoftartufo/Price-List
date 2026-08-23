@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { syncCanonicalCatalogue } from '../src/catalogue';
+import { parseSheetCommercialProducts } from '../src/providers/sheet';
 import { acceptQuote } from '../src/quote-service';
 import type { Env } from '../src/env';
 import type { CanonicalProduct, QuoteRequestInput } from '../src/types';
@@ -160,6 +161,15 @@ const input: QuoteRequestInput = {
   },
   lines: [{ sku: OFFICIAL_SKU, cases: 1 }],
 };
+
+describe('Price List Sheet identity bridge', () => {
+  it('keeps the first canonical price row when a later legacy/Natural Line row resolves to the same official SKU', () => {
+    const csv = `Code,Product Name,Shelf Life,Weight/Vol,Qty/Box,€/unit (base),€/box (base)\n59,White Truffle Extra Virgin Olive Oil,2 years,250ml,12,€10.36,€124.32\n139,White Truffle Extra Virgin Olive Oil – Natural Line,2 years,250ml,12,€19.38,€232.56\n`;
+    const products = parseSheetCommercialProducts(csv);
+    const product = products.find((entry) => entry.sku === '5430004174547');
+    expect(product).toMatchObject({ sourceCode: '59', amountExcl: 10.36 });
+  });
+});
 
 describe('Price List commercial source authority', () => {
   afterEach(() => {
