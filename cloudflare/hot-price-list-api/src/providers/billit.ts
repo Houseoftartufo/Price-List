@@ -123,7 +123,6 @@ export async function createBillitOffer(env: Env, requestId: string, quote: Cano
   const body = {
     OrderType: 'Offer',
     OrderDirection: 'Income',
-    OrderNumber: quote.quoteId,
     Reference: quote.quoteId,
     OrderTitle: `House of Tartufo quotation ${quote.quoteId}`,
     OrderDate: quote.createdAt.slice(0, 10),
