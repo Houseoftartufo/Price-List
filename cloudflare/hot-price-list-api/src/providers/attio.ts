@@ -47,12 +47,14 @@ function location(customer: QuoteCustomerInput) {
 }
 
 function preferredLanguage(locale: Locale): string | undefined {
-  return {
+  const values: Partial<Record<Locale, string>> = {
     en: 'English',
     fr: 'French',
     it: 'Italian',
     nl: 'Dutch',
-  }[locale];
+  };
+  // German is deliberately kept in the quote/note until the Attio select has a German option.
+  return values[locale];
 }
 
 function normalizeVat(value: string): string {
