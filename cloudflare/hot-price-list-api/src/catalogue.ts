@@ -76,9 +76,6 @@ export function mergeCanonicalProduct(
     ...(shopify?.localized ? { localized: shopify.localized } : {}),
     health,
     healthReasons: reasons,
-    billitProductId: billit.productId,
-    ...(shopify?.productId ? { shopifyProductId: shopify.productId } : {}),
-    ...(shopify?.variantId ? { shopifyVariantId: shopify.variantId } : {}),
     verifiedAt,
   };
 
