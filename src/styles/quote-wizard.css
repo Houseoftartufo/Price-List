@@ -1,0 +1,225 @@
+.hot-quote-wizard {
+  border: 0;
+  padding: 0;
+  width: min(760px, calc(100vw - 24px));
+  max-height: min(900px, calc(100vh - 24px));
+  border-radius: 24px;
+  background: #f8f4ed;
+  color: #2f251f;
+  box-shadow: 0 28px 90px rgba(47, 37, 31, 0.24);
+}
+
+.hot-quote-wizard::backdrop {
+  background: rgba(34, 27, 23, 0.52);
+  backdrop-filter: blur(8px);
+}
+
+.hot-quote-wizard__panel {
+  display: grid;
+  gap: 22px;
+  padding: clamp(22px, 4vw, 38px);
+  max-height: min(900px, calc(100vh - 24px));
+  overflow: auto;
+}
+
+.hot-quote-wizard__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.hot-quote-wizard__eyebrow {
+  margin: 0 0 7px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7a6658;
+}
+
+.hot-quote-wizard h2 {
+  margin: 0;
+  font-size: clamp(26px, 4vw, 38px);
+  line-height: 1.05;
+  letter-spacing: -.035em;
+}
+
+.hot-quote-wizard__intro {
+  margin: 8px 0 0;
+  max-width: 58ch;
+  color: #6e5c50;
+  line-height: 1.55;
+}
+
+.hot-quote-wizard__close {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(86, 67, 55, .18);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hot-quote-wizard__types {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.hot-quote-wizard__type {
+  position: relative;
+}
+
+.hot-quote-wizard__type input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hot-quote-wizard__type span {
+  display: block;
+  border: 1px solid rgba(86, 67, 55, .16);
+  border-radius: 15px;
+  padding: 13px 16px;
+  text-align: center;
+  font-weight: 650;
+  background: rgba(255,255,255,.5);
+  cursor: pointer;
+}
+
+.hot-quote-wizard__type input:checked + span {
+  border-color: #4f3b2f;
+  background: #3b2c24;
+  color: #fffaf4;
+}
+
+.hot-quote-wizard__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.hot-quote-wizard__field {
+  display: grid;
+  gap: 7px;
+}
+
+.hot-quote-wizard__field--wide {
+  grid-column: 1 / -1;
+}
+
+.hot-quote-wizard__field label,
+.hot-quote-wizard__field > span {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+
+.hot-quote-wizard input,
+.hot-quote-wizard select {
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
+  border: 1px solid rgba(86, 67, 55, .18);
+  border-radius: 12px;
+  background: rgba(255,255,255,.72);
+  padding: 10px 12px;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.hot-quote-wizard input:focus,
+.hot-quote-wizard select:focus {
+  border-color: #6b4d3b;
+  box-shadow: 0 0 0 3px rgba(107, 77, 59, .12);
+}
+
+.hot-quote-wizard__company[hidden] {
+  display: none;
+}
+
+.hot-quote-wizard__status {
+  min-height: 22px;
+  margin: 0;
+  color: #6e5c50;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.hot-quote-wizard__status[data-state="error"] {
+  color: #9a2d27;
+}
+
+.hot-quote-wizard__status[data-state="success"] {
+  color: #2f6b48;
+}
+
+.hot-quote-wizard__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding-top: 4px;
+}
+
+.hot-quote-wizard__privacy {
+  margin: 0;
+  max-width: 45ch;
+  color: #7a6658;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.hot-quote-wizard__submit {
+  flex: 0 0 auto;
+  min-height: 48px;
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 22px;
+  background: #3b2c24;
+  color: #fffaf4;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.hot-quote-wizard__submit:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
+@media (max-width: 640px) {
+  .hot-quote-wizard {
+    width: 100vw;
+    max-width: none;
+    max-height: 92vh;
+    margin: auto 0 0;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .hot-quote-wizard__panel {
+    max-height: 92vh;
+    padding: 22px 18px 28px;
+  }
+
+  .hot-quote-wizard__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hot-quote-wizard__field--wide {
+    grid-column: auto;
+  }
+
+  .hot-quote-wizard__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hot-quote-wizard__submit {
+    width: 100%;
+  }
+}
