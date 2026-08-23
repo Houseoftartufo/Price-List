@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       enable_shadow_quotes:
-        description: 'Enable quotations on the workers.dev shadow after OFF deploy + secret checks'
+        description: 'Enable quotations on the version-preview shadow after OFF deploy + secret checks'
         required: true
         default: false
         type: boolean
@@ -65,9 +65,9 @@ jobs:
         if: steps.auth.outputs.ready == 'true'
         run: npm install --no-audit --no-fund
 
-      - name: Verify worker before provisioning
+      - name: Verify worker and inert shadow config before provisioning
         if: steps.auth.outputs.ready == 'true'
-        run: npm run typecheck && npm test && npm run deploy:dry
+        run: npm run typecheck && npm test && npm run deploy:dry && node scripts/verify-shadow-safety.mjs
 
       - name: Provision isolated Cloudflare resources and deploy OFF
         if: steps.auth.outputs.ready == 'true'
@@ -106,7 +106,7 @@ jobs:
         if: steps.auth.outputs.ready == 'true' && steps.runtime-secrets.outputs.count != '0'
         run: npx wrangler secret bulk .runtime-secrets.json --config .wrangler.deploy.json
 
-      - name: Enable quote engine for explicit shadow QA
+      - name: Enable quote engine for explicit version-preview shadow QA
         if: steps.auth.outputs.ready == 'true' && github.event_name == 'workflow_dispatch' && inputs.enable_shadow_quotes
         run: node scripts/activate-shadow.mjs
 
