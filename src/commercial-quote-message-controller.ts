@@ -10,6 +10,7 @@ function locale(): CommercialQuoteLocale {
   if (value.startsWith('it')) return 'it';
   if (value.startsWith('fr')) return 'fr';
   if (value.startsWith('nl')) return 'nl';
+  if (value.startsWith('de')) return 'de';
   return 'en';
 }
 
