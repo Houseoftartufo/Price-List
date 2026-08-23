@@ -2,7 +2,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 
 const EXPECTED_PRODUCTS = 145;
 const EXPECTED_CATEGORIES = 8;
-const PRODUCTION_URL = 'https://houseoftartufo-price-list.vercel.app/';
+const PRODUCTION_URL = 'https://pricelist.houseoftartufo.com/';
 const JS_BUDGET_BYTES = 250 * 1024;
 const CSS_BUDGET_BYTES = 150 * 1024;
 const HTML_BUDGET_BYTES = 80 * 1024;
