@@ -1,8 +1,13 @@
 import { expect, test } from '@playwright/test';
 
+async function waitForCatalogue(page: Parameters<typeof test>[0] extends never ? never : any): Promise<void> {
+  await expect(page.locator('#product-rows tr[data-sku]').first()).toBeVisible({ timeout: 15_000 });
+}
+
 test.describe('German Price List locale', () => {
   test('switches the buyer UI to German and keeps quote controls usable', async ({ page }) => {
     await page.goto('/preview.html');
+    await waitForCatalogue(page);
     await page.getByRole('button', { name: 'DE', exact: true }).click();
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'de');
@@ -18,8 +23,12 @@ test.describe('German Price List locale', () => {
 
   test('restores German from saved locale', async ({ page }) => {
     await page.goto('/preview.html');
+    await waitForCatalogue(page);
     await page.getByRole('button', { name: 'DE', exact: true }).click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'de');
+
     await page.reload();
+    await waitForCatalogue(page);
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'de');
     await expect(page.locator('#catalogue-search')).toHaveAttribute('placeholder', 'SKU, Produkt, Format suchen…');
