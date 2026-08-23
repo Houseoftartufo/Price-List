@@ -162,6 +162,19 @@ const input: QuoteRequestInput = {
   lines: [{ sku: OFFICIAL_SKU, cases: 1 }],
 };
 
+describe('Price List Sheet verified legacy naming', () => {
+  it('maps the 300g Rice with Truffle row to the official Truffle Risotto variant', () => {
+    const csv = `Code,Product Name,Shelf Life,Weight/Vol,Qty/Box,€/unit (base),€/box (base)\n122,Rice with Truffle,18 months,300g,24,€10.67,€256.08\n`;
+    const products = parseSheetCommercialProducts(csv);
+    expect(products).toContainEqual(expect.objectContaining({
+      sourceCode: '122',
+      sku: '5430004174165',
+      amountExcl: 10.67,
+      unitsPerCase: 24,
+    }));
+  });
+});
+
 describe('Price List Sheet identity bridge', () => {
   it('keeps the first canonical price row when a later legacy/Natural Line row resolves to the same official SKU', () => {
     const csv = `Code,Product Name,Shelf Life,Weight/Vol,Qty/Box,€/unit (base),€/box (base)\n59,White Truffle Extra Virgin Olive Oil,2 years,250ml,12,€10.36,€124.32\n139,White Truffle Extra Virgin Olive Oil – Natural Line,2 years,250ml,12,€19.38,€232.56\n`;
