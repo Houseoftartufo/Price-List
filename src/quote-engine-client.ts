@@ -61,15 +61,10 @@ const QUOTE_KEY = 'hot-price-list:quote:v1';
 const LOCALE_KEY = 'hot-price-list:locale:v1';
 const IDEMPOTENCY_PREFIX = 'hot-price-list:quote-idempotency:v1:';
 
-function envValue(name: string): string | undefined {
-  const meta = import.meta as ImportMeta & { env?: Record<string, string | undefined> };
-  return meta.env?.[name]?.trim() || undefined;
-}
-
 export function quoteEngineConfig(): { enabled: boolean; apiBase?: string; turnstileSiteKey?: string } {
-  const enabled = envValue('VITE_HOT_QUOTE_ENGINE_ENABLED') === 'true';
-  const raw = envValue('VITE_HOT_QUOTE_API_URL');
-  const turnstileSiteKey = envValue('VITE_HOT_TURNSTILE_SITE_KEY');
+  const enabled = import.meta.env.VITE_HOT_QUOTE_ENGINE_ENABLED?.trim() === 'true';
+  const raw = import.meta.env.VITE_HOT_QUOTE_API_URL?.trim() || undefined;
+  const turnstileSiteKey = import.meta.env.VITE_HOT_TURNSTILE_SITE_KEY?.trim() || undefined;
   return {
     enabled,
     ...(raw ? { apiBase: raw.replace(/\/$/, '') } : {}),
