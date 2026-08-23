@@ -5,6 +5,7 @@ const TITLES = {
   it: 'Il catalogo wholesale',
   fr: 'Le catalogue wholesale',
   nl: 'De wholesale catalogus',
+  de: 'Der Großhandelskatalog',
 } as const;
 
 const LOCALE_KEY = 'hot-price-list:locale:v1';
@@ -70,7 +71,7 @@ test('hero uses the new price-catalog eyebrow and one-line H1/H2 in every langua
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/');
 
-  for (const locale of ['en', 'it', 'fr', 'nl'] as const) {
+  for (const locale of ['en', 'it', 'fr', 'nl', 'de'] as const) {
     await loadLocale(page, locale);
     await expectSingleLineHero(page, locale);
   }
@@ -80,7 +81,7 @@ test('hero H1 and H2 remain single-line and overflow-free at 320px', async ({ pa
   await page.setViewportSize({ width: 320, height: 820 });
   await page.goto('/');
 
-  for (const locale of ['en', 'it', 'fr', 'nl'] as const) {
+  for (const locale of ['en', 'it', 'fr', 'nl', 'de'] as const) {
     await loadLocale(page, locale);
     await expectSingleLineHero(page, locale);
   }
