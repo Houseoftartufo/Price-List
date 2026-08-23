@@ -24,6 +24,15 @@ interface QuoteLineRow {
   snapshot_json: string;
 }
 
+export interface QuoteOperationalStatus {
+  quoteId: string;
+  status: string;
+  billit: { status: string; orderId?: string };
+  attio: { status: string; dealId?: string };
+  admin: { status: string };
+  lastError?: string;
+}
+
 export async function upsertCatalogueProduct(env: Env, product: CanonicalProduct, internal: unknown): Promise<void> {
   const existing = await env.DB.prepare('SELECT public_json FROM catalogue_products WHERE sku = ?')
     .bind(product.sku)
@@ -43,6 +52,7 @@ export async function upsertCatalogueProduct(env: Env, product: CanonicalProduct
     }
   }
 
+  const internalMeta = internal as { billitModifiedAt?: string; shopifyModifiedAt?: string };
   await env.DB.prepare(`
     INSERT INTO catalogue_products (
       sku, public_json, internal_json, health, verified_at, billit_modified_at, shopify_modified_at
@@ -60,8 +70,8 @@ export async function upsertCatalogueProduct(env: Env, product: CanonicalProduct
     JSON.stringify(internal),
     product.health,
     product.verifiedAt,
-    (internal as { billitModifiedAt?: string }).billitModifiedAt ?? null,
-    (internal as { shopifyModifiedAt?: string }).shopifyModifiedAt ?? null,
+    internalMeta.billitModifiedAt ?? null,
+    internalMeta.shopifyModifiedAt ?? null,
   ).run();
 }
 
@@ -69,23 +79,19 @@ export async function getCatalogueProduct(env: Env, sku: string): Promise<Canoni
   const row = await env.DB.prepare('SELECT public_json FROM catalogue_products WHERE sku = ?')
     .bind(sku)
     .first<{ public_json: string }>();
-  if (!row) return undefined;
-  return JSON.parse(row.public_json) as CanonicalProduct;
+  return row ? JSON.parse(row.public_json) as CanonicalProduct : undefined;
 }
 
 export async function getCatalogueInternal<T>(env: Env, sku: string): Promise<T | undefined> {
   const row = await env.DB.prepare('SELECT internal_json FROM catalogue_products WHERE sku = ?')
     .bind(sku)
     .first<{ internal_json: string }>();
-  if (!row) return undefined;
-  return JSON.parse(row.internal_json) as T;
+  return row ? JSON.parse(row.internal_json) as T : undefined;
 }
 
 export async function listPublicCatalogue(env: Env): Promise<CanonicalProduct[]> {
-  const result = await env.DB.prepare(`
-    SELECT public_json FROM catalogue_products
-    ORDER BY sku ASC
-  `).all<{ public_json: string }>();
+  const result = await env.DB.prepare('SELECT public_json FROM catalogue_products ORDER BY sku ASC')
+    .all<{ public_json: string }>();
   return result.results.map((row) => JSON.parse(row.public_json) as CanonicalProduct);
 }
 
@@ -97,7 +103,6 @@ export async function nextQuoteId(env: Env, now = new Date()): Promise<string> {
     ON CONFLICT(year) DO UPDATE SET next_value = quote_sequences.next_value + 1
     RETURNING next_value
   `).bind(year).first<{ next_value: number }>();
-
   if (!row?.next_value) throw new Error('Unable to allocate quote sequence.');
   return `HOT-Q-${year}-${String(row.next_value).padStart(6, '0')}`;
 }
@@ -117,10 +122,9 @@ export async function getQuote(env: Env, quoteId: string): Promise<CanonicalQuot
 }
 
 async function hydrateQuote(env: Env, row: QuoteRow): Promise<CanonicalQuote> {
-  const lines = await env.DB.prepare(`
-    SELECT snapshot_json FROM quote_lines WHERE quote_id = ? ORDER BY line_no ASC
-  `).bind(row.quote_id).all<QuoteLineRow>();
-
+  const lines = await env.DB.prepare('SELECT snapshot_json FROM quote_lines WHERE quote_id = ? ORDER BY line_no ASC')
+    .bind(row.quote_id)
+    .all<QuoteLineRow>();
   return {
     quoteId: row.quote_id,
     status: 'ACCEPTED',
@@ -143,28 +147,40 @@ export async function insertQuote(env: Env, quote: CanonicalQuote, idempotencyKe
         customer_json, total_ex_vat, currency, catalogue_verified_at, created_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
-      quote.quoteId,
-      idempotencyKey,
-      quote.status,
-      quote.locale,
-      quote.preferredChannel,
-      JSON.stringify(quote.customer),
-      quote.totalExVat,
-      quote.currency,
-      quote.catalogueVerifiedAt,
-      quote.createdAt,
+      quote.quoteId, idempotencyKey, quote.status, quote.locale, quote.preferredChannel,
+      JSON.stringify(quote.customer), quote.totalExVat, quote.currency, quote.catalogueVerifiedAt, quote.createdAt,
     ),
     ...quote.lines.map((line, index) => env.DB.prepare(`
-      INSERT INTO quote_lines (quote_id, line_no, sku, snapshot_json)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO quote_lines (quote_id, line_no, sku, snapshot_json) VALUES (?, ?, ?, ?)
     `).bind(quote.quoteId, index + 1, line.sku, JSON.stringify(line))),
     env.DB.prepare(`
       INSERT INTO quote_events (quote_id, event_type, event_json, created_at)
       VALUES (?, 'quote.accepted', ?, ?)
     `).bind(quote.quoteId, JSON.stringify({ preferredChannel: quote.preferredChannel }), quote.createdAt),
+    ...(['billit', 'attio', 'admin'] as const).map((provider) => env.DB.prepare(`
+      INSERT INTO provider_jobs (quote_id, provider, status, attempt, available_at)
+      VALUES (?, ?, 'pending', 0, ?)
+    `).bind(quote.quoteId, provider, quote.createdAt)),
   ];
-
   await env.DB.batch(statements);
+}
+
+export async function getQuoteOperationalStatus(env: Env, quoteId: string): Promise<QuoteOperationalStatus | undefined> {
+  const row = await env.DB.prepare(`
+    SELECT quote_id, status, billit_status, billit_order_id, attio_status, attio_deal_id, admin_status, last_error
+    FROM quotes WHERE quote_id = ?
+  `).bind(quoteId).first<Pick<QuoteRow,
+    'quote_id' | 'status' | 'billit_status' | 'billit_order_id' | 'attio_status' | 'attio_deal_id' | 'admin_status' | 'last_error'
+  >>();
+  if (!row) return undefined;
+  return {
+    quoteId: row.quote_id,
+    status: row.status,
+    billit: { status: row.billit_status, ...(row.billit_order_id ? { orderId: row.billit_order_id } : {}) },
+    attio: { status: row.attio_status, ...(row.attio_deal_id ? { dealId: row.attio_deal_id } : {}) },
+    admin: { status: row.admin_status },
+    ...(row.last_error ? { lastError: row.last_error } : {}),
+  };
 }
 
 export async function updateProviderStatus(
@@ -188,9 +204,25 @@ export async function updateProviderStatus(
   }
 
   await env.DB.prepare(`
+    UPDATE provider_jobs
+    SET status = ?, completed_at = CASE WHEN ? = 'success' THEN ? ELSE completed_at END,
+        last_error = ?, attempt = MAX(attempt, ?)
+    WHERE quote_id = ? AND provider = ?
+  `).bind(status === 'success' ? 'success' : 'failed', status, now, error ?? null, 1, quoteId, provider).run();
+
+  await env.DB.prepare(`
     INSERT INTO quote_events (quote_id, event_type, event_json, created_at)
     VALUES (?, ?, ?, ?)
   `).bind(quoteId, `${provider}.${status}`, JSON.stringify(ref ? { ref } : error ? { error } : {}), now).run();
+}
+
+export async function markOutboxAttempt(env: Env, job: QuoteJob, attempt: number, error?: string): Promise<void> {
+  const status = error ? 'failed' : 'processing';
+  await env.DB.prepare(`
+    UPDATE provider_jobs
+    SET status = ?, attempt = ?, locked_at = ?, last_error = ?
+    WHERE quote_id = ? AND provider = ?
+  `).bind(status, attempt, new Date().toISOString(), error ?? null, job.quoteId, job.kind).run();
 }
 
 export async function recordProviderAttempt(
@@ -206,13 +238,19 @@ export async function recordProviderAttempt(
       quote_id, provider, attempt, status, started_at, completed_at, response_ref, error_message
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
-    job.quoteId,
-    job.kind,
-    job.attempt,
-    status,
-    startedAt,
-    new Date().toISOString(),
-    responseRef ?? null,
-    error?.message ?? null,
+    job.quoteId, job.kind, job.attempt, status, startedAt, new Date().toISOString(),
+    responseRef ?? null, error?.message ?? null,
   ).run();
+}
+
+export async function pendingProviderJobs(env: Env, limit = 50): Promise<QuoteJob[]> {
+  const now = new Date().toISOString();
+  const result = await env.DB.prepare(`
+    SELECT quote_id, provider, attempt
+    FROM provider_jobs
+    WHERE status IN ('pending','failed') AND available_at <= ?
+    ORDER BY available_at ASC
+    LIMIT ?
+  `).bind(now, limit).all<{ quote_id: string; provider: QuoteJob['kind']; attempt: number }>();
+  return result.results.map((row) => ({ quoteId: row.quote_id, kind: row.provider, attempt: row.attempt + 1 }));
 }
