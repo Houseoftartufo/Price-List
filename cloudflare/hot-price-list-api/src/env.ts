@@ -4,8 +4,11 @@ export interface Env {
   BILLIT_API_KEY: string;
   BILLIT_PARTY_ID: string;
   SHOPIFY_SHOP_DOMAIN: string;
-  SHOPIFY_ADMIN_ACCESS_TOKEN: string;
+  SHOPIFY_ADMIN_ACCESS_TOKEN?: string;
+  SHOPIFY_CLIENT_ID?: string;
+  SHOPIFY_CLIENT_SECRET?: string;
   ATTIO_API_KEY: string;
+  ATTIO_DEAL_OWNER_EMAIL?: string;
   ADMIN_NOTIFICATION_WEBHOOK?: string;
   API_ORIGIN?: string;
   QUOTE_ENGINE_ENABLED?: string;
