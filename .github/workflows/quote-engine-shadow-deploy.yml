@@ -2,6 +2,12 @@ name: Quote Engine Shadow Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      enable_shadow_quotes:
+        description: 'Enable quotations on the workers.dev shadow after OFF deploy + secret checks'
+        required: true
+        default: false
+        type: boolean
   push:
     branches:
       - codex/price-list-quote-engine
@@ -24,6 +30,7 @@ env:
   SYNC_SHARED_KEY: ${{ secrets.PRICE_LIST_SYNC_SHARED_KEY }}
   ADMIN_NOTIFICATION_WEBHOOK: ${{ secrets.PRICE_LIST_ADMIN_NOTIFICATION_WEBHOOK }}
   TURNSTILE_SECRET: ${{ secrets.PRICE_LIST_TURNSTILE_SECRET }}
+  QUOTE_ENGINE_SHADOW_ENABLED: ${{ github.event_name == 'workflow_dispatch' && inputs.enable_shadow_quotes && 'true' || 'false' }}
 
 jobs:
   shadow-deploy:
@@ -98,6 +105,10 @@ jobs:
       - name: Upload available runtime secrets
         if: steps.auth.outputs.ready == 'true' && steps.runtime-secrets.outputs.count != '0'
         run: npx wrangler secret bulk .runtime-secrets.json --config .wrangler.deploy.json
+
+      - name: Enable quote engine for explicit shadow QA
+        if: steps.auth.outputs.ready == 'true' && github.event_name == 'workflow_dispatch' && inputs.enable_shadow_quotes
+        run: node scripts/activate-shadow.mjs
 
       - name: Show configured secret names only
         if: steps.auth.outputs.ready == 'true'
