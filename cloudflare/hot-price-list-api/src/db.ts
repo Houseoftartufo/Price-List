@@ -252,6 +252,7 @@ export async function beginProviderJob(env: Env, job: QuoteJob, deliveryAttempt:
       AND available_at <= ?
       AND (
         status IN ('queued','pending','failed','retrying')
+        OR (? > 1 AND status = 'processing')
         OR (status = 'processing' AND (locked_at IS NULL OR locked_at <= ?))
       )
     RETURNING quote_id
@@ -261,6 +262,7 @@ export async function beginProviderJob(env: Env, job: QuoteJob, deliveryAttempt:
     job.quoteId,
     job.kind,
     nowIso,
+    deliveryAttempt,
     staleProcessingIso,
   ).first<{ quote_id: string }>();
   return Boolean(row?.quote_id);
