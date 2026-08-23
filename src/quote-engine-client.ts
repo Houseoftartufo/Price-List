@@ -158,6 +158,23 @@ export function normalizeEmail(value: string): string {
   return clean;
 }
 
+function isQuoteAcceptResponse(value: unknown): value is QuoteAcceptResponse {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<QuoteAcceptResponse>;
+  return candidate.ok === true
+    && typeof candidate.duplicate === 'boolean'
+    && Boolean(candidate.quote)
+    && typeof candidate.quote?.quoteId === 'string';
+}
+
+function responseErrorMessage(value: unknown, status: number): string {
+  if (value && typeof value === 'object' && 'message' in value && typeof (value as { message?: unknown }).message === 'string') {
+    const message = (value as { message: string }).message.trim();
+    if (message) return message;
+  }
+  return `Quote API returned HTTP ${status}.`;
+}
+
 export async function submitQuote(apiBase: string, input: QuoteRequestInput): Promise<QuoteAcceptResponse> {
   const response = await fetch(`${apiBase.replace(/\/$/, '')}/quotes`, {
     method: 'POST',
@@ -168,10 +185,9 @@ export async function submitQuote(apiBase: string, input: QuoteRequestInput): Pr
     body: JSON.stringify(input),
   });
 
-  const payload = await response.json().catch(() => undefined) as QuoteAcceptResponse | { message?: string; code?: string } | undefined;
-  if (!response.ok || !payload || payload.ok !== true) {
-    const message = payload && 'message' in payload && payload.message ? payload.message : `Quote API returned HTTP ${response.status}.`;
-    throw new Error(message);
+  const payload: unknown = await response.json().catch(() => undefined);
+  if (!response.ok || !isQuoteAcceptResponse(payload)) {
+    throw new Error(responseErrorMessage(payload, response.status));
   }
   return payload;
 }
