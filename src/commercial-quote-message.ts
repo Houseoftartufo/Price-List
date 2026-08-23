@@ -1,4 +1,4 @@
-export type CommercialQuoteLocale = 'en' | 'it' | 'fr' | 'nl';
+export type CommercialQuoteLocale = 'en' | 'it' | 'fr' | 'nl' | 'de';
 
 export interface CommercialQuoteLine {
   name: string;
@@ -30,6 +30,7 @@ const LOCALE_CODES: Record<CommercialQuoteLocale, string> = {
   it: 'it-IT',
   fr: 'fr-BE',
   nl: 'nl-BE',
+  de: 'de-DE',
 };
 
 const COPY = {
@@ -104,6 +105,24 @@ const COPY = {
     total: 'Geschat totaal',
     exWorks: 'Prijzen ex-works, exclusief btw en verzending.',
     verified: 'Prijzen geverifieerd',
+  },
+  de: {
+    title: 'B2B ANGEBOTSANFRAGE',
+    intro: 'Hallo House of Tartufo, wir möchten ein Angebot für die folgenden Produkte erhalten.',
+    product: (count: number) => (count === 1 ? 'Produkt' : 'Produkte'),
+    box: (count: number) => (count === 1 ? 'Karton' : 'Kartons'),
+    unit: (count: number) => (count === 1 ? 'Einheit' : 'Einheiten'),
+    sku: 'SKU',
+    quantity: 'Menge',
+    netPrice: 'Nettopreis',
+    volumeDiscount: 'Mengenrabatt',
+    subtotal: 'Zwischensumme',
+    summary: 'ZUSAMMENFASSUNG',
+    beforeDiscount: 'Wert vor Mengenrabatten',
+    saving: 'Ersparnis durch Mengenrabatt',
+    total: 'Geschätzte Gesamtsumme',
+    exWorks: 'Preise ab Werk, zzgl. MwSt. und Versand.',
+    verified: 'Preise geprüft',
   },
 } as const;
 
