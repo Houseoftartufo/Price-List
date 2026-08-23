@@ -70,6 +70,7 @@ function preferredLanguage(locale: Locale): string | undefined {
     fr: 'French',
     it: 'Italian',
     nl: 'Dutch',
+    de: 'German',
   };
   // Attio currently has no German option in Preferred Language. The exact DE locale
   // remains first-class in the immutable quote snapshot and the Deal note.
@@ -130,6 +131,7 @@ async function resolveCompany(env: Env, customer: QuoteCustomerInput): Promise<s
   const values = {
     name: customer.companyName,
     primary_location: location(customer),
+    vat_number: normalizeVat(customer.vatNumber),
     description: `House of Tartufo Price List customer · VAT ${normalizeVat(customer.vatNumber)}`,
     ...(domain ? { domains: [domain] } : {}),
   };
@@ -247,7 +249,7 @@ export async function projectQuoteToAttio(env: Env, quote: CanonicalQuote): Prom
           ...(companyId ? { associated_company: [{ target_object: 'companies', target_record_id: companyId }] } : {}),
           opportunity_type: 'Quotation Request',
           quotation_status: 'Preparing',
-          opportunity_channel: 'Website / Shopify',
+          opportunity_channel: preferredContactChannel(quote),
         },
       },
     }),
