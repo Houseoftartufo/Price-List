@@ -23,6 +23,7 @@ env:
   ATTIO_API_KEY: ${{ secrets.ATTIO_API_KEY }}
   SYNC_SHARED_KEY: ${{ secrets.PRICE_LIST_SYNC_SHARED_KEY }}
   ADMIN_NOTIFICATION_WEBHOOK: ${{ secrets.PRICE_LIST_ADMIN_NOTIFICATION_WEBHOOK }}
+  TURNSTILE_SECRET: ${{ secrets.PRICE_LIST_TURNSTILE_SECRET }}
 
 jobs:
   shadow-deploy:
@@ -81,6 +82,7 @@ jobs:
             'ATTIO_API_KEY',
             'SYNC_SHARED_KEY',
             'ADMIN_NOTIFICATION_WEBHOOK',
+            'TURNSTILE_SECRET',
           ];
           const payload = {};
           for (const name of names) {
