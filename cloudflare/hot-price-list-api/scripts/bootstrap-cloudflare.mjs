@@ -63,13 +63,24 @@ function ensureQueue(name) {
   run(['queues', 'create', name, '--config', CONFIG], { capture: false });
 }
 
+function requestedShadowState() {
+  const requested = process.env.QUOTE_ENGINE_SHADOW_ENABLED === 'true';
+  const manualDispatch = process.env.GITHUB_EVENT_NAME === 'workflow_dispatch';
+  if (requested && !manualDispatch) {
+    throw new Error('Refusing to enable shadow quotes outside an explicit workflow_dispatch run.');
+  }
+  return requested;
+}
+
 function createDeployConfig(id) {
   const config = JSON.parse(readFileSync(CONFIG, 'utf8'));
   const binding = config.d1_databases?.find((item) => item.binding === 'DB' || item.database_name === DB_NAME);
   if (!binding) throw new Error('D1 binding DB is missing from Wrangler config.');
   binding.database_id = id;
+  config.vars ||= {};
+  config.vars.QUOTE_ENGINE_ENABLED = requestedShadowState() ? 'true' : 'false';
   writeFileSync(DEPLOY_CONFIG, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
-  return DEPLOY_CONFIG;
+  return { path: DEPLOY_CONFIG, enabled: config.vars.QUOTE_ENGINE_ENABLED === 'true' };
 }
 
 const id = ensureDatabase();
@@ -78,8 +89,8 @@ ensureQueue(JOB_QUEUE);
 const deployConfig = createDeployConfig(id);
 
 console.log('[bootstrap] applying D1 migrations');
-run(['d1', 'migrations', 'apply', DB_NAME, '--remote', '--config', deployConfig], { capture: false });
+run(['d1', 'migrations', 'apply', DB_NAME, '--remote', '--config', deployConfig.path], { capture: false });
 
-console.log('[bootstrap] deploying Worker with quote engine disabled by config');
-run(['deploy', '--config', deployConfig], { capture: false });
+console.log(`[bootstrap] deploying Worker with quote engine ${deployConfig.enabled ? 'ENABLED for explicit shadow QA' : 'disabled'}`);
+run(['deploy', '--config', deployConfig.path], { capture: false });
 console.log('[bootstrap] complete');
