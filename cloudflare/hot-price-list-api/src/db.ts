@@ -1,6 +1,9 @@
 import type { CanonicalProduct, CanonicalQuote, CanonicalQuoteLine, QuoteJob } from './types';
 import type { Env } from './env';
 
+const PROVIDER_CLAIM_STALE_MS = 4 * 60 * 60 * 1000;
+const PROVIDER_PROCESSING_STALE_MS = 15 * 60 * 1000;
+
 interface QuoteRow {
   quote_id: string;
   idempotency_key: string;
@@ -22,6 +25,12 @@ interface QuoteRow {
 
 interface QuoteLineRow {
   snapshot_json: string;
+}
+
+interface ProviderJobRow {
+  quote_id: string;
+  provider: QuoteJob['kind'];
+  attempt: number;
 }
 
 export interface QuoteOperationalStatus {
@@ -183,46 +192,128 @@ export async function getQuoteOperationalStatus(env: Env, quoteId: string): Prom
   };
 }
 
-export async function updateProviderStatus(
-  env: Env,
-  quoteId: string,
-  provider: QuoteJob['kind'],
-  status: string,
-  ref?: string,
-  error?: string,
-): Promise<void> {
-  const column = provider === 'billit' ? 'billit_status' : provider === 'attio' ? 'attio_status' : 'admin_status';
-  const refColumn = provider === 'billit' ? 'billit_order_id' : provider === 'attio' ? 'attio_deal_id' : undefined;
-  const now = new Date().toISOString();
-
-  if (refColumn && ref) {
-    await env.DB.prepare(`UPDATE quotes SET ${column} = ?, ${refColumn} = ?, last_error = ? WHERE quote_id = ?`)
-      .bind(status, ref, error ?? null, quoteId).run();
-  } else {
-    await env.DB.prepare(`UPDATE quotes SET ${column} = ?, last_error = ? WHERE quote_id = ?`)
-      .bind(status, error ?? null, quoteId).run();
-  }
-
-  await env.DB.prepare(`
-    UPDATE provider_jobs
-    SET status = ?, completed_at = CASE WHEN ? = 'success' THEN ? ELSE completed_at END,
-        last_error = ?, attempt = MAX(attempt, ?)
-    WHERE quote_id = ? AND provider = ?
-  `).bind(status === 'success' ? 'success' : 'failed', status, now, error ?? null, 1, quoteId, provider).run();
-
-  await env.DB.prepare(`
-    INSERT INTO quote_events (quote_id, event_type, event_json, created_at)
-    VALUES (?, ?, ?, ?)
-  `).bind(quoteId, `${provider}.${status}`, JSON.stringify(ref ? { ref } : error ? { error } : {}), now).run();
+function providerColumns(provider: QuoteJob['kind']): { status: string; ref?: string } {
+  if (provider === 'billit') return { status: 'billit_status', ref: 'billit_order_id' };
+  if (provider === 'attio') return { status: 'attio_status', ref: 'attio_deal_id' };
+  return { status: 'admin_status' };
 }
 
-export async function markOutboxAttempt(env: Env, job: QuoteJob, attempt: number, error?: string): Promise<void> {
-  const status = error ? 'failed' : 'processing';
-  await env.DB.prepare(`
+export async function claimProviderJobs(env: Env, limit = 50, quoteId?: string): Promise<QuoteJob[]> {
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const staleIso = new Date(now.getTime() - PROVIDER_CLAIM_STALE_MS).toISOString();
+  const quoteFilter = quoteId ? 'AND quote_id = ?' : '';
+  const statement = env.DB.prepare(`
     UPDATE provider_jobs
-    SET status = ?, attempt = ?, locked_at = ?, last_error = ?
+    SET status = 'queued', attempt = attempt + 1, locked_at = ?, last_error = NULL
+    WHERE rowid IN (
+      SELECT rowid
+      FROM provider_jobs
+      WHERE available_at <= ?
+        AND (
+          status IN ('pending','failed')
+          OR (
+            status IN ('queued','processing','retrying')
+            AND locked_at IS NOT NULL
+            AND locked_at <= ?
+          )
+        )
+        ${quoteFilter}
+      ORDER BY available_at ASC, quote_id ASC, provider ASC
+      LIMIT ?
+    )
+    RETURNING quote_id, provider, attempt
+  `);
+  const bound = quoteId
+    ? statement.bind(nowIso, nowIso, staleIso, quoteId, limit)
+    : statement.bind(nowIso, nowIso, staleIso, limit);
+  const result = await bound.all<ProviderJobRow>();
+  return result.results.map((row) => ({ quoteId: row.quote_id, kind: row.provider, attempt: row.attempt }));
+}
+
+export async function releaseClaimedProviderJobs(env: Env, jobs: QuoteJob[], error?: string): Promise<void> {
+  if (!jobs.length) return;
+  await env.DB.batch(jobs.map((job) => env.DB.prepare(`
+    UPDATE provider_jobs
+    SET status = 'pending', locked_at = NULL, last_error = ?
+    WHERE quote_id = ? AND provider = ? AND status = 'queued'
+  `).bind(error?.slice(0, 1000) ?? null, job.quoteId, job.kind)));
+}
+
+export async function beginProviderJob(env: Env, job: QuoteJob, deliveryAttempt: number): Promise<boolean> {
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const staleProcessingIso = new Date(now.getTime() - PROVIDER_PROCESSING_STALE_MS).toISOString();
+  const row = await env.DB.prepare(`
+    UPDATE provider_jobs
+    SET status = 'processing', attempt = MAX(attempt, ?), locked_at = ?, last_error = NULL
     WHERE quote_id = ? AND provider = ?
-  `).bind(status, attempt, new Date().toISOString(), error ?? null, job.quoteId, job.kind).run();
+      AND status <> 'success'
+      AND available_at <= ?
+      AND (
+        status IN ('queued','pending','failed','retrying')
+        OR (status = 'processing' AND (locked_at IS NULL OR locked_at <= ?))
+      )
+    RETURNING quote_id
+  `).bind(
+    Math.max(job.attempt, deliveryAttempt),
+    nowIso,
+    job.quoteId,
+    job.kind,
+    nowIso,
+    staleProcessingIso,
+  ).first<{ quote_id: string }>();
+  return Boolean(row?.quote_id);
+}
+
+export async function markProviderSuccess(env: Env, job: QuoteJob, ref: string): Promise<void> {
+  const columns = providerColumns(job.kind);
+  const now = new Date().toISOString();
+  const quoteStatement = columns.ref
+    ? env.DB.prepare(`UPDATE quotes SET ${columns.status} = 'success', ${columns.ref} = ?, last_error = NULL WHERE quote_id = ?`)
+        .bind(ref, job.quoteId)
+    : env.DB.prepare(`UPDATE quotes SET ${columns.status} = 'success', last_error = NULL WHERE quote_id = ?`)
+        .bind(job.quoteId);
+
+  await env.DB.batch([
+    quoteStatement,
+    env.DB.prepare(`
+      UPDATE provider_jobs
+      SET status = 'success', completed_at = ?, locked_at = NULL, last_error = NULL
+      WHERE quote_id = ? AND provider = ?
+    `).bind(now, job.quoteId, job.kind),
+    env.DB.prepare(`
+      INSERT INTO quote_events (quote_id, event_type, event_json, created_at)
+      VALUES (?, ?, ?, ?)
+    `).bind(job.quoteId, `${job.kind}.success`, JSON.stringify({ ref }), now),
+  ]);
+}
+
+export async function markProviderFailure(
+  env: Env,
+  job: QuoteJob,
+  error: string,
+  delaySeconds: number,
+): Promise<void> {
+  const columns = providerColumns(job.kind);
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const retryAt = new Date(now.getTime() + delaySeconds * 1000).toISOString();
+  const safeError = error.slice(0, 1000);
+
+  await env.DB.batch([
+    env.DB.prepare(`UPDATE quotes SET ${columns.status} = 'retrying', last_error = ? WHERE quote_id = ?`)
+      .bind(safeError, job.quoteId),
+    env.DB.prepare(`
+      UPDATE provider_jobs
+      SET status = 'retrying', available_at = ?, locked_at = ?, last_error = ?
+      WHERE quote_id = ? AND provider = ?
+    `).bind(retryAt, nowIso, safeError, job.quoteId, job.kind),
+    env.DB.prepare(`
+      INSERT INTO quote_events (quote_id, event_type, event_json, created_at)
+      VALUES (?, ?, ?, ?)
+    `).bind(job.quoteId, `${job.kind}.failed`, JSON.stringify({ error: safeError, retryAt }), nowIso),
+  ]);
 }
 
 export async function recordProviderAttempt(
@@ -241,16 +332,4 @@ export async function recordProviderAttempt(
     job.quoteId, job.kind, job.attempt, status, startedAt, new Date().toISOString(),
     responseRef ?? null, error?.message ?? null,
   ).run();
-}
-
-export async function pendingProviderJobs(env: Env, limit = 50): Promise<QuoteJob[]> {
-  const now = new Date().toISOString();
-  const result = await env.DB.prepare(`
-    SELECT quote_id, provider, attempt
-    FROM provider_jobs
-    WHERE status IN ('pending','failed') AND available_at <= ?
-    ORDER BY available_at ASC
-    LIMIT ?
-  `).bind(now, limit).all<{ quote_id: string; provider: QuoteJob['kind']; attempt: number }>();
-  return result.results.map((row) => ({ quoteId: row.quote_id, kind: row.provider, attempt: row.attempt + 1 }));
 }
