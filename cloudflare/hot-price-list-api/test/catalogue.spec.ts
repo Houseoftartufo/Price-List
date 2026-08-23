@@ -11,6 +11,14 @@ const billit: BillitCommercialProduct = {
   unit: 'NAR',
 };
 
+const localized = {
+  en: { title: 'Black Truffle Sauce', description: '<p>English</p>' },
+  fr: { title: 'Sauce à la truffe noire', description: '<p>Français</p>' },
+  it: { title: 'Salsa al tartufo nero', description: '<p>Italiano</p>' },
+  nl: { title: 'Zwarte truffelsaus', description: '<p>Nederlands</p>' },
+  de: { title: 'Schwarze Trüffelsauce', description: '<p>Deutsch</p>' },
+} satisfies NonNullable<ShopifyProductEnrichment['localized']>;
+
 const shopify: ShopifyProductEnrichment = {
   productId: 'gid://shopify/Product/1',
   variantId: 'gid://shopify/ProductVariant/1',
@@ -22,6 +30,7 @@ const shopify: ShopifyProductEnrichment = {
   imageUrl: 'https://cdn.shopify.com/example.webp',
   sizeLabel: '80 g',
   unitsPerCase: 12,
+  localized,
 };
 
 describe('canonical catalogue merge', () => {
@@ -66,5 +75,14 @@ describe('canonical catalogue merge', () => {
     expect(product.health).toBe('WARNING');
     expect(product.healthReasons).toContain('missing-image');
     expect(product.basePriceExVat).toBe(billit.amountExcl);
+  });
+
+  it('warns instead of blocking when one official locale is incomplete', () => {
+    const { product } = mergeCanonicalProduct(billit, {
+      ...shopify,
+      localized: { ...localized, de: { title: localized.de.title } },
+    }, false);
+    expect(product.health).toBe('WARNING');
+    expect(product.healthReasons).toContain('missing-de-description');
   });
 });
