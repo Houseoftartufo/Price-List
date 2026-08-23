@@ -136,7 +136,14 @@ async function handleStatus(request: Request, env: Env, quoteId: string): Promis
   if (!quote || quote.quoteId !== quoteId) return json(request, env, { ok: false, code: 'not-found' }, 404);
   const status = await getQuoteOperationalStatus(env, quoteId);
   return status
-    ? json(request, env, { ok: true, ...status })
+    ? json(request, env, {
+        ok: true,
+        quoteId: status.quoteId,
+        status: status.status,
+        billit: { status: status.billit.status },
+        attio: { status: status.attio.status },
+        admin: { status: status.admin.status },
+      })
     : json(request, env, { ok: false, code: 'not-found' }, 404);
 }
 
