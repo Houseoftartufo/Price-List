@@ -1,15 +1,17 @@
 import type { Env } from './env';
 import { quoteEngineEnabled } from './env';
 import {
+  beginProviderJob,
+  claimProviderJobs,
   getCatalogueProduct,
   getQuote,
   getQuoteByIdempotencyKey,
   getQuoteOperationalStatus,
   listPublicCatalogue,
-  markOutboxAttempt,
-  pendingProviderJobs,
+  markProviderFailure,
+  markProviderSuccess,
   recordProviderAttempt,
-  updateProviderStatus,
+  releaseClaimedProviderJobs,
 } from './db';
 import { syncCanonicalCatalogue } from './catalogue';
 import { acceptQuote } from './quote-service';
@@ -52,7 +54,7 @@ function json(request: Request, env: Env, body: unknown, status = 200, extra: He
     status,
     headers: {
       ...corsHeaders(request, env),
-      'Cache-Control': status === 200 ? 'no-store' : 'no-store',
+      'Cache-Control': 'no-store',
       'X-Content-Type-Options': 'nosniff',
       ...extra,
     },
@@ -66,20 +68,25 @@ function isInternalRequest(request: Request, env: Env): boolean {
   return value === `Bearer ${runtime.SYNC_SHARED_KEY}`;
 }
 
-async function enqueueInitialJobs(env: Env, quoteId: string): Promise<void> {
-  const jobs: QuoteJob[] = [
-    { quoteId, kind: 'billit', attempt: 0 },
-    { quoteId, kind: 'attio', attempt: 0 },
-    { quoteId, kind: 'admin', attempt: 0 },
-  ];
-  await env.QUOTE_JOBS.sendBatch(jobs.map((body) => ({ body })));
+async function dispatchClaimedJobs(env: Env, jobs: QuoteJob[]): Promise<number> {
+  if (!jobs.length) return 0;
+  try {
+    await env.QUOTE_JOBS.sendBatch(jobs.map((body) => ({ body })));
+    return jobs.length;
+  } catch (error) {
+    await releaseClaimedProviderJobs(env, jobs, error instanceof Error ? error.message : String(error));
+    throw error;
+  }
+}
+
+async function enqueueInitialJobs(env: Env, quoteId: string): Promise<number> {
+  const jobs = await claimProviderJobs(env, 3, quoteId);
+  return dispatchClaimedJobs(env, jobs);
 }
 
 async function enqueueRecoveryJobs(env: Env): Promise<number> {
-  const jobs = await pendingProviderJobs(env, 50);
-  if (!jobs.length) return 0;
-  await env.QUOTE_JOBS.sendBatch(jobs.map((body) => ({ body })));
-  return jobs.length;
+  const jobs = await claimProviderJobs(env, 50);
+  return dispatchClaimedJobs(env, jobs);
 }
 
 async function handleQuote(request: Request, env: Env): Promise<Response> {
@@ -225,7 +232,10 @@ async function fetchHandler(request: Request, env: Env): Promise<Response> {
 }
 
 async function processQueueMessage(message: Message<QuoteJob>, env: Env): Promise<void> {
-  const job: QuoteJob = { ...message.body, attempt: message.attempts };
+  const job: QuoteJob = {
+    ...message.body,
+    attempt: Math.max(message.body.attempt, message.attempts),
+  };
   const quote = await getQuote(env, job.quoteId);
   if (!quote) {
     console.error('[HOT Price List] queue job references missing quote', { job });
@@ -244,9 +254,13 @@ async function processQueueMessage(message: Message<QuoteJob>, env: Env): Promis
     return;
   }
 
-  const startedAt = new Date().toISOString();
-  await markOutboxAttempt(env, job, message.attempts);
+  const acquired = await beginProviderJob(env, job, message.attempts);
+  if (!acquired) {
+    message.ack();
+    return;
+  }
 
+  const startedAt = new Date().toISOString();
   try {
     let ref: string;
     if (job.kind === 'billit') {
@@ -258,13 +272,13 @@ async function processQueueMessage(message: Message<QuoteJob>, env: Env): Promis
     }
 
     await recordProviderAttempt(env, job, 'success', startedAt, ref);
-    await updateProviderStatus(env, job.quoteId, job.kind, 'success', ref);
+    await markProviderSuccess(env, job, ref);
     message.ack();
   } catch (error) {
     const failure = error instanceof Error ? error : new Error(String(error));
-    await recordProviderAttempt(env, job, 'failed', startedAt, undefined, failure);
-    await updateProviderStatus(env, job.quoteId, job.kind, 'failed', undefined, failure.message.slice(0, 1000));
     const delaySeconds = Math.min(3600, Math.max(30, 30 * 2 ** Math.min(message.attempts - 1, 6)));
+    await recordProviderAttempt(env, job, 'failed', startedAt, undefined, failure);
+    await markProviderFailure(env, job, failure.message, delaySeconds);
     message.retry({ delaySeconds });
   }
 }
