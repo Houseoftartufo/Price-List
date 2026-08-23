@@ -1,0 +1,49 @@
+name: Quote Engine Quality
+
+on:
+  push:
+    branches:
+      - codex/price-list-quote-engine
+    paths:
+      - 'cloudflare/hot-price-list-api/**'
+      - '.github/workflows/quote-engine.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'cloudflare/hot-price-list-api/**'
+      - '.github/workflows/quote-engine.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  quote-engine:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: cloudflare/hot-price-list-api
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: cloudflare/hot-price-list-api/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Wrangler dry-run bundle
+        run: npm run deploy:dry
