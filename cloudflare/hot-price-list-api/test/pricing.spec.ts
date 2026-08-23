@@ -3,20 +3,17 @@ import { discountRateForCases, priceQuoteLine } from '../src/pricing';
 import type { CanonicalProduct } from '../src/types';
 
 const product: CanonicalProduct = {
-  sku: '0048',
+  sku: '5430004174103',
   name: 'Black Truffle Sauce',
   currency: 'EUR',
   basePriceExVat: 10,
   vatRate: 6,
   unit: 'NAR',
-  sizeLabel: '180 g',
+  sizeLabel: '80 g',
   unitsPerCase: 12,
   availability: 'IN_STOCK',
   health: 'READY',
   healthReasons: [],
-  billitProductId: 419999,
-  shopifyProductId: 'gid://shopify/Product/1',
-  shopifyVariantId: 'gid://shopify/ProductVariant/1',
   verifiedAt: '2026-08-23T12:00:00.000Z',
 };
 
