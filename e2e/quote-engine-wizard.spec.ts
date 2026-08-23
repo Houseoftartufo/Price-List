@@ -111,10 +111,9 @@ test.describe('guarded quote engine wizard', () => {
     expect(submitted).not.toHaveProperty('price');
     expect(submitted).not.toHaveProperty('total');
 
-    const accepted = await page.evaluate(() => (
+    await expect.poll(() => page.evaluate(() => (
       window as typeof window & { __hotAccepted?: { quoteId?: string; channel?: string } }
-    ).__hotAccepted);
-    expect(accepted).toMatchObject({ quoteId: 'HOT-Q-2026-009999', channel: 'whatsapp' });
+    ).__hotAccepted)).toMatchObject({ quoteId: 'HOT-Q-2026-009999', channel: 'whatsapp' });
 
     await popup.waitForLoadState('domcontentloaded').catch(() => undefined);
     expect(popup.url()).toContain('wa.me/32480205715');

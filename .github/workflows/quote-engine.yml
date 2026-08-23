@@ -45,3 +45,12 @@ jobs:
 
       - name: Wrangler dry-run bundle
         run: npm run deploy:dry
+
+      - name: Upload verified Worker dry-run bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: hot-price-list-api-wrangler-dry-run
+          path: cloudflare/hot-price-list-api/.wrangler-dry-run
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
