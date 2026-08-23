@@ -8,6 +8,7 @@
   "vars": {
     "QUOTE_ENGINE_ENABLED": "false",
     "SHOPIFY_API_VERSION": "2026-07",
+    "SHOPIFY_SHOP_DOMAIN": "cc4fd8.myshopify.com",
     "BILLIT_BASE_URL": "https://api.billit.be",
     "API_ORIGIN": "https://pricelist.houseoftartufo.com,https://price-list-git-codex-price-list-quote-engine-house-of-tartufo.vercel.app",
     "TURNSTILE_HOSTNAMES": "pricelist.houseoftartufo.com,price-list-git-codex-price-list-quote-engine-house-of-tartufo.vercel.app",
