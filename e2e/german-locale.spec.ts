@@ -1,6 +1,6 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
-async function waitForCatalogue(page: Parameters<typeof test>[0] extends never ? never : any): Promise<void> {
+async function waitForCatalogue(page: Page): Promise<void> {
   await expect(page.locator('#product-rows tr[data-sku]').first()).toBeVisible({ timeout: 15_000 });
 }
 
