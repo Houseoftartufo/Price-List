@@ -2,7 +2,7 @@ import type { Env } from './env';
 import { upsertCatalogueProduct } from './db';
 import { listBillitProducts } from './providers/billit';
 import { availabilityState, listShopifyEnrichment } from './providers/shopify';
-import type { BillitCommercialProduct, CanonicalProduct, ShopifyProductEnrichment } from './types';
+import type { BillitCommercialProduct, CanonicalProduct, Locale, ShopifyProductEnrichment } from './types';
 
 interface InternalCatalogueProduct {
   billitProductId: number;
@@ -16,6 +16,8 @@ interface InternalCatalogueProduct {
     shopify: 'ok' | 'missing' | 'duplicate';
   };
 }
+
+const REQUIRED_LOCALES: Locale[] = ['en', 'fr', 'it', 'nl', 'de'];
 
 function indexUnique<T extends { sku: string }>(items: T[]): { unique: Map<string, T>; duplicates: Set<string> } {
   const unique = new Map<string, T>();
@@ -55,6 +57,17 @@ export function mergeCanonicalProduct(
   if (shopify && !shopify.imageUrl) {
     reasons.push('missing-image');
     if (health === 'READY') health = 'WARNING';
+  }
+
+  if (shopify) {
+    for (const locale of REQUIRED_LOCALES) {
+      const content = shopify.localized?.[locale];
+      if (!content?.title) reasons.push(`missing-${locale}-title`);
+      if (!content?.description) reasons.push(`missing-${locale}-description`);
+    }
+    if (reasons.some((reason) => reason.startsWith('missing-') && reason !== 'missing-units-per-case' && reason !== 'missing-image')) {
+      if (health === 'READY') health = 'WARNING';
+    }
   }
 
   const unitsPerCase = shopify?.unitsPerCase ?? 0;
