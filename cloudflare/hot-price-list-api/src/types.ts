@@ -15,6 +15,24 @@ export interface BillitCommercialProduct {
   lastModified?: string;
 }
 
+
+export interface SheetCommercialProduct {
+  /** Legacy numeric row code from HOT_PriceList_DataSheet_2026; not the runtime SKU. */
+  sourceCode: string;
+  /** Official EAN/SKU resolved through Master_file_prodotti.xlsx. */
+  sku: string;
+  name: string;
+  amountExcl: number;
+  vatRate: number;
+  unit: string;
+  sizeLabel: string;
+  /** Official case pack from Master_file_prodotti.xlsx. */
+  unitsPerCase: number;
+  /** Sheet Qty/Box retained for reconciliation/audit only. */
+  sheetUnitsPerCase: number;
+  officialKey: string;
+}
+
 export interface ShopifyProductEnrichment {
   productId: string;
   variantId: string;

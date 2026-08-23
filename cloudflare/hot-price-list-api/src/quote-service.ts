@@ -1,6 +1,5 @@
 import type { Env } from './env';
 import {
-  getCatalogueInternal,
   getCatalogueProduct,
   getQuoteByIdempotencyKey,
   insertQuote,
@@ -8,17 +7,13 @@ import {
   upsertCatalogueProduct,
 } from './db';
 import { mergeCanonicalProduct } from './catalogue';
-import { getBillitProductById } from './providers/billit';
+import { listSheetCommercialProducts } from './providers/sheet';
 import { listShopifyEnrichment } from './providers/shopify';
 import { priceQuoteLine, roundMoney } from './pricing';
-import type { CanonicalQuote, QuoteRequestInput, ShopifyProductEnrichment } from './types';
+import type { CanonicalQuote, QuoteRequestInput, SheetCommercialProduct, ShopifyProductEnrichment } from './types';
 
-interface InternalCatalogueProduct {
-  billitProductId: number;
-}
-
-function uniqueShopifyBySku(items: ShopifyProductEnrichment[]): { unique: Map<string, ShopifyProductEnrichment>; duplicates: Set<string> } {
-  const unique = new Map<string, ShopifyProductEnrichment>();
+function uniqueBySku<T extends { sku: string }>(items: T[]): { unique: Map<string, T>; duplicates: Set<string> } {
+  const unique = new Map<string, T>();
   const duplicates = new Set<string>();
   for (const item of items) {
     if (unique.has(item.sku)) {
@@ -35,45 +30,37 @@ export async function acceptQuote(env: Env, requestId: string, input: QuoteReque
   const existing = await getQuoteByIdempotencyKey(env, input.idempotencyKey);
   if (existing) return { quote: existing, duplicate: true };
 
-  // A fresh Shopify read makes Shopify authoritative for availability at submit time.
-  const shopify = uniqueShopifyBySku(await listShopifyEnrichment(env));
+  void requestId;
+  // Fresh Sheet + official-master data remains authoritative for commercial terms; Shopify is authoritative for availability.
+  const [sheetProducts, shopifyProducts] = await Promise.all([
+    listSheetCommercialProducts(),
+    listShopifyEnrichment(env),
+  ]);
+  const sheet = uniqueBySku<SheetCommercialProduct>(sheetProducts);
+  const shopify = uniqueBySku<ShopifyProductEnrichment>(shopifyProducts);
+  if (sheet.duplicates.size > 0) {
+    throw new Error(`Duplicate official SKUs from Price List Sheet: ${[...sheet.duplicates].slice(0, 20).join(', ')}`);
+  }
   const lines = [];
   let latestCatalogueVerification = '';
 
   for (const requested of input.lines) {
     const projected = await getCatalogueProduct(env, requested.sku);
-    const internal = await getCatalogueInternal<InternalCatalogueProduct>(env, requested.sku);
-    if (!projected || !internal?.billitProductId) {
+    const freshCommercial = sheet.unique.get(requested.sku);
+    if (!projected || !freshCommercial) {
       throw new Error(`SKU ${requested.sku} is not present in the verified B2B catalogue.`);
-    }
-
-    // Billit is authoritative for reference, official commercial name, ex-VAT price and VAT.
-    const freshBillit = await getBillitProductById(env, requestId, internal.billitProductId);
-    if (freshBillit.sku !== requested.sku) {
-      throw new Error(`Billit reference mismatch for requested SKU ${requested.sku}.`);
     }
 
     const freshShopify = shopify.unique.get(requested.sku);
     const merged = mergeCanonicalProduct(
-      freshBillit,
+      freshCommercial,
       freshShopify,
       shopify.duplicates.has(requested.sku),
       new Date().toISOString(),
     );
 
     // Persist the fresh projection and price history before creating the immutable quote snapshot.
-    await upsertCatalogueProduct(env, merged.product, {
-      billitProductId: freshBillit.productId,
-      billitModifiedAt: freshBillit.lastModified,
-      shopifyProductId: freshShopify?.productId,
-      shopifyVariantId: freshShopify?.variantId,
-      shopifyModifiedAt: freshShopify?.updatedAt,
-      rawInventoryQuantity: freshShopify?.inventoryQuantity,
-      sourceStatus: {
-        billit: 'ok',
-        shopify: shopify.duplicates.has(requested.sku) ? 'duplicate' : freshShopify ? 'ok' : 'missing',
-      },
-    });
+    await upsertCatalogueProduct(env, merged.product, merged.internal);
 
     if (merged.product.health === 'BLOCKED') {
       throw new Error(`SKU ${requested.sku} is blocked: ${merged.product.healthReasons.join(', ')}.`);
