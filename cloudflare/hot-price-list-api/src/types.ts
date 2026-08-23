@@ -39,6 +39,7 @@ export interface ShopifyProductEnrichment {
   updatedAt?: string;
 }
 
+/** Browser-safe catalogue projection. Provider IDs stay in D1 internal_json only. */
 export interface CanonicalProduct {
   sku: string;
   name: string;
@@ -53,9 +54,6 @@ export interface CanonicalProduct {
   localized?: ShopifyProductEnrichment['localized'];
   health: CatalogueHealth;
   healthReasons: string[];
-  billitProductId: number;
-  shopifyProductId?: string;
-  shopifyVariantId?: string;
   verifiedAt: string;
 }
 
