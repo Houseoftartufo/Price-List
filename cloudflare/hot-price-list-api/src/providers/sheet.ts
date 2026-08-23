@@ -147,7 +147,11 @@ export function parseSheetCommercialProducts(csv: string): SheetCommercialProduc
       const sameCommercialData = existing.amountExcl === product.amountExcl
         && existing.sheetUnitsPerCase === product.sheetUnitsPerCase;
       if (!sameCommercialData) {
-        throw new Error(`Price List Sheet maps multiple conflicting rows to official SKU ${product.sku}.`);
+        console.warn('[HOT Price List] duplicate commercial row ignored', {
+          sku: product.sku,
+          keptSourceCode: existing.sourceCode,
+          ignoredSourceCode: product.sourceCode,
+        });
       }
       continue;
     }
