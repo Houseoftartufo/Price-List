@@ -143,7 +143,7 @@ function localizedContent(product: {
   it: Translation[];
   nl: Translation[];
   de: Translation[];
-}): ShopifyProductEnrichment['localized'] {
+}): NonNullable<ShopifyProductEnrichment['localized']> {
   const englishTitle = product.title.trim();
   const englishDescription = product.descriptionHtml.trim();
   return {
