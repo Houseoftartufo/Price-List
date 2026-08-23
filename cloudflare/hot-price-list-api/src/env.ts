@@ -14,6 +14,8 @@ export interface Env {
   QUOTE_ENGINE_ENABLED?: string;
   BILLIT_BASE_URL?: string;
   SHOPIFY_API_VERSION?: string;
+  TURNSTILE_SECRET?: string;
+  TURNSTILE_HOSTNAMES?: string;
 }
 
 export function quoteEngineEnabled(env: Env): boolean {
