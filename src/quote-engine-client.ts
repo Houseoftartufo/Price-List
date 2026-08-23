@@ -29,6 +29,7 @@ export interface QuoteRequestInput {
   preferredChannel: QuoteChannel;
   customer: QuoteCustomerInput;
   lines: QuoteLineInput[];
+  turnstileToken?: string;
 }
 
 export interface AcceptedQuoteLine {
@@ -65,12 +66,14 @@ function envValue(name: string): string | undefined {
   return meta.env?.[name]?.trim() || undefined;
 }
 
-export function quoteEngineConfig(): { enabled: boolean; apiBase?: string } {
+export function quoteEngineConfig(): { enabled: boolean; apiBase?: string; turnstileSiteKey?: string } {
   const enabled = envValue('VITE_HOT_QUOTE_ENGINE_ENABLED') === 'true';
   const raw = envValue('VITE_HOT_QUOTE_API_URL');
+  const turnstileSiteKey = envValue('VITE_HOT_TURNSTILE_SITE_KEY');
   return {
     enabled,
     ...(raw ? { apiBase: raw.replace(/\/$/, '') } : {}),
+    ...(turnstileSiteKey ? { turnstileSiteKey } : {}),
   };
 }
 
