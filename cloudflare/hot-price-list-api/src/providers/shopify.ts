@@ -16,6 +16,10 @@ query HotPriceListProducts($cursor: String) {
       status
       updatedAt
       descriptionHtml
+      fr: translations(locale: "fr") { key value outdated }
+      it: translations(locale: "it") { key value outdated }
+      nl: translations(locale: "nl") { key value outdated }
+      de: translations(locale: "de") { key value outdated }
       media(first: 10) {
         nodes {
           ... on MediaImage {
@@ -117,6 +121,43 @@ function inferSizeLabel(selectedOptions: Array<{ name: string; value: string }>,
   return variantTitle && variantTitle !== 'Default Title' ? variantTitle : undefined;
 }
 
+type Translation = { key: string; value?: string | null; outdated: boolean };
+
+function translatedContent(entries: Translation[]): { title?: string; description?: string } {
+  const current = (key: string): string | undefined => {
+    const entry = entries.find((item) => item.key === key && !item.outdated);
+    return entry?.value?.trim() || undefined;
+  };
+  const title = current('title');
+  const description = current('body_html');
+  return {
+    ...(title ? { title } : {}),
+    ...(description ? { description } : {}),
+  };
+}
+
+function localizedContent(product: {
+  title: string;
+  descriptionHtml: string;
+  fr: Translation[];
+  it: Translation[];
+  nl: Translation[];
+  de: Translation[];
+}): ShopifyProductEnrichment['localized'] {
+  const englishTitle = product.title.trim();
+  const englishDescription = product.descriptionHtml.trim();
+  return {
+    en: {
+      ...(englishTitle ? { title: englishTitle } : {}),
+      ...(englishDescription ? { description: englishDescription } : {}),
+    },
+    fr: translatedContent(product.fr),
+    it: translatedContent(product.it),
+    nl: translatedContent(product.nl),
+    de: translatedContent(product.de),
+  };
+}
+
 export function availabilityState(availableForSale: boolean, inventoryQuantity?: number): AvailabilityState {
   if (!availableForSale) return 'OUT_OF_STOCK';
   if (typeof inventoryQuantity !== 'number') return 'IN_STOCK';
@@ -128,6 +169,7 @@ export function availabilityState(availableForSale: boolean, inventoryQuantity?:
 export async function listShopifyEnrichment(env: Env): Promise<ShopifyProductEnrichment[]> {
   type Node = {
     id: string; title: string; handle: string; status: string; updatedAt: string; descriptionHtml: string;
+    fr: Translation[]; it: Translation[]; nl: Translation[]; de: Translation[];
     media: { nodes: Array<{ image?: { url?: string } | null }> };
     metafields: { nodes: Array<{ namespace: string; key: string; type: string; value: string }> };
     variants: { nodes: Array<{
@@ -145,6 +187,7 @@ export async function listShopifyEnrichment(env: Env): Promise<ShopifyProductEnr
     const result: Result = await graphql<Result>(env, PRODUCT_QUERY, { cursor });
     for (const product of result.products.nodes) {
       if (product.status !== 'ACTIVE') continue;
+      const localized = localizedContent(product);
       for (const variant of product.variants.nodes) {
         const sku = variant.sku?.trim();
         if (!sku) continue;
@@ -172,6 +215,7 @@ export async function listShopifyEnrichment(env: Env): Promise<ShopifyProductEnr
           ...(ingredients ? { ingredients } : {}),
           ...(storage ? { storage } : {}),
           ...(usage ? { usage } : {}),
+          localized,
           updatedAt: product.updatedAt,
         });
       }
