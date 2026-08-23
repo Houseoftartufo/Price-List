@@ -49,7 +49,8 @@ describe('canonical catalogue merge', () => {
   });
 
   it('warns on a missing image without changing the authority model', () => {
-    const { product } = mergeCanonicalProduct(billit, { ...shopify, imageUrl: undefined }, false);
+    const { imageUrl: _imageUrl, ...withoutImage } = shopify;
+    const { product } = mergeCanonicalProduct(billit, withoutImage, false);
     expect(product.health).toBe('WARNING');
     expect(product.healthReasons).toContain('missing-image');
     expect(product.basePriceExVat).toBe(billit.amountExcl);
