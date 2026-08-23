@@ -1,0 +1,45 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hot-price-list-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-23",
+  "account_id": "ec7956c98d058dadc2c8bcd42fb0fbd7",
+  "workers_dev": true,
+  "vars": {
+    "QUOTE_ENGINE_ENABLED": "false",
+    "SHOPIFY_API_VERSION": "2026-07",
+    "BILLIT_BASE_URL": "https://api.billit.be",
+    "API_ORIGIN": "https://pricelist.houseoftartufo.com",
+    "ATTIO_DEAL_OWNER_EMAIL": "marketing@houseoftartufo.com",
+    "ADMIN_EMAIL_TO": "admin@houseoftartufo.com",
+    "ADMIN_FROM_EMAIL": "quotes@houseoftartufo.com"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hot-price-list-db"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "QUOTE_JOBS",
+        "queue": "hot-price-list-jobs"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "hot-price-list-jobs",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 8,
+        "dead_letter_queue": "hot-price-list-dlq",
+        "max_concurrency": 5,
+        "retry_delay": 30
+      }
+    ]
+  },
+  "triggers": {
+    "crons": ["0 * * * *"]
+  }
+}
