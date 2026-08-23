@@ -12,9 +12,12 @@ function env(overrides: Partial<Env> = {}): Env {
 
 describe('Turnstile quote protection', () => {
   it('fails closed when the secret or hostname allowlist is missing', async () => {
+    const missingSecret = env();
+    delete missingSecret.TURNSTILE_SECRET;
+
     await expect(verifyTurnstile(
       new Request('https://api.example.test/quotes'),
-      env({ TURNSTILE_SECRET: undefined }),
+      missingSecret,
       'token',
     )).rejects.toMatchObject({ code: 'turnstile-not-configured', status: 503 });
   });
