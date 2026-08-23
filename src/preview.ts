@@ -1,4 +1,5 @@
 import './styles/preview.css';
+import './quote-wizard';
 
 import { loadCatalogue } from './catalog/catalog-service';
 import { calculatePriceBreakdown, formatEur, roundMoney } from './catalog/pricing';
