@@ -91,7 +91,11 @@ export async function listBillitProducts(env: Env, requestId: string): Promise<B
   let page = 0;
 
   while (next && page < 50) {
-    const payload = await billitFetch<BillitListResponse<BillitProductPayload>>(env, requestId, next);
+    const payload: BillitListResponse<BillitProductPayload> = await billitFetch<BillitListResponse<BillitProductPayload>>(
+      env,
+      requestId,
+      next,
+    );
     for (const raw of payload.Items ?? []) {
       const product = normalizeProduct(raw);
       if (product) products.push(product);
