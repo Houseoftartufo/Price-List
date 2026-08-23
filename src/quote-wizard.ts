@@ -13,6 +13,7 @@ import {
   type QuoteCustomerInput,
   type QuoteLocale,
 } from './quote-engine-client';
+import { mountTurnstile, type TurnstileController } from './turnstile-client';
 
 const HOT_WHATSAPP = '32480205715';
 const HOT_EMAIL = 'admin@houseoftartufo.com';
@@ -45,6 +46,9 @@ interface Copy {
   address2: string;
   postal: string;
   city: string;
+  security: string;
+  securityPending: string;
+  securityUnavailable: string;
   submitWhatsApp: string;
   submitEmail: string;
   privacy: string;
@@ -67,8 +71,11 @@ const COPY: Record<QuoteLocale, Copy> = {
     company: 'Company', private: 'Private individual', companyName: 'Company legal name', vat: 'VAT number',
     firstName: 'First name', lastName: 'Last name', country: 'Country', email: 'Email', phone: 'Phone / WhatsApp',
     phoneHint: 'International format, e.g. +32470123456', billingAddress: 'Billing address', street: 'Street', number: 'Number',
-    address2: 'Address line 2 (optional)', postal: 'Postal code', city: 'City', submitWhatsApp: 'Continue on WhatsApp',
-    submitEmail: 'Continue by email', privacy: 'Used only to prepare and answer this quotation request. No marketing consent is added.',
+    address2: 'Address line 2 (optional)', postal: 'Postal code', city: 'City', security: 'Security verification',
+    securityPending: 'Security verification is still running. Please try again in a moment.',
+    securityUnavailable: 'Security verification is temporarily unavailable. Please try again.',
+    submitWhatsApp: 'Continue on WhatsApp', submitEmail: 'Continue by email',
+    privacy: 'Used only to prepare and answer this quotation request. No marketing consent is added.',
     requiredCompany: 'Company name is required.', requiredVat: 'VAT number is required for a company request.',
     invalidPhone: 'Use an international phone number beginning with +.', invalidEmail: 'Enter a valid email address.',
     noProducts: 'Your quote is empty.', apiMissing: 'The new quotation service is not configured yet.', sending: 'Verifying prices and availability…',
@@ -80,8 +87,11 @@ const COPY: Record<QuoteLocale, Copy> = {
     company: 'Azienda', private: 'Privato', companyName: 'Ragione sociale', vat: 'Partita IVA',
     firstName: 'Nome', lastName: 'Cognome', country: 'Paese', email: 'Email', phone: 'Telefono / WhatsApp',
     phoneHint: 'Formato internazionale, es. +393331234567', billingAddress: 'Indirizzo di fatturazione', street: 'Via', number: 'Numero',
-    address2: 'Riga indirizzo 2 (opzionale)', postal: 'CAP', city: 'Città', submitWhatsApp: 'Continua su WhatsApp',
-    submitEmail: 'Continua via email', privacy: 'I dati servono solo per preparare e rispondere a questa richiesta. Nessun consenso marketing viene aggiunto.',
+    address2: 'Riga indirizzo 2 (opzionale)', postal: 'CAP', city: 'Città', security: 'Verifica di sicurezza',
+    securityPending: 'La verifica di sicurezza è ancora in corso. Riprova tra un momento.',
+    securityUnavailable: 'La verifica di sicurezza non è disponibile al momento. Riprova.',
+    submitWhatsApp: 'Continua su WhatsApp', submitEmail: 'Continua via email',
+    privacy: 'I dati servono solo per preparare e rispondere a questa richiesta. Nessun consenso marketing viene aggiunto.',
     requiredCompany: 'La ragione sociale è obbligatoria.', requiredVat: 'La Partita IVA è obbligatoria per una richiesta aziendale.',
     invalidPhone: 'Inserisci il telefono in formato internazionale con +.', invalidEmail: 'Inserisci un indirizzo email valido.',
     noProducts: 'Il preventivo è vuoto.', apiMissing: 'Il nuovo servizio preventivi non è ancora configurato.', sending: 'Verifica prezzi e disponibilità…',
@@ -93,8 +103,11 @@ const COPY: Record<QuoteLocale, Copy> = {
     company: 'Société', private: 'Particulier', companyName: 'Raison sociale', vat: 'N° TVA',
     firstName: 'Prénom', lastName: 'Nom', country: 'Pays', email: 'E-mail', phone: 'Téléphone / WhatsApp',
     phoneHint: 'Format international, ex. +32470123456', billingAddress: 'Adresse de facturation', street: 'Rue', number: 'Numéro',
-    address2: 'Complément d’adresse (facultatif)', postal: 'Code postal', city: 'Ville', submitWhatsApp: 'Continuer sur WhatsApp',
-    submitEmail: 'Continuer par e-mail', privacy: 'Ces données servent uniquement à préparer et répondre à cette demande. Aucun consentement marketing n’est ajouté.',
+    address2: 'Complément d’adresse (facultatif)', postal: 'Code postal', city: 'Ville', security: 'Vérification de sécurité',
+    securityPending: 'La vérification de sécurité est toujours en cours. Réessayez dans un instant.',
+    securityUnavailable: 'La vérification de sécurité est temporairement indisponible. Veuillez réessayer.',
+    submitWhatsApp: 'Continuer sur WhatsApp', submitEmail: 'Continuer par e-mail',
+    privacy: 'Ces données servent uniquement à préparer et répondre à cette demande. Aucun consentement marketing n’est ajouté.',
     requiredCompany: 'La raison sociale est obligatoire.', requiredVat: 'Le N° TVA est obligatoire pour une société.',
     invalidPhone: 'Utilisez un numéro international commençant par +.', invalidEmail: 'Saisissez une adresse e-mail valide.',
     noProducts: 'Votre devis est vide.', apiMissing: 'Le nouveau service de devis n’est pas encore configuré.', sending: 'Vérification des prix et disponibilités…',
@@ -106,8 +119,11 @@ const COPY: Record<QuoteLocale, Copy> = {
     company: 'Bedrijf', private: 'Particulier', companyName: 'Officiële bedrijfsnaam', vat: 'BTW-nummer',
     firstName: 'Voornaam', lastName: 'Achternaam', country: 'Land', email: 'E-mail', phone: 'Telefoon / WhatsApp',
     phoneHint: 'Internationaal formaat, bv. +32470123456', billingAddress: 'Factuuradres', street: 'Straat', number: 'Nummer',
-    address2: 'Adresregel 2 (optioneel)', postal: 'Postcode', city: 'Plaats', submitWhatsApp: 'Doorgaan via WhatsApp',
-    submitEmail: 'Doorgaan per e-mail', privacy: 'Alleen gebruikt om deze offerteaanvraag voor te bereiden en te beantwoorden. Er wordt geen marketingtoestemming toegevoegd.',
+    address2: 'Adresregel 2 (optioneel)', postal: 'Postcode', city: 'Plaats', security: 'Beveiligingscontrole',
+    securityPending: 'De beveiligingscontrole loopt nog. Probeer het over een moment opnieuw.',
+    securityUnavailable: 'De beveiligingscontrole is tijdelijk niet beschikbaar. Probeer opnieuw.',
+    submitWhatsApp: 'Doorgaan via WhatsApp', submitEmail: 'Doorgaan per e-mail',
+    privacy: 'Alleen gebruikt om deze offerteaanvraag voor te bereiden en te beantwoorden. Er wordt geen marketingtoestemming toegevoegd.',
     requiredCompany: 'Bedrijfsnaam is verplicht.', requiredVat: 'BTW-nummer is verplicht voor een bedrijfsaanvraag.',
     invalidPhone: 'Gebruik een internationaal nummer dat met + begint.', invalidEmail: 'Voer een geldig e-mailadres in.',
     noProducts: 'Uw offerte is leeg.', apiMissing: 'De nieuwe offerteservice is nog niet geconfigureerd.', sending: 'Prijzen en beschikbaarheid controleren…',
@@ -119,8 +135,11 @@ const COPY: Record<QuoteLocale, Copy> = {
     company: 'Unternehmen', private: 'Privatperson', companyName: 'Firmenname', vat: 'USt-IdNr.',
     firstName: 'Vorname', lastName: 'Nachname', country: 'Land', email: 'E-Mail', phone: 'Telefon / WhatsApp',
     phoneHint: 'Internationales Format, z. B. +491701234567', billingAddress: 'Rechnungsadresse', street: 'Straße', number: 'Hausnummer',
-    address2: 'Adresszusatz (optional)', postal: 'Postleitzahl', city: 'Ort', submitWhatsApp: 'Weiter zu WhatsApp',
-    submitEmail: 'Weiter per E-Mail', privacy: 'Die Daten werden nur zur Erstellung und Beantwortung dieser Angebotsanfrage verwendet. Es wird keine Marketingeinwilligung gesetzt.',
+    address2: 'Adresszusatz (optional)', postal: 'Postleitzahl', city: 'Ort', security: 'Sicherheitsprüfung',
+    securityPending: 'Die Sicherheitsprüfung läuft noch. Bitte versuchen Sie es gleich noch einmal.',
+    securityUnavailable: 'Die Sicherheitsprüfung ist vorübergehend nicht verfügbar. Bitte versuchen Sie es erneut.',
+    submitWhatsApp: 'Weiter zu WhatsApp', submitEmail: 'Weiter per E-Mail',
+    privacy: 'Die Daten werden nur zur Erstellung und Beantwortung dieser Angebotsanfrage verwendet. Es wird keine Marketingeinwilligung gesetzt.',
     requiredCompany: 'Der Firmenname ist erforderlich.', requiredVat: 'Die USt-IdNr. ist für eine Unternehmensanfrage erforderlich.',
     invalidPhone: 'Verwenden Sie eine internationale Nummer, die mit + beginnt.', invalidEmail: 'Geben Sie eine gültige E-Mail-Adresse ein.',
     noProducts: 'Ihr Angebot ist leer.', apiMissing: 'Der neue Angebotsservice ist noch nicht konfiguriert.', sending: 'Preise und Verfügbarkeit werden geprüft…',
@@ -225,6 +244,10 @@ function template(locale: QuoteLocale): string {
         <div class="hot-quote-wizard__field">
           <span>${escapeHtml(copy.city)}</span>
           <input name="city" autocomplete="address-level2" maxlength="100" required />
+        </div>
+        <div class="hot-quote-wizard__field hot-quote-wizard__field--wide">
+          <span>${escapeHtml(copy.security)}</span>
+          <div id="hot-quote-turnstile"></div>
         </div>
       </div>
 
@@ -339,14 +362,39 @@ function configureDialog(channel: QuoteChannel): void {
   selectedChannel = channel;
   const locale = currentQuoteLocale();
   const copy = COPY[locale];
+  const config = quoteEngineConfig();
   const active = ensureDialog();
   active.innerHTML = template(locale);
   const form = active.querySelector<HTMLFormElement>('#hot-quote-wizard-form');
   const submitButton = active.querySelector<HTMLButtonElement>('.hot-quote-wizard__submit');
-  if (!form || !submitButton) throw new Error('Quote wizard could not initialise.');
+  const turnstileContainer = active.querySelector<HTMLElement>('#hot-quote-turnstile');
+  if (!form || !submitButton || !turnstileContainer) throw new Error('Quote wizard could not initialise.');
   submitButton.textContent = channel === 'whatsapp' ? copy.submitWhatsApp : copy.submitEmail;
 
+  let turnstile: TurnstileController | undefined;
+  let securityFatal = false;
+  if (!config.apiBase || !config.turnstileSiteKey) {
+    securityFatal = true;
+    submitButton.disabled = true;
+    setStatus(copy.apiMissing, 'error');
+  } else {
+    void mountTurnstile(turnstileContainer, config.turnstileSiteKey, locale, () => {
+      setStatus(copy.securityUnavailable, 'error');
+    }).then((controller) => {
+      if (!active.open) {
+        controller.destroy();
+        return;
+      }
+      turnstile = controller;
+    }).catch(() => {
+      securityFatal = true;
+      submitButton.disabled = true;
+      setStatus(copy.securityUnavailable, 'error');
+    });
+  }
+
   active.querySelector<HTMLButtonElement>('[data-hot-quote-close]')?.addEventListener('click', () => active.close());
+  active.addEventListener('close', () => turnstile?.destroy(), { once: true });
   active.addEventListener('click', (event) => {
     if (event.target === active) active.close();
   }, { once: true });
@@ -364,9 +412,13 @@ function configureDialog(channel: QuoteChannel): void {
       setStatus(copy.noProducts, 'error');
       return;
     }
-    const config = quoteEngineConfig();
-    if (!config.apiBase) {
+    if (!config.apiBase || !config.turnstileSiteKey) {
       setStatus(copy.apiMissing, 'error');
+      return;
+    }
+    const turnstileToken = turnstile?.token();
+    if (!turnstileToken) {
+      setStatus(copy.securityPending, 'error');
       return;
     }
 
@@ -389,6 +441,7 @@ function configureDialog(channel: QuoteChannel): void {
         preferredChannel: selectedChannel,
         customer,
         lines,
+        turnstileToken,
       });
       setStatus(`${copy.accepted} ${result.quote.quoteId}`, 'success');
       window.dispatchEvent(new CustomEvent('hot:quote-engine-accepted', {
@@ -398,12 +451,13 @@ function configureDialog(channel: QuoteChannel): void {
       openSelectedChannel(selectedChannel, locale, customer, result.quote, popup);
     } catch (error) {
       popup?.close();
+      turnstile?.reset();
       setStatus(error instanceof Error && error.message ? error.message : copy.failed, 'error');
       window.dispatchEvent(new CustomEvent('hot:quote-engine-failed', {
         detail: { channel: selectedChannel },
       }));
     } finally {
-      submitButton.disabled = false;
+      submitButton.disabled = securityFatal;
     }
   });
 
