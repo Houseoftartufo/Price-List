@@ -60,8 +60,8 @@ function normalizeShopDomain(value: string): string {
 
 async function accessToken(env: Env): Promise<string> {
   if (env.SHOPIFY_ADMIN_ACCESS_TOKEN?.trim()) return env.SHOPIFY_ADMIN_ACCESS_TOKEN.trim();
-  const clientId = (env as Env & { SHOPIFY_CLIENT_ID?: string }).SHOPIFY_CLIENT_ID?.trim();
-  const clientSecret = (env as Env & { SHOPIFY_CLIENT_SECRET?: string }).SHOPIFY_CLIENT_SECRET?.trim();
+  const clientId = env.SHOPIFY_CLIENT_ID?.trim();
+  const clientSecret = env.SHOPIFY_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) throw new Error('Shopify credentials are not configured.');
 
   const now = Date.now();
@@ -142,15 +142,22 @@ export async function listShopifyEnrichment(env: Env): Promise<ShopifyProductEnr
   const output: ShopifyProductEnrichment[] = [];
   let cursor: string | null = null;
   for (let page = 0; page < 50; page += 1) {
-    const result = await graphql<Result>(env, PRODUCT_QUERY, { cursor });
+    const result: Result = await graphql<Result>(env, PRODUCT_QUERY, { cursor });
     for (const product of result.products.nodes) {
       if (product.status !== 'ACTIVE') continue;
       for (const variant of product.variants.nodes) {
         const sku = variant.sku?.trim();
         if (!sku) continue;
+
         const unitsPerCase = parsePositiveInteger(
           metafieldValue(variant.metafields.nodes, 'units_per_case') || metafieldValue(product.metafields.nodes, 'units_per_case'),
         );
+        const imageUrl = firstImage(variant.media.nodes) ?? firstImage(product.media.nodes);
+        const sizeLabel = inferSizeLabel(variant.selectedOptions, variant.title);
+        const ingredients = metafieldValue(product.metafields.nodes, 'ingredients');
+        const storage = metafieldValue(product.metafields.nodes, 'storage');
+        const usage = metafieldValue(product.metafields.nodes, 'usage');
+
         output.push({
           productId: product.id,
           variantId: variant.id,
@@ -159,14 +166,12 @@ export async function listShopifyEnrichment(env: Env): Promise<ShopifyProductEnr
           title: product.title,
           availableForSale: variant.availableForSale,
           ...(typeof variant.inventoryQuantity === 'number' ? { inventoryQuantity: variant.inventoryQuantity } : {}),
-          ...(firstImage(variant.media.nodes) || firstImage(product.media.nodes)
-            ? { imageUrl: firstImage(variant.media.nodes) || firstImage(product.media.nodes) }
-            : {}),
-          ...(inferSizeLabel(variant.selectedOptions, variant.title) ? { sizeLabel: inferSizeLabel(variant.selectedOptions, variant.title) } : {}),
+          ...(imageUrl ? { imageUrl } : {}),
+          ...(sizeLabel ? { sizeLabel } : {}),
           ...(unitsPerCase ? { unitsPerCase } : {}),
-          ...(metafieldValue(product.metafields.nodes, 'ingredients') ? { ingredients: metafieldValue(product.metafields.nodes, 'ingredients') } : {}),
-          ...(metafieldValue(product.metafields.nodes, 'storage') ? { storage: metafieldValue(product.metafields.nodes, 'storage') } : {}),
-          ...(metafieldValue(product.metafields.nodes, 'usage') ? { usage: metafieldValue(product.metafields.nodes, 'usage') } : {}),
+          ...(ingredients ? { ingredients } : {}),
+          ...(storage ? { storage } : {}),
+          ...(usage ? { usage } : {}),
           updatedAt: product.updatedAt,
         });
       }
