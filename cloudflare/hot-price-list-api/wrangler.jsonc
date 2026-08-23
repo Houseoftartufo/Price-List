@@ -9,7 +9,8 @@
     "QUOTE_ENGINE_ENABLED": "false",
     "SHOPIFY_API_VERSION": "2026-07",
     "BILLIT_BASE_URL": "https://api.billit.be",
-    "API_ORIGIN": "https://pricelist.houseoftartufo.com",
+    "API_ORIGIN": "https://pricelist.houseoftartufo.com,https://price-list-git-codex-price-list-quote-engine-house-of-tartufo.vercel.app",
+    "TURNSTILE_HOSTNAMES": "pricelist.houseoftartufo.com,price-list-git-codex-price-list-quote-engine-house-of-tartufo.vercel.app",
     "ATTIO_DEAL_OWNER_EMAIL": "marketing@houseoftartufo.com",
     "ADMIN_EMAIL_TO": "admin@houseoftartufo.com",
     "ADMIN_FROM_EMAIL": "quotes@houseoftartufo.com"
