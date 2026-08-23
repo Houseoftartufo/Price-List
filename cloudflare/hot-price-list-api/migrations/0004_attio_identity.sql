@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS attio_identity_map (
-  identity_type TEXT NOT NULL CHECK (identity_type IN ('company_vat','company_name_country')),
+  identity_type TEXT NOT NULL CHECK (identity_type IN ('company_vat')),
   identity_value TEXT NOT NULL,
   attio_record_id TEXT NOT NULL,
   created_at TEXT NOT NULL,

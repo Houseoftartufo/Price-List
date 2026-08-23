@@ -2,6 +2,24 @@ import type { Env } from '../env';
 import type { CanonicalQuote, Locale, QuoteCustomerInput } from '../types';
 
 const ATTIO_BASE_URL = 'https://api.attio.com/v2';
+const PUBLIC_EMAIL_DOMAINS = new Set([
+  'aol.com',
+  'gmail.com',
+  'googlemail.com',
+  'gmx.com',
+  'gmx.de',
+  'hotmail.com',
+  'icloud.com',
+  'live.com',
+  'mac.com',
+  'me.com',
+  'msn.com',
+  'outlook.com',
+  'proton.me',
+  'protonmail.com',
+  'yahoo.com',
+  'yahoo.fr',
+]);
 
 interface AttioRecordResponse {
   data: {
@@ -53,47 +71,48 @@ function preferredLanguage(locale: Locale): string | undefined {
     it: 'Italian',
     nl: 'Dutch',
   };
-  // German is deliberately kept in the quote/note until the Attio select has a German option.
+  // Attio currently has no German option in Preferred Language. The exact DE locale
+  // remains first-class in the immutable quote snapshot and the Deal note.
   return values[locale];
+}
+
+function preferredContactChannel(quote: CanonicalQuote): 'WhatsApp' | 'Email' {
+  return quote.preferredChannel === 'whatsapp' ? 'WhatsApp' : 'Email';
 }
 
 function normalizeVat(value: string): string {
   return value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
 }
 
-function normalizeCompanyName(value: string): string {
-  return value.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US');
+function corporateDomain(email: string): string | undefined {
+  const domain = email.trim().toLowerCase().split('@')[1];
+  if (!domain || PUBLIC_EMAIL_DOMAINS.has(domain)) return undefined;
+  return domain;
 }
 
-async function mappedCompanyId(env: Env, customer: QuoteCustomerInput): Promise<string | undefined> {
-  const identityType = customer.vatNumber ? 'company_vat' : 'company_name_country';
-  const identityValue = customer.vatNumber
-    ? normalizeVat(customer.vatNumber)
-    : `${customer.countryCode}:${normalizeCompanyName(customer.companyName || '')}`;
+async function mappedCompanyId(env: Env, vatNumber: string): Promise<string | undefined> {
+  const identityValue = normalizeVat(vatNumber);
   const row = await env.DB.prepare(`
     SELECT attio_record_id FROM attio_identity_map
-    WHERE identity_type = ? AND identity_value = ?
-  `).bind(identityType, identityValue).first<{ attio_record_id: string }>();
+    WHERE identity_type = 'company_vat' AND identity_value = ?
+  `).bind(identityValue).first<{ attio_record_id: string }>();
   return row?.attio_record_id;
 }
 
-async function saveCompanyMapping(env: Env, customer: QuoteCustomerInput, recordId: string): Promise<void> {
-  const identityType = customer.vatNumber ? 'company_vat' : 'company_name_country';
-  const identityValue = customer.vatNumber
-    ? normalizeVat(customer.vatNumber)
-    : `${customer.countryCode}:${normalizeCompanyName(customer.companyName || '')}`;
+async function saveCompanyMapping(env: Env, vatNumber: string, recordId: string): Promise<void> {
+  const identityValue = normalizeVat(vatNumber);
   const now = new Date().toISOString();
   await env.DB.prepare(`
     INSERT INTO attio_identity_map (identity_type, identity_value, attio_record_id, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?)
+    VALUES ('company_vat', ?, ?, ?, ?)
     ON CONFLICT(identity_type, identity_value) DO UPDATE SET
       attio_record_id = excluded.attio_record_id,
       updated_at = excluded.updated_at
-  `).bind(identityType, identityValue, recordId, now, now).run();
+  `).bind(identityValue, recordId, now, now).run();
 }
 
-async function queryExactName(env: Env, object: 'companies' | 'deals', name: string): Promise<string[]> {
-  const payload = await attioFetch<AttioQueryResponse>(env, `/objects/${object}/records/query`, {
+async function queryExactDealName(env: Env, name: string): Promise<string[]> {
+  const payload = await attioFetch<AttioQueryResponse>(env, '/objects/deals/records/query', {
     method: 'POST',
     body: JSON.stringify({ filter: { name }, limit: 10, offset: 0 }),
   });
@@ -102,35 +121,31 @@ async function queryExactName(env: Env, object: 'companies' | 'deals', name: str
 
 async function resolveCompany(env: Env, customer: QuoteCustomerInput): Promise<string | undefined> {
   if (customer.type !== 'company' || !customer.companyName) return undefined;
+  if (!customer.vatNumber) throw new Error('Company VAT is required for Attio identity resolution.');
 
-  const mapped = await mappedCompanyId(env, customer);
+  const mapped = await mappedCompanyId(env, customer.vatNumber);
   if (mapped) return mapped;
 
-  const exact = await queryExactName(env, 'companies', customer.companyName);
-  let recordId: string;
-  if (exact.length === 1) {
-    recordId = exact[0]!;
-  } else if (exact.length > 1) {
-    throw new Error(`Attio company identity is ambiguous for ${customer.companyName}.`);
-  } else {
-    const created = await attioFetch<AttioRecordResponse>(env, '/objects/companies/records', {
-      method: 'POST',
-      body: JSON.stringify({
-        data: {
-          values: {
-            name: customer.companyName,
-            primary_location: location(customer),
-            ...(customer.vatNumber
-              ? { description: `House of Tartufo Price List customer · VAT ${normalizeVat(customer.vatNumber)}` }
-              : { description: 'House of Tartufo Price List customer' }),
-          },
-        },
-      }),
-    });
-    recordId = created.data.id.record_id;
-  }
+  const domain = corporateDomain(customer.email);
+  const values = {
+    name: customer.companyName,
+    primary_location: location(customer),
+    description: `House of Tartufo Price List customer · VAT ${normalizeVat(customer.vatNumber)}`,
+    ...(domain ? { domains: [domain] } : {}),
+  };
 
-  await saveCompanyMapping(env, customer, recordId);
+  const record = domain
+    ? await attioFetch<AttioRecordResponse>(env, '/objects/companies/records?matching_attribute=domains', {
+        method: 'PUT',
+        body: JSON.stringify({ data: { values } }),
+      })
+    : await attioFetch<AttioRecordResponse>(env, '/objects/companies/records', {
+        method: 'POST',
+        body: JSON.stringify({ data: { values } }),
+      });
+
+  const recordId = record.data.id.record_id;
+  await saveCompanyMapping(env, customer.vatNumber, recordId);
   return recordId;
 }
 
@@ -146,6 +161,7 @@ async function upsertPerson(env: Env, quote: CanonicalQuote, companyId?: string)
     },
     phone_numbers: [customer.phone],
     primary_location: location(customer),
+    preferred_contact_channel: preferredContactChannel(quote),
     ...(language ? { preferred_language: language } : {}),
     ...(companyId ? { company: [{ target_object: 'companies', target_record_id: companyId }] } : {}),
   };
@@ -211,7 +227,7 @@ async function createQuoteNote(env: Env, quote: CanonicalQuote, dealId: string):
 
 export async function projectQuoteToAttio(env: Env, quote: CanonicalQuote): Promise<string> {
   const name = dealName(quote);
-  const existing = await queryExactName(env, 'deals', name);
+  const existing = await queryExactDealName(env, name);
   if (existing.length === 1) return existing[0]!;
   if (existing.length > 1) throw new Error(`Duplicate Attio deals already exist for ${quote.quoteId}.`);
 
