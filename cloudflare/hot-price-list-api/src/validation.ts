@@ -52,6 +52,7 @@ export function parseQuoteRequest(value: unknown): QuoteRequestInput {
   const companyName = optionalString(rawCustomer.companyName, 180);
   const vatNumber = optionalString(rawCustomer.vatNumber, 40)?.replace(/[\s.\-]/g, '').toUpperCase();
   if (customerType === 'company' && !companyName) throw new Error('Company name is required for company customers.');
+  if (customerType === 'company' && !vatNumber) throw new Error('VAT number is required for company customers.');
 
   const countryCode = requiredString(rawCustomer.countryCode, 'countryCode', 2).toUpperCase();
   if (!COUNTRY_RE.test(countryCode)) throw new Error('Invalid country code.');

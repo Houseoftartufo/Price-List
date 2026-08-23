@@ -34,6 +34,12 @@ describe('quote request validation', () => {
     expect(() => parseQuoteRequest({ ...base, customer })).toThrow(/Company name/);
   });
 
+  it('requires a VAT number for company customers', () => {
+    const customer = { ...base.customer } as Record<string, unknown>;
+    delete customer.vatNumber;
+    expect(() => parseQuoteRequest({ ...base, customer })).toThrow(/VAT number/);
+  });
+
   it('rejects duplicate SKU lines', () => {
     expect(() => parseQuoteRequest({
       ...base,
