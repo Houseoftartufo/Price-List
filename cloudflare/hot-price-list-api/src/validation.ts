@@ -93,5 +93,13 @@ export function parseQuoteRequest(value: unknown): QuoteRequestInput {
     return { sku, cases: line.cases };
   });
 
-  return { idempotencyKey, locale, preferredChannel, customer, lines };
+  const turnstileToken = optionalString(input.turnstileToken, 2048);
+  return {
+    idempotencyKey,
+    locale,
+    preferredChannel,
+    customer,
+    lines,
+    ...(turnstileToken ? { turnstileToken } : {}),
+  };
 }

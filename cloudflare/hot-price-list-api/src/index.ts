@@ -17,6 +17,7 @@ import { parseQuoteRequest } from './validation';
 import { createBillitOffer } from './providers/billit';
 import { projectQuoteToAttio } from './providers/attio';
 import { notifyAdmin } from './providers/admin';
+import { TurnstileVerificationError, turnstileConfigured, verifyTurnstile } from './turnstile';
 import type { QuoteJob } from './types';
 
 type RuntimeEnv = Env & { SYNC_SHARED_KEY?: string };
@@ -89,7 +90,11 @@ async function handleQuote(request: Request, env: Env): Promise<Response> {
   const rid = requestId(request);
   try {
     const payload = parseQuoteRequest(await request.json());
-    const result = await acceptQuote(env, rid, payload);
+    const existing = await getQuoteByIdempotencyKey(env, payload.idempotencyKey);
+    if (!existing) await verifyTurnstile(request, env, payload.turnstileToken);
+    const result = existing
+      ? { quote: existing, duplicate: true }
+      : await acceptQuote(env, rid, payload);
 
     if (!result.duplicate) {
       try {
@@ -120,6 +125,14 @@ async function handleQuote(request: Request, env: Env): Promise<Response> {
       requestId: rid,
       message: error instanceof Error ? error.message : String(error),
     });
+    if (error instanceof TurnstileVerificationError) {
+      return json(request, env, {
+        ok: false,
+        code: error.code,
+        requestId: rid,
+        message: error.message,
+      }, error.status);
+    }
     return json(request, env, {
       ok: false,
       code: 'quote-verification-failed',
@@ -173,6 +186,7 @@ async function fetchHandler(request: Request, env: Env): Promise<Response> {
       ok: true,
       service: 'hot-price-list-api',
       quoteEngineEnabled: quoteEngineEnabled(env),
+      quoteProtectionConfigured: turnstileConfigured(env),
       version: '0.1.0',
     });
   }

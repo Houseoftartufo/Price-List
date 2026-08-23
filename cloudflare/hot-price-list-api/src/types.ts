@@ -84,6 +84,7 @@ export interface QuoteRequestInput {
   preferredChannel: ContactChannel;
   customer: QuoteCustomerInput;
   lines: QuoteLineInput[];
+  turnstileToken?: string;
 }
 
 export interface CanonicalQuoteLine {
