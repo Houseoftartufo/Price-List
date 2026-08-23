@@ -55,6 +55,22 @@ jobs:
       - name: Browser buyer QA
         run: npm run test:e2e
 
+      - name: Build guarded quote engine browser fixture
+        env:
+          VITE_HOT_QUOTE_ENGINE_ENABLED: 'true'
+          VITE_HOT_QUOTE_API_URL: http://127.0.0.1:4173/mock-quote-api
+          VITE_HOT_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+        run: npm run build
+
+      - name: Guarded quote engine browser QA
+        env:
+          QUOTE_ENGINE_BROWSER_QA: '1'
+        run: npx playwright test e2e/quote-engine-wizard.spec.ts
+
+      - name: Restore production build after guarded QA
+        if: always()
+        run: npm run build && npm run qa:preview
+
       - name: Upload QA screenshots
         if: always()
         uses: actions/upload-artifact@v4
