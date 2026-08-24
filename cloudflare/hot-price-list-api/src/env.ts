@@ -7,6 +7,7 @@ export interface Env {
   SHOPIFY_ADMIN_ACCESS_TOKEN?: string;
   SHOPIFY_CLIENT_ID?: string;
   SHOPIFY_CLIENT_SECRET?: string;
+  SHOPIFY_SHADOW_PROXY_URL?: string;
   ATTIO_API_KEY: string;
   ATTIO_DEAL_OWNER_EMAIL?: string;
   ADMIN_NOTIFICATION_WEBHOOK?: string;
