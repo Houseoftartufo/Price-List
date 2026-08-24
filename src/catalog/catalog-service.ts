@@ -1,4 +1,6 @@
 import { buildStrictOfficialCatalogue } from '../official-catalogue-filter';
+import { quoteEngineConfig } from '../quote-engine-client';
+import { applyBillitCommercialPrices, loadBillitCommercialCatalogue, type BillitCataloguePayload } from './billit-live';
 import { applyShopifyExVatPrices, loadShopifyLiveCatalogue } from '../shopify-live';
 import { parseCatalogueSourceCsv, reconcileSourceProduct, sourceRowToProduct } from './price-source';
 import { DEFAULT_DISCOUNT_POLICY } from './pricing';
@@ -90,6 +92,22 @@ async function applyShopifyPricing(catalogue: Catalogue): Promise<CatalogueLoadR
   }
 
   return { catalogue: overlay.catalogue };
+}
+
+
+async function applyCommercialPricing(
+  catalogue: Catalogue,
+  billitPayload?: Promise<BillitCataloguePayload>,
+): Promise<CatalogueLoadResult> {
+  if (!billitPayload) return applyShopifyPricing(catalogue);
+
+  const overlay = applyBillitCommercialPrices(catalogue, await billitPayload);
+  return {
+    catalogue: assertValidCatalogue(overlay.catalogue),
+    ...(overlay.missingSkus.length > 0
+      ? { warning: `${overlay.missingSkus.length} SKU(s) have no valid Billit fiscal price and are on standby.` }
+      : {}),
+  };
 }
 
 function assertContainsBaseline(candidate: Catalogue, baseline: Catalogue): void {
@@ -219,9 +237,16 @@ async function loadBuildSnapshot(): Promise<Catalogue> {
 }
 
 export async function loadCatalogue(): Promise<CatalogueLoadResult> {
-  // Start the Shopify request immediately so live prices are ready by the time
-  // the technical catalogue has been reconciled.
-  void loadShopifyLiveCatalogue();
+  const quoteConfig = quoteEngineConfig();
+  const billitPayload = quoteConfig.enabled
+    ? quoteConfig.apiBase
+      ? loadBillitCommercialCatalogue(quoteConfig.apiBase)
+      : Promise.reject<BillitCataloguePayload>(new Error('Quote Engine is enabled but the Billit catalogue API URL is not configured.'))
+    : undefined;
+
+  // Shopify monetary data is legacy-only. In Quote Engine mode Billit is the
+  // exclusive fiscal/B2B pricing authority; Shopify remains enrichment elsewhere.
+  if (!quoteConfig.enabled) void loadShopifyLiveCatalogue();
 
   let baseline: Catalogue | undefined;
   let baselineError: unknown;
@@ -235,17 +260,17 @@ export async function loadCatalogue(): Promise<CatalogueLoadResult> {
   try {
     const live = await loadLiveCatalogue(baseline);
     cacheVerifiedCatalogue(live);
-    return await applyShopifyPricing(live);
+    return await applyCommercialPricing(live, billitPayload);
   } catch (liveError) {
     emitCatalogueError('live-source', liveError);
 
     const stale = readStaleCatalogue(baseline);
     if (stale) {
-      return await applyShopifyPricing(stale);
+      return await applyCommercialPricing(stale, billitPayload);
     }
 
     if (baseline) {
-      return await applyShopifyPricing(baseline);
+      return await applyCommercialPricing(baseline, billitPayload);
     }
 
     const liveMessage = liveError instanceof Error ? liveError.message : String(liveError);
