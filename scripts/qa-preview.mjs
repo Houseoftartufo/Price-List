@@ -2,7 +2,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 
 const EXPECTED_PRODUCTS = 145;
 const EXPECTED_CATEGORIES = 8;
-const PRODUCTION_URL = 'https://houseoftartufo-price-list.vercel.app/';
+const PRODUCTION_URL = 'https://pricelist.houseoftartufo.com/';
 const JS_BUDGET_BYTES = 250 * 1024;
 const CSS_BUDGET_BYTES = 150 * 1024;
 const HTML_BUDGET_BYTES = 80 * 1024;
@@ -135,7 +135,7 @@ if (catalogue.products.some((product) => !(product.baseUnitPrice > 0) || !(produ
 }
 
 const translations = JSON.parse(translationText);
-for (const locale of ['en', 'it', 'fr', 'nl']) {
+for (const locale of ['en', 'it', 'fr', 'nl', 'de']) {
   if (!translations[locale] || Object.keys(translations[locale]).length === 0) {
     fail(`translation snapshot is missing ${locale}`);
   }
@@ -152,5 +152,5 @@ if (!previewTs.includes('loadCatalogue')) fail('preview is not connected to the 
 if (!previewTs.includes('quote.set')) fail('quote flow is not wired');
 
 console.log(
-  `[preview-qa] PASS · production / mirrors preview · ${catalogue.products.length} SKUs · ${categoryCount} categories · ${previewIds.length}/${productionIds.length} unique UI ids · JS ${(jsBytes / 1024).toFixed(1)}KB · CSS ${(cssBytes / 1024).toFixed(1)}KB · EN/IT/FR/NL snapshots present`,
+  `[preview-qa] PASS · production / mirrors preview · ${catalogue.products.length} SKUs · ${categoryCount} categories · ${previewIds.length}/${productionIds.length} unique UI ids · JS ${(jsBytes / 1024).toFixed(1)}KB · CSS ${(cssBytes / 1024).toFixed(1)}KB · EN/IT/FR/NL/DE snapshots present`,
 );

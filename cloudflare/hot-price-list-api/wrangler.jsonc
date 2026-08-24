@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hot-price-list-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-23",
+  "account_id": "ec7956c98d058dadc2c8bcd42fb0fbd7",
+  "workers_dev": false,
+  "preview_urls": true,
+  "vars": {
+    "QUOTE_ENGINE_ENABLED": "false",
+    "SHOPIFY_API_VERSION": "2026-07",
+    "SHOPIFY_SHOP_DOMAIN": "cc4fd8.myshopify.com",
+    "SHOPIFY_SHADOW_PROXY_URL": "https://pricelist.houseoftartufo.com/api/shopify-products",
+    "BILLIT_BASE_URL": "https://api.billit.be",
+    "API_ORIGIN": "https://pricelist.houseoftartufo.com,https://price-list-git-codex-price-list-quote-engine-house-of-tartufo.vercel.app",
+    "TURNSTILE_HOSTNAMES": "pricelist.houseoftartufo.com,price-list-git-codex-price-list-quote-engine-house-of-tartufo.vercel.app",
+    "ATTIO_DEAL_OWNER_EMAIL": "marketing@houseoftartufo.com",
+    "ADMIN_EMAIL_TO": "admin@houseoftartufo.com",
+    "ADMIN_FROM_EMAIL": "quotes@houseoftartufo.com"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hot-price-list-db",
+      "database_id": "514dcef3-950d-4afb-a88d-4f27ad7cc748"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "QUOTE_JOBS",
+        "queue": "hot-price-list-jobs"
+      }
+    ]
+  }
+}

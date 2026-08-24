@@ -1,4 +1,4 @@
-const ALLOWED_LOCALES = new Set(['en', 'it', 'fr', 'nl']);
+const ALLOWED_LOCALES = new Set(['en', 'it', 'fr', 'nl', 'de']);
 const SHOP_ORIGIN = 'https://houseoftartufo.com';
 
 function prefix(locale) {

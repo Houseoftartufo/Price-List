@@ -1,6 +1,6 @@
 import { cp, mkdir, readFile } from 'node:fs/promises';
 
-const PRODUCTION_URL = process.env.PRODUCTION_URL || 'https://houseoftartufo-price-list.vercel.app/';
+const PRODUCTION_URL = process.env.PRODUCTION_URL || 'https://pricelist.houseoftartufo.com/';
 const dist = new URL('../dist/', import.meta.url);
 const output = new URL('../release-candidate/', import.meta.url);
 

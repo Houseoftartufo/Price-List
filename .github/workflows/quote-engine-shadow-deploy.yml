@@ -1,0 +1,121 @@
+name: Quote Engine Shadow Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      enable_shadow_quotes:
+        description: 'Enable quotations on the version-preview shadow after OFF deploy + secret checks'
+        required: true
+        default: false
+        type: boolean
+  push:
+    branches:
+      - codex/price-list-quote-engine
+    paths:
+      - 'cloudflare/hot-price-list-api/**'
+      - '.github/workflows/quote-engine-shadow-deploy.yml'
+
+permissions:
+  contents: read
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ec7956c98d058dadc2c8bcd42fb0fbd7
+  PRICE_LIST_WORKERS_SUBDOMAIN: house-of-tartufo
+  BILLIT_API_KEY: ${{ secrets.BILLIT_API_KEY }}
+  BILLIT_PARTY_ID: ${{ secrets.BILLIT_PARTY_ID }}
+  SHOPIFY_ADMIN_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ADMIN_ACCESS_TOKEN }}
+  SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+  SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+  ATTIO_API_KEY: ${{ secrets.ATTIO_API_KEY }}
+  SYNC_SHARED_KEY: ${{ secrets.PRICE_LIST_SYNC_SHARED_KEY }}
+  ADMIN_NOTIFICATION_WEBHOOK: ${{ secrets.PRICE_LIST_ADMIN_NOTIFICATION_WEBHOOK }}
+  TURNSTILE_SECRET: ${{ secrets.PRICE_LIST_TURNSTILE_SECRET }}
+  QUOTE_ENGINE_SHADOW_ENABLED: ${{ github.event_name == 'workflow_dispatch' && inputs.enable_shadow_quotes && 'true' || 'false' }}
+
+jobs:
+  shadow-deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: cloudflare/hot-price-list-api
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check Cloudflare authorization
+        id: auth
+        shell: bash
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "Cloudflare authorization is available."
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN is not configured in this repository; shadow deployment skipped safely."
+          fi
+
+      - name: Install worker dependencies
+        if: steps.auth.outputs.ready == 'true'
+        run: npm install --no-audit --no-fund
+
+      - name: Verify worker and inert shadow config before provisioning
+        if: steps.auth.outputs.ready == 'true'
+        run: npm run typecheck && npm test && npm run deploy:dry && node scripts/verify-shadow-safety.mjs
+
+      - name: Provision isolated Cloudflare resources and deploy OFF
+        if: steps.auth.outputs.ready == 'true'
+        run: node scripts/bootstrap-cloudflare.mjs
+
+      - name: Prepare available runtime secrets
+        if: steps.auth.outputs.ready == 'true'
+        id: runtime-secrets
+        shell: bash
+        run: |
+          node <<'NODE'
+          const { writeFileSync } = require('node:fs');
+          const names = [
+            'BILLIT_API_KEY',
+            'BILLIT_PARTY_ID',
+            'SHOPIFY_ADMIN_ACCESS_TOKEN',
+            'SHOPIFY_CLIENT_ID',
+            'SHOPIFY_CLIENT_SECRET',
+            'ATTIO_API_KEY',
+            'SYNC_SHARED_KEY',
+            'ADMIN_NOTIFICATION_WEBHOOK',
+            'TURNSTILE_SECRET',
+          ];
+          const payload = {};
+          for (const name of names) {
+            const value = process.env[name]?.trim();
+            if (value) payload[name] = value;
+          }
+          writeFileSync('.runtime-secrets.json', JSON.stringify(payload));
+          writeFileSync('.runtime-secret-count', String(Object.keys(payload).length));
+          console.log(`Prepared ${Object.keys(payload).length} runtime secret(s).`);
+          NODE
+          echo "count=$(cat .runtime-secret-count)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload available runtime secrets
+        if: steps.auth.outputs.ready == 'true' && steps.runtime-secrets.outputs.count != '0'
+        run: npx wrangler secret bulk .runtime-secrets.json --config .wrangler.deploy.json
+
+      - name: Enable quote engine for explicit version-preview shadow QA
+        if: steps.auth.outputs.ready == 'true' && github.event_name == 'workflow_dispatch' && inputs.enable_shadow_quotes
+        run: node scripts/activate-shadow.mjs
+
+      - name: Show configured secret names only
+        if: steps.auth.outputs.ready == 'true'
+        run: npx wrangler secret list --config .wrangler.deploy.json
+
+      - name: Clean transient secret file
+        if: always()
+        shell: bash
+        run: rm -f .runtime-secrets.json .runtime-secret-count .wrangler.deploy.json

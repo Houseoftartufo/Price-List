@@ -1,7 +1,7 @@
 export type Currency = 'EUR';
 
 export type CatalogueFreshness = 'fresh' | 'stale' | 'fallback';
-export type CatalogueSource = 'google-sheet' | 'snapshot';
+export type CatalogueSource = 'google-sheet' | 'snapshot' | 'billit';
 
 export type TruffleType =
   | 'white'
