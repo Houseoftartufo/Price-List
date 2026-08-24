@@ -166,7 +166,121 @@ export function availabilityState(availableForSale: boolean, inventoryQuantity?:
   return 'IN_STOCK';
 }
 
+type ShadowProxyMetafield = { namespace?: string; key?: string; value?: string };
+type ShadowProxyImage = { url?: string | null };
+type ShadowProxyVariant = {
+  id?: string;
+  title?: string;
+  sku?: string | null;
+  availableForSale?: boolean;
+  inventoryQuantity?: number | null;
+  selectedOptions?: Array<{ name?: string; value?: string }>;
+  media?: ShadowProxyImage[];
+  metafields?: ShadowProxyMetafield[];
+};
+type ShadowProxyProduct = {
+  id?: string;
+  title?: string;
+  handle?: string;
+  status?: string;
+  updatedAt?: string;
+  descriptionHtml?: string;
+  media?: ShadowProxyImage[];
+  metafields?: ShadowProxyMetafield[];
+  variants?: ShadowProxyVariant[];
+};
+type ShadowProxyPayload = {
+  available?: boolean;
+  source?: string;
+  apiVersion?: string;
+  products?: ShadowProxyProduct[];
+};
+
+function shadowProxyImage(images: ShadowProxyImage[] | undefined): string | undefined {
+  return images?.find((image) => image.url?.trim())?.url?.trim() || undefined;
+}
+
+function shadowProxyMetafield(fields: ShadowProxyMetafield[] | undefined, key: string): string | undefined {
+  return fields?.find((field) => field.namespace === 'hot' && field.key === key)?.value?.trim() || undefined;
+}
+
+function shadowProxyUrl(env: Env): string | undefined {
+  const configured = env.SHOPIFY_SHADOW_PROXY_URL?.trim();
+  if (!configured) return undefined;
+  const url = new URL(configured);
+  if (url.protocol !== 'https:') throw new Error('Shopify shadow proxy URL must use HTTPS.');
+  return url.toString();
+}
+
+async function listShopifyShadowProxy(url: string): Promise<ShopifyProductEnrichment[]> {
+  const response = await fetch(url, {
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error(`Shopify shadow proxy returned HTTP ${response.status}.`);
+
+  const payload = await response.json() as ShadowProxyPayload;
+  if (!payload.available || payload.source !== 'shopify-admin-graphql' || !Array.isArray(payload.products)) {
+    throw new Error('Shopify shadow proxy returned an invalid or unavailable payload.');
+  }
+
+  const output: ShopifyProductEnrichment[] = [];
+  for (const product of payload.products) {
+    if (product.status !== 'ACTIVE' || !product.id?.trim() || !product.handle?.trim() || !product.title?.trim()) continue;
+    const productMetafields = product.metafields ?? [];
+    const englishTitle = product.title.trim();
+    const englishDescription = product.descriptionHtml?.trim();
+
+    for (const variant of product.variants ?? []) {
+      const sku = variant.sku?.trim();
+      const variantId = variant.id?.trim();
+      if (!sku || !variantId || typeof variant.availableForSale !== 'boolean') continue;
+
+      const variantMetafields = variant.metafields ?? [];
+      const unitsPerCase = parsePositiveInteger(
+        shadowProxyMetafield(variantMetafields, 'units_per_case') || shadowProxyMetafield(productMetafields, 'units_per_case'),
+      );
+      const selectedOptions = (variant.selectedOptions ?? [])
+        .filter((option): option is { name: string; value: string } => Boolean(option.name?.trim() && option.value?.trim()))
+        .map((option) => ({ name: option.name.trim(), value: option.value.trim() }));
+      const imageUrl = shadowProxyImage(variant.media) ?? shadowProxyImage(product.media);
+      const sizeLabel = inferSizeLabel(selectedOptions, variant.title?.trim() || '');
+      const ingredients = shadowProxyMetafield(productMetafields, 'ingredients');
+      const storage = shadowProxyMetafield(productMetafields, 'storage');
+      const usage = shadowProxyMetafield(productMetafields, 'usage');
+
+      output.push({
+        productId: product.id.trim(),
+        variantId,
+        sku,
+        handle: product.handle.trim(),
+        title: englishTitle,
+        availableForSale: variant.availableForSale,
+        ...(typeof variant.inventoryQuantity === 'number' ? { inventoryQuantity: variant.inventoryQuantity } : {}),
+        ...(imageUrl ? { imageUrl } : {}),
+        ...(sizeLabel ? { sizeLabel } : {}),
+        ...(unitsPerCase ? { unitsPerCase } : {}),
+        ...(ingredients ? { ingredients } : {}),
+        ...(storage ? { storage } : {}),
+        ...(usage ? { usage } : {}),
+        localized: {
+          en: {
+            title: englishTitle,
+            ...(englishDescription ? { description: englishDescription } : {}),
+          },
+        },
+        ...(product.updatedAt?.trim() ? { updatedAt: product.updatedAt.trim() } : {}),
+      });
+    }
+  }
+  if (output.length === 0) throw new Error('Shopify shadow proxy contained no usable active variants.');
+  return output;
+}
+
 export async function listShopifyEnrichment(env: Env): Promise<ShopifyProductEnrichment[]> {
+  const proxy = shadowProxyUrl(env);
+  if (proxy) return listShopifyShadowProxy(proxy);
+
   type Node = {
     id: string; title: string; handle: string; status: string; updatedAt: string; descriptionHtml: string;
     fr: Translation[]; it: Translation[]; nl: Translation[]; de: Translation[];
