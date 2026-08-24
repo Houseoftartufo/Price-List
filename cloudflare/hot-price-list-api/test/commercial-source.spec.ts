@@ -62,7 +62,7 @@ function installProviderFetch() {
         Items: [{
           ProductID: 999,
           Reference: OFFICIAL_SKU,
-          Description: 'WRONG BILLIT PRICE SOURCE',
+          Description: 'Fiscal Billit Price Source',
           AmountExcl: 99,
           VAT: 6,
           Unit: 'NAR',
@@ -189,7 +189,7 @@ describe('Price List commercial source authority', () => {
     vi.unstubAllGlobals();
   });
 
-  it('syncs Sheet/master commercial price and identity instead of Billit product pricing', async () => {
+  it('syncs Billit fiscal price/VAT/identity instead of Sheet pricing', async () => {
     const calls = installProviderFetch();
     const { db, catalogueWrites } = makeDb();
 
@@ -199,17 +199,20 @@ describe('Price List commercial source authority', () => {
     expect(write).toBeDefined();
     expect(JSON.parse(write!.publicJson)).toMatchObject({
       sku: OFFICIAL_SKU,
-      basePriceExVat: 10,
+      name: 'Fiscal Billit Price Source',
+      basePriceExVat: 99,
+      vatRate: 6,
       unitsPerCase: 12,
     });
     expect(JSON.parse(write!.internalJson)).toMatchObject({
-      sheetSourceCode: '28',
-      sourceStatus: { sheet: 'ok', shopify: 'ok' },
+      billitProductId: 999,
+      sourceStatus: { billit: 'ok', shopify: 'ok' },
     });
-    expect(calls.some((url) => url.includes('api.billit.be/v1/products'))).toBe(false);
+    expect(calls.some((url) => url.includes('api.billit.be/v1/products'))).toBe(true);
+    expect(calls.some((url) => url.includes('docs.google.com/spreadsheets'))).toBe(false);
   });
 
-  it('re-verifies Sheet + Shopify at quote acceptance without consulting Billit for price', async () => {
+  it('re-verifies Billit + Shopify at quote acceptance without consulting Sheet for price', async () => {
     const calls = installProviderFetch();
     const { db } = makeDb(projected);
 
@@ -217,10 +220,11 @@ describe('Price List commercial source authority', () => {
 
     expect(result.quote.lines[0]).toMatchObject({
       sku: OFFICIAL_SKU,
-      baseUnitPriceExVat: 10,
+      baseUnitPriceExVat: 99,
       unitsPerCase: 12,
-      subtotalExVat: 120,
+      subtotalExVat: 1188,
     });
-    expect(calls.some((url) => url.includes('api.billit.be/v1/products'))).toBe(false);
+    expect(calls.some((url) => url.includes('api.billit.be/v1/products'))).toBe(true);
+    expect(calls.some((url) => url.includes('docs.google.com/spreadsheets'))).toBe(false);
   });
 });
