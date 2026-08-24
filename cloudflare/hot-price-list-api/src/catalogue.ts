@@ -1,6 +1,6 @@
 import type { Env } from './env';
 import { upsertCatalogueProduct } from './db';
-import { listSheetCommercialProducts } from './providers/sheet';
+import { listBillitProducts } from './providers/billit';
 import { availabilityState, listShopifyEnrichment } from './providers/shopify';
 import type { BillitCommercialProduct, CanonicalProduct, Locale, SheetCommercialProduct, ShopifyProductEnrichment } from './types';
 
@@ -138,14 +138,14 @@ export async function syncCanonicalCatalogue(env: Env, requestId: string): Promi
 
   try {
     void requestId;
-    const [sheetProducts, shopifyProducts] = await Promise.all([
-      listSheetCommercialProducts(),
+    const [billitProducts, shopifyProducts] = await Promise.all([
+      listBillitProducts(env, requestId),
       listShopifyEnrichment(env),
     ]);
 
-    const sheetIndex = indexUnique(sheetProducts);
-    if (sheetIndex.duplicates.size > 0) {
-      throw new Error(`Duplicate official SKUs from Price List Sheet: ${[...sheetIndex.duplicates].slice(0, 20).join(', ')}`);
+    const billitIndex = indexUnique(billitProducts);
+    if (billitIndex.duplicates.size > 0) {
+      throw new Error(`Duplicate fiscal SKUs from Billit: ${[...billitIndex.duplicates].slice(0, 20).join(', ')}`);
     }
     const shopifyIndex = indexUnique(shopifyProducts);
     const verifiedAt = new Date().toISOString();
@@ -154,7 +154,7 @@ export async function syncCanonicalCatalogue(env: Env, requestId: string): Promi
     let warning = 0;
     let blocked = 0;
 
-    for (const commercial of sheetProducts) {
+    for (const commercial of billitProducts) {
       const merged = mergeCanonicalProduct(
         commercial,
         shopifyIndex.unique.get(commercial.sku),
@@ -167,14 +167,14 @@ export async function syncCanonicalCatalogue(env: Env, requestId: string): Promi
       await upsertCatalogueProduct(env, merged.product, merged.internal);
     }
 
-    const shopifyOrphans = [...shopifyIndex.unique.keys()].filter((sku) => !sheetIndex.unique.has(sku)).sort();
+    const shopifyOrphans = [...shopifyIndex.unique.keys()].filter((sku) => !billitIndex.unique.has(sku)).sort();
     await env.DB.prepare(`
       UPDATE catalogue_syncs
       SET status = 'success', completed_at = ?, item_count = ?, error_count = 0
       WHERE sync_id = ?
-    `).bind(new Date().toISOString(), sheetProducts.length, syncId).run();
+    `).bind(new Date().toISOString(), billitProducts.length, syncId).run();
 
-    return { total: sheetProducts.length, ready, warning, blocked, shopifyOrphans };
+    return { total: billitProducts.length, ready, warning, blocked, shopifyOrphans };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await env.DB.prepare(`

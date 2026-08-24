@@ -7,10 +7,10 @@ import {
   upsertCatalogueProduct,
 } from './db';
 import { mergeCanonicalProduct } from './catalogue';
-import { listSheetCommercialProducts } from './providers/sheet';
+import { listBillitProducts } from './providers/billit';
 import { listShopifyEnrichment } from './providers/shopify';
 import { priceQuoteLine, roundMoney } from './pricing';
-import type { CanonicalQuote, QuoteRequestInput, SheetCommercialProduct, ShopifyProductEnrichment } from './types';
+import type { BillitCommercialProduct, CanonicalQuote, QuoteRequestInput, ShopifyProductEnrichment } from './types';
 
 function uniqueBySku<T extends { sku: string }>(items: T[]): { unique: Map<string, T>; duplicates: Set<string> } {
   const unique = new Map<string, T>();
@@ -30,23 +30,22 @@ export async function acceptQuote(env: Env, requestId: string, input: QuoteReque
   const existing = await getQuoteByIdempotencyKey(env, input.idempotencyKey);
   if (existing) return { quote: existing, duplicate: true };
 
-  void requestId;
-  // Fresh Sheet + official-master data remains authoritative for commercial terms; Shopify is authoritative for availability.
-  const [sheetProducts, shopifyProducts] = await Promise.all([
-    listSheetCommercialProducts(),
+  // Billit is authoritative for fiscal product identity, price and VAT; Shopify is authoritative for availability/media.
+  const [billitProducts, shopifyProducts] = await Promise.all([
+    listBillitProducts(env, requestId),
     listShopifyEnrichment(env),
   ]);
-  const sheet = uniqueBySku<SheetCommercialProduct>(sheetProducts);
+  const billit = uniqueBySku<BillitCommercialProduct>(billitProducts);
   const shopify = uniqueBySku<ShopifyProductEnrichment>(shopifyProducts);
-  if (sheet.duplicates.size > 0) {
-    throw new Error(`Duplicate official SKUs from Price List Sheet: ${[...sheet.duplicates].slice(0, 20).join(', ')}`);
+  if (billit.duplicates.size > 0) {
+    throw new Error(`Duplicate fiscal SKUs from Billit: ${[...billit.duplicates].slice(0, 20).join(', ')}`);
   }
   const lines = [];
   let latestCatalogueVerification = '';
 
   for (const requested of input.lines) {
     const projected = await getCatalogueProduct(env, requested.sku);
-    const freshCommercial = sheet.unique.get(requested.sku);
+    const freshCommercial = billit.unique.get(requested.sku);
     if (!projected || !freshCommercial) {
       throw new Error(`SKU ${requested.sku} is not present in the verified B2B catalogue.`);
     }
