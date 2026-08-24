@@ -6,12 +6,13 @@ Use Shopify Admin as a live enrichment and verification layer for the House of T
 
 ## Source-of-truth hierarchy
 
-1. `Master_file_prodotti.xlsx` → official product identity, SKU, barcode, case pack and technical specifications.
-2. B2B Google Sheet → wholesale base price only, and only when product + format resolves to one official master row.
-3. Shopify Admin GraphQL API → live product status, variants, images, public URL, description and explicitly allowed metafields.
-4. Static Shopify map → public-verified image/link fallback only when the Admin API is unavailable.
+1. `Master_file_prodotti.xlsx` → official product identity, EAN/barcode, case pack and technical specifications.
+2. **Billit** → fiscal product identity, wholesale base unit price ex VAT, VAT percentage, commercial unit and Billit ProductID. Billit is the B2B pricing source of truth.
+3. Shopify Admin GraphQL API → live product status, variants, images, public URL, description and explicitly allowed metafields/localized content.
+4. B2B Google Sheet → legacy/reference, translation and reconciliation support only; never a runtime price authority.
+5. Static Shopify map → public-verified image/link fallback only when the Admin API is unavailable.
 
-Shopify must never silently overwrite the master SKU, barcode, case pack or B2B price.
+Shopify and the Google Sheet must never silently overwrite the master SKU/barcode/case pack or Billit B2B price/VAT.
 
 ## Implemented
 
