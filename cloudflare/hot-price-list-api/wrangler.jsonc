@@ -20,7 +20,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "hot-price-list-db"
+      "database_name": "hot-price-list-db",
+      "database_id": "514dcef3-950d-4afb-a88d-4f27ad7cc748"
     }
   ],
   "queues": {
