@@ -3,32 +3,32 @@
 Status: Sprint 1 / P0 — VERIFIED AGAINST LIVE SOURCE  
 Purpose: define the only model allowed to reach pricing, UI and quote flows.
 
-## Verified commercial source
+## Verified fiscal/commercial authority
 
-Google Sheet: `HOT_PriceList_DataSheet_2026`  
-Spreadsheet ID: `1qqOv6i2UrZZwtbW8awMzawBNs8f9UblGoL25QZf3u94`
+**Billit is the fiscal and B2B pricing source of truth.**
 
-Tabs used by the catalogue:
+Authoritative Billit fields for the Price List runtime:
 
-- `PRODUCTS` — commercial product and pricing source;
-- `TRANSLATIONS` — EN / IT / FR / NL catalogue copy;
-- `HOW TO USE` — operational documentation only.
+- product reference / fiscal SKU identity;
+- `AmountExcl` as B2B base unit price ex VAT;
+- VAT percentage;
+- commercial unit;
+- Billit `ProductID` for downstream offer creation and auditability.
 
-Verified source state on 2026-08-12:
+Supporting sources have narrower responsibilities:
 
-- 145 product SKUs;
-- 8 product categories;
-- 107 translation keys;
-- 100% translation coverage for EN / IT / FR / NL;
-- zero duplicate translation keys;
-- zero mathematical mismatches across base case price and all five discount check columns.
+- `Master_file_prodotti.xlsx` → official product identity, EAN/barcode, technical specifications and case-pack metadata where required;
+- Shopify Admin → live availability, variants, media, public product content and localized enrichment;
+- Google Sheet `HOT_PriceList_DataSheet_2026` → legacy/reference, translation and reconciliation support only. It must never override Billit price or VAT.
+
+At quote acceptance the fiscal price is re-read from Billit before the immutable quote snapshot is created.
 
 ## Principles
 
 - Product code/SKU is the stable primary key.
 - Prices are numeric values in EUR, never preformatted strings inside the application.
-- `baseUnitPrice` is the only authoritative monetary product input.
-- `unitsPerCase` is authoritative packaging data.
+- Billit `AmountExcl` is the only authoritative monetary product input for B2B pricing.
+- `unitsPerCase` comes from the verified official product/master packaging layer; it is not inferred from Billit price.
 - Case prices are derived from unit price × units per case.
 - Tier prices are derived from the central discount policy.
 - Existing source `€/box` and tier-price columns are treated as reconciliation/check columns, not independent authorities.
@@ -106,15 +106,13 @@ export interface Catalogue {
   currency: 'EUR';
   updatedAt: string;
   verifiedAt: string;
-  source: 'google-sheet' | 'snapshot';
+  source: 'billit' | 'snapshot';
   freshness: 'fresh' | 'stale' | 'fallback';
   products: Product[];
   discountPolicy: DiscountTier[];
   sourceMeta?: {
-    spreadsheetId: string;
-    sheet: string;
-    sourceRowCount: number;
-    categoryCount: number;
+    sourceFetchedAt: string;
+    billitProductCount: number;
   };
 }
 ```
@@ -164,7 +162,7 @@ The buyer-facing unit price is rounded to cents first. Case price and subtotal a
 
 This is intentional: every number visible in the UI must remain mathematically reproducible from the other visible numbers. A buyer must never see a displayed unit price whose multiplication produces a contradictory displayed case total.
 
-The Google Sheet's existing base-case and discount columns remain useful as source-integrity checks. A build fails if those source check values cease to match their deterministic formula.
+The Google Sheet's existing base-case and discount columns may remain useful as non-authoritative reconciliation checks against Billit and the central discount policy. A build fails if those source check values cease to match their deterministic formula.
 
 ## Packaging verification
 

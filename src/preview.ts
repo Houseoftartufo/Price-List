@@ -1,4 +1,5 @@
 import './styles/preview.css';
+import './quote-wizard';
 
 import { loadCatalogue } from './catalog/catalog-service';
 import { calculatePriceBreakdown, formatEur, roundMoney } from './catalog/pricing';
@@ -43,7 +44,7 @@ function escapeHtml(value: string): string {
 }
 
 function localeCode(current: Locale): string {
-  return ({ en: 'en-BE', it: 'it-IT', fr: 'fr-BE', nl: 'nl-BE' } as const)[current];
+  return ({ en: 'en-BE', it: 'it-IT', fr: 'fr-BE', nl: 'nl-BE', de: 'de-DE' } as const)[current];
 }
 
 function monthsLabel(months: number | undefined): string {
@@ -554,7 +555,7 @@ function bindEvents(): void {
   document.querySelectorAll<HTMLButtonElement>('[data-locale]').forEach((button) => {
     button.addEventListener('click', () => {
       const next = button.dataset.locale;
-      if (next !== 'en' && next !== 'it' && next !== 'fr' && next !== 'nl') return;
+      if (next !== 'en' && next !== 'it' && next !== 'fr' && next !== 'nl' && next !== 'de') return;
       locale = next;
       setDocumentLocale(locale);
       renderAll();

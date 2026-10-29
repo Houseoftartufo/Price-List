@@ -1,4 +1,4 @@
-type HeroLocale = 'en' | 'it' | 'fr' | 'nl';
+type HeroLocale = 'en' | 'it' | 'fr' | 'nl' | 'de';
 
 const EYEBROW = 'HOUSE OF TARTUFO · PRICE CATALOG · B2B';
 const MOTTO = 'Truffle. Elevated.';
@@ -8,13 +8,14 @@ const TITLES: Readonly<Record<HeroLocale, string>> = {
   it: 'Il catalogo wholesale',
   fr: 'Le catalogue wholesale',
   nl: 'De wholesale catalogus',
+  de: 'Der Großhandelskatalog',
 };
 
 const STYLE_ID = 'hot-hero-brand-line-style';
 
 function currentLocale(): HeroLocale {
   const locale = document.documentElement.lang.toLowerCase().split('-')[0];
-  return locale === 'it' || locale === 'fr' || locale === 'nl' ? locale : 'en';
+  return locale === 'it' || locale === 'fr' || locale === 'nl' || locale === 'de' ? locale : 'en';
 }
 
 function installStyles(): void {
@@ -105,8 +106,6 @@ function bind(): void {
   const localeObserver = new MutationObserver(() => applyHeroBrandLine());
   localeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
 
-  // A locale click triggers the catalogue renderer synchronously. Re-apply once
-  // more in a microtask so the brand line always wins without changing i18n internals.
   document.addEventListener('click', (event) => {
     const localeButton = (event.target as HTMLElement).closest('[data-locale]');
     if (!localeButton) return;

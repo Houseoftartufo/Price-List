@@ -8,7 +8,7 @@
   },
   "scripts": {
     "prepare:brand": "node scripts/prepare-brand-assets.mjs",
-    "sync:catalog": "node scripts/sync-catalog.mjs",
+    "sync:catalog": "node scripts/sync-catalog.mjs && node scripts/normalize-de-snapshot.mjs",
     "audit:shopify": "CI_SHOPIFY_LIVE=1 vitest run tests/official-shopify-live.spec.ts",
     "audit:shopify-legacy": "npm run sync:catalog && node scripts/audit-shopify-catalog.mjs",
     "verify:product-map": "node scripts/verify-product-detail-map.mjs",

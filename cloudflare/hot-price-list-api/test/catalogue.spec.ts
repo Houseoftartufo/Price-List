@@ -1,0 +1,88 @@
+import { describe, expect, it } from 'vitest';
+import { mergeCanonicalProduct } from '../src/catalogue';
+import type { BillitCommercialProduct, ShopifyProductEnrichment } from '../src/types';
+
+const billit: BillitCommercialProduct = {
+  productId: 419999,
+  sku: '5430004174103',
+  name: 'Black Truffle Sauce',
+  amountExcl: 8.5,
+  vatRate: 6,
+  unit: 'NAR',
+};
+
+const localized = {
+  en: { title: 'Black Truffle Sauce', description: '<p>English</p>' },
+  fr: { title: 'Sauce à la truffe noire', description: '<p>Français</p>' },
+  it: { title: 'Salsa al tartufo nero', description: '<p>Italiano</p>' },
+  nl: { title: 'Zwarte truffelsaus', description: '<p>Nederlands</p>' },
+  de: { title: 'Schwarze Trüffelsauce', description: '<p>Deutsch</p>' },
+} satisfies NonNullable<ShopifyProductEnrichment['localized']>;
+
+const shopify: ShopifyProductEnrichment = {
+  productId: 'gid://shopify/Product/1',
+  variantId: 'gid://shopify/ProductVariant/1',
+  sku: '5430004174103',
+  handle: 'black-truffle-sauce',
+  title: 'Retail title can differ',
+  availableForSale: true,
+  inventoryQuantity: 4,
+  imageUrl: 'https://cdn.shopify.com/example.webp',
+  sizeLabel: '80 g',
+  unitsPerCase: 12,
+  localized,
+};
+
+describe('canonical catalogue merge', () => {
+  it('takes price/name/VAT from Billit and stock/media/pack from Shopify', () => {
+    const { product } = mergeCanonicalProduct(billit, shopify, false, '2026-08-23T12:00:00.000Z');
+    expect(product.name).toBe('Black Truffle Sauce');
+    expect(product.basePriceExVat).toBe(8.5);
+    expect(product.vatRate).toBe(6);
+    expect(product.unitsPerCase).toBe(12);
+    expect(product.imageUrl).toContain('shopify');
+    expect(product.availability).toBe('LOW_STOCK');
+    expect(product.health).toBe('READY');
+  });
+
+  it('keeps provider ids out of the browser-safe public projection', () => {
+    const { product, internal } = mergeCanonicalProduct(billit, shopify, false);
+    expect(product).not.toHaveProperty('billitProductId');
+    expect(product).not.toHaveProperty('shopifyProductId');
+    expect(product).not.toHaveProperty('shopifyVariantId');
+    expect(internal).toMatchObject({
+      billitProductId: billit.productId,
+      shopifyProductId: shopify.productId,
+      shopifyVariantId: shopify.variantId,
+    });
+  });
+
+  it('blocks a Billit product that has no matching Shopify SKU', () => {
+    const { product } = mergeCanonicalProduct(billit, undefined, false);
+    expect(product.health).toBe('BLOCKED');
+    expect(product.healthReasons).toContain('missing-shopify-sku');
+  });
+
+  it('blocks duplicate Shopify SKUs rather than guessing', () => {
+    const { product } = mergeCanonicalProduct(billit, undefined, true);
+    expect(product.health).toBe('BLOCKED');
+    expect(product.healthReasons).toContain('duplicate-shopify-sku');
+  });
+
+  it('warns on a missing image without changing the authority model', () => {
+    const { imageUrl: _imageUrl, ...withoutImage } = shopify;
+    const { product } = mergeCanonicalProduct(billit, withoutImage, false);
+    expect(product.health).toBe('WARNING');
+    expect(product.healthReasons).toContain('missing-image');
+    expect(product.basePriceExVat).toBe(billit.amountExcl);
+  });
+
+  it('warns instead of blocking when one official locale is incomplete', () => {
+    const { product } = mergeCanonicalProduct(billit, {
+      ...shopify,
+      localized: { ...localized, de: { title: localized.de.title } },
+    }, false);
+    expect(product.health).toBe('WARNING');
+    expect(product.healthReasons).toContain('missing-de-description');
+  });
+});

@@ -104,7 +104,7 @@ export function validateCatalogue(catalogue: Catalogue): ValidationResult {
   if (catalogue.currency !== 'EUR') errors.push('Catalogue currency must be EUR.');
   if (!isIsoDate(catalogue.updatedAt)) errors.push('updatedAt must be a valid date.');
   if (!isIsoDate(catalogue.verifiedAt)) errors.push('verifiedAt must be a valid date.');
-  if (!['google-sheet', 'snapshot'].includes(catalogue.source)) errors.push('Invalid catalogue source.');
+  if (!['google-sheet', 'snapshot', 'billit'].includes(catalogue.source)) errors.push('Invalid catalogue source.');
   if (!['fresh', 'stale', 'fallback'].includes(catalogue.freshness)) errors.push('Invalid freshness state.');
 
   if (!Array.isArray(catalogue.products) || catalogue.products.length === 0) {

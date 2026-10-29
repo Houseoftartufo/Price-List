@@ -4,6 +4,7 @@ import './quote-format-controls';
 import './quote-volume-upsell';
 import './styles/mobile-unlock-cta.css';
 import './commercial-quote-message-controller';
+import './quote-wizard';
 import './styles/filter-control-shape.css';
 import './universal-product-search-controller';
 import './product-details';
@@ -59,6 +60,20 @@ function bind(): void {
       toSku: detail?.toSku,
       quantity: detail?.quantity,
     });
+  });
+
+  window.addEventListener('hot:quote-engine-accepted', (event) => {
+    const detail = (event as CustomEvent<{ quoteId?: string; channel?: string; duplicate?: boolean }>).detail;
+    emit('quote_engine_accepted', {
+      quoteId: detail?.quoteId,
+      channel: detail?.channel,
+      duplicate: detail?.duplicate,
+    });
+  });
+
+  window.addEventListener('hot:quote-engine-failed', (event) => {
+    const detail = (event as CustomEvent<{ channel?: string }>).detail;
+    emit('quote_engine_failed', { channel: detail?.channel });
   });
 
   for (const id of ['line-filter', 'truffle-filter']) {
